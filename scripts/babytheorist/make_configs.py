@@ -74,11 +74,11 @@ def neo_transformer(train: list[str], evals: dict[str, str], seed: int, steps: i
             "train": train_block(steps, 512, seed, "runs/codec_token/ckpt/step-003000.pt", steps // 10, ema=0.999)}
 
 
-def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, steps: int = 39100, codes: int = 12, max_length: int = 4, codec_steps: int = 40000) -> dict:
+def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, steps: int = 39100, codes: int = 12, max_length: int = 4, codec_steps: int = 40000, hidden: int = 128) -> dict:
     """The lab's official NEO (neo_gw033_k4_cb6_s42.yaml) with the 15x15 CNN state encoder and decoder."""
 
     part = {"type": "cnn_vae_any", "grid_size": GRID, "num_colors": COLORS, "state_dim": state_dim, "num_state_tokens": 1, "dropout": 0.0}
-    mlp = {"type": "film_mlp", "state_dim": state_dim, "action_dim": 16, "num_state_tokens": 1, "num_action_tokens": 1, "hidden": 128, "dropout": 0.0}
+    mlp = {"type": "film_mlp", "state_dim": state_dim, "action_dim": 16, "num_state_tokens": 1, "num_action_tokens": 1, "hidden": hidden, "dropout": 0.0}
     infer = {"max_steps": max_length}
     return {"data": {"type": "babytheorist_pairs", "train": train, "evals": evals},
             "model": {"type": "neo", "encoder": {**part, "variational": True, "deterministic": True}, "decoder": part,
@@ -104,6 +104,9 @@ def main() -> None:
         configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)
         for state_dim in (32, 256):
             configs[f"neo_mlp_d{state_dim}_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, state_dim)
+        # the lab's MLP width of 128 is narrower than a 128-d or 256-d state; these widen the programmer and executor only
+        configs[f"neo_mlp_d128_h512_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, 128, hidden=512)
+        configs[f"neo_mlp_d256_h1024_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, 256, hidden=1024)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(sorted(configs))
