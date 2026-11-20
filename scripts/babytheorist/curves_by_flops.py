@@ -28,10 +28,12 @@ def curve(run: Path, split: str, flops: dict) -> dict:
     per_step = flops[run.name]["train_flops_per_step"]
     rows = [json.loads(line) for line in (run / "train.jsonl").read_text().splitlines()]
     extra, points = 0.0, []
+    offline = json.loads((run / "extra_flops.json").read_text()) if (run / "extra_flops.json").exists() else None  # an offline phase applied to a checkpoint
     for row in rows:
         extra = row.get("extra_flops", extra)
         if f"observe/{split}/explain" in row:
-            points.append({"step": row["step"], "flops": row["step"] * per_step + extra, "explain": row[f"observe/{split}/explain"],
+            once = offline["flops"] if offline and row["step"] >= offline["at_step"] else 0.0
+            points.append({"step": row["step"], "flops": row["step"] * per_step + extra + once, "explain": row[f"observe/{split}/explain"],
                            "transfer": row[f"observe/{split}/transfer_strict"], "transfer_depth1": row[f"observe/{split}/transfer_strict_depth1"]})
     return {"run": run.name, "points": points}
 
