@@ -27,3 +27,5 @@
 - 19:50 그림에서 본 설명을 숫자로 확인함. transformer NEO seed 42의 primitive 하나짜리 이동 과제에서 새 object의 크기가 예시와 같으면 transfer 17.3%, 다르면 9.2%다. 크기 차이가 절반을 설명하지만 주된 원인은 아니다. 보고서의 문장을 고쳤다.
 - 21:08 transformer NEO seed 43이 끝남. 재현 63.0%, transfer 24.5%로 seed 42의 세 배가 넘는다. code 대 primitive 표에서 seed 43은 위아래 이동을 각각 code 하나에 담았다.
 - 21:35 primitive 하나짜리 과제만으로 학습한 transformer NEO가 끝남. primitive 둘만 배우고 23%에서 멈췄다. 막히는 곳이 이어 붙이기가 아니라 primitive를 찾는 일이라는 가설을 보고서 5.2절에 적음.
+- 22:50 체크포인트 열 개를 따라가며 primitive마다 code가 언제 생기는지를 잼. primitive는 차례로 code를 얻고, code 하나로 굳기 전에 여러 code로 설명하는 단계를 거친다. 21:35에 적은 가설, 곧 초반에 갈리고 안 바뀐다는 것은 틀렸다. 측정도 고쳤다. code 하나를 고른 것이 아니라 code 하나로 출력을 정확히 만든 것만 센다.
+- 22:17 같은 설정의 seed 45부터 48을 밤사이 줄에 더함. 사용자가 연속 벡터 기준선은 돌리지 말고 아직 모르는 것을 돌리라고 함.

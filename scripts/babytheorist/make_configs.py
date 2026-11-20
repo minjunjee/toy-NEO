@@ -103,6 +103,9 @@ def main() -> None:
     configs["codec_token"] = codec_token()
     # the 12,000-step run was still improving when its schedule ended; three times as long, one seed
     configs["neo_transformer_36k_single_a_lv1_s42"] = neo_transformer(*SINGLE_A_LV1, 42, steps=36000)
+    # more seeds of the same run: the first two differed threefold, so the spread over seeds comes before any comparison
+    for seed in (45, 46, 47, 48):
+        configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)
     for seed in (42, 43, 44):
         # the lab schedule is 78,200 steps; at 15x15 that is two days per run, so the first look uses 12,000 (about 25 passes over the data)
         configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)

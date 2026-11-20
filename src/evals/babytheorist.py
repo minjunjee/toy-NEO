@@ -9,7 +9,8 @@ babytheorist_observe   what a trained NEO does on the tasks of one eval file, sp
     transfer_consistent  a program is taken from every support pair; the one that reproduces the most support pairs is
                        replayed on the query (ties go to the earlier pair), without showing the query answer
   and, as tables: the number of codes extracted against the true depth, how often each code is used, and for tasks whose
-  program is one primitive, which code was chosen for which primitive. The hidden program is read here only to sort the
+  program is one primitive, which code was chosen for which primitive (counted both when the length rule picked one
+  code, and when that one code also reproduces the support output exactly). The hidden program is read here only to sort the
   results; the model never sees it.
 """
 
@@ -99,12 +100,16 @@ def babytheorist_observe(model: nn.Module, data, cfg: dict, step: int, device: t
             usage += torch.bincount(steps[used].cpu(), minlength=codes)
             for row in torch.nonzero(batch["depth"] == 1).flatten().tolist():
                 primitive = json.loads(batch["transitions"][row])[0]["primitive"]
-                entry = one_step.setdefault(primitive, {"tasks": 0, "one_code_extracted": 0, "transfer_strict": 0, "code": [0] * codes})
+                entry = one_step.setdefault(primitive, {"tasks": 0, "explained": 0, "one_code_extracted": 0, "one_code_exact": 0, "transfer_strict": 0, "code": [0] * codes, "exact_code": [0] * codes})
                 entry["tasks"] += 1
+                entry["explained"] += int(first_explains[row])
                 entry["transfer_strict"] += int(results["transfer_strict"][row])
-                if int(lab["n_extracted"][row]) == 1:
+                if int(lab["n_extracted"][row]) == 1:  # the length rule chose one code, whether or not it reproduces the support output
                     entry["one_code_extracted"] += 1
                     entry["code"][int(steps[row, 0])] += 1
+                    if bool(first_explains[row]):  # and that one code reproduces the support output exactly
+                        entry["one_code_exact"] += 1
+                        entry["exact_code"][int(steps[row, 0])] += 1
     total = float(counts.sum())
     out: dict = {"total": int(total)}
     for name in names:
