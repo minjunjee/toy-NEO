@@ -1,0 +1,368 @@
+{
+ "run": "neo_transformer_36k_single_a_lv1_s42",
+ "step": 32400,
+ "settings": {
+  "run": "runs/neo_transformer_36k_single_a_lv1_s42",
+  "ckpt": "runs/neo_transformer_36k_single_a_lv1_s42/ckpt/step-032400.pt",
+  "split": "lv1",
+  "memory": 20000,
+  "holdout": 0.15,
+  "candidates": 8,
+  "min_use": 50,
+  "repair_steps": 400,
+  "batch": 96,
+  "lr": 3e-05,
+  "programmer_weight": 1.0,
+  "margin": 0.01,
+  "eval_samples": 5000,
+  "seed": 0,
+  "out": "docs/reports/first-numbers/merge_sleep_36k_step32400.json",
+  "save": null
+ },
+ "before": {
+  "explain": 0.8952,
+  "transfer_strict": 0.3898,
+  "transfer_strict_depth1": 0.5583941605839416,
+  "single_primitive_tasks": {
+   "same code": {
+    "share": 0.4578226387887527,
+    "transferred": 1.0
+   },
+   "different codes": {
+    "share": 0.1521268925739005,
+    "transferred": 0.33886255924170616
+   },
+   "not covered": {
+    "share": 0.12869502523431867,
+    "transferred": 0.011204481792717087
+   },
+   "not one code": {
+    "share": 0.26135544340302813,
+    "transferred": 0.21793103448275863
+   }
+  }
+ },
+ "memory": {
+  "sampled": 20000,
+  "stored": 18062,
+  "held_out": 2709,
+  "code_usage": [
+   796,
+   2251,
+   5564,
+   1304,
+   1988,
+   4515,
+   2613,
+   1259,
+   4427,
+   1983,
+   2323,
+   115,
+   3432,
+   137,
+   3343,
+   3912
+  ],
+  "reproduced_held_out": 1.0
+ },
+ "candidates": [
+  {
+   "codes": [
+    14,
+    10
+   ],
+   "cosine": 0.9166107773780823,
+   "use": [
+    3343,
+    2323
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.9520118124769288,
+    "after_repair": 0.9593946105574013,
+    "during_repair": [
+     [
+      100,
+      0.9634551495016611
+     ],
+     [
+      200,
+      0.9549649317091178
+     ],
+     [
+      300,
+      0.9040236249538575
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    12,
+    6
+   ],
+   "cosine": 0.763738751411438,
+   "use": [
+    3432,
+    2613
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.8656330749354005,
+    "after_repair": 0.8401624215577704,
+    "during_repair": [
+     [
+      100,
+      0.8157991878922112
+     ],
+     [
+      200,
+      0.8301956441491325
+     ],
+     [
+      300,
+      0.8431155407899594
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    1,
+    0
+   ],
+   "cosine": 0.7512540817260742,
+   "use": [
+    2251,
+    796
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.9582871908453304,
+    "after_repair": 0.9243263196751569,
+    "during_repair": [
+     [
+      100,
+      0.9191583610188261
+     ],
+     [
+      200,
+      0.9132521225544481
+     ],
+     [
+      300,
+      0.9102990033222591
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    4,
+    0
+   ],
+   "cosine": 0.713699996471405,
+   "use": [
+    1988,
+    796
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.958656330749354,
+    "after_repair": 0.9176818014027316,
+    "during_repair": [
+     [
+      100,
+      0.9239571797711332
+     ],
+     [
+      200,
+      0.9150978220745662
+     ],
+     [
+      300,
+      0.9154669619785899
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    4,
+    9
+   ],
+   "cosine": 0.7121553421020508,
+   "use": [
+    1988,
+    1983
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.8807678110003692,
+    "after_repair": 0.8851974898486527,
+    "during_repair": [
+     [
+      100,
+      0.8726467331118494
+     ],
+     [
+      200,
+      0.8888888888888888
+     ],
+     [
+      300,
+      0.8870431893687708
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    12,
+    4
+   ],
+   "cosine": 0.7089760899543762,
+   "use": [
+    3432,
+    1988
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.9043927648578811,
+    "after_repair": 0.8711701734957549,
+    "during_repair": [
+     [
+      100,
+      0.8298265042451088
+     ],
+     [
+      200,
+      0.8453303802141011
+     ],
+     [
+      300,
+      0.870062753783684
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    6,
+    9
+   ],
+   "cosine": 0.6916273236274719,
+   "use": [
+    2613,
+    1983
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.8811369509043928,
+    "after_repair": 0.8726467331118494,
+    "during_repair": [
+     [
+      100,
+      0.8626799557032115
+     ],
+     [
+      200,
+      0.8689553340716132
+     ],
+     [
+      300,
+      0.8663713547434477
+     ]
+    ]
+   },
+   "accepted": false
+  },
+  {
+   "codes": [
+    12,
+    9
+   ],
+   "cosine": 0.6864237785339355,
+   "use": [
+    3432,
+    1983
+   ],
+   "held_out_reproduced": {
+    "before": 1.0,
+    "after_merge": 0.878922111480251,
+    "after_repair": 0.8357327427094869,
+    "during_repair": [
+     [
+      100,
+      0.8301956441491325
+     ],
+     [
+      200,
+      0.8305647840531561
+     ],
+     [
+      300,
+      0.8475452196382429
+     ]
+    ]
+   },
+   "accepted": false
+  }
+ ],
+ "codes_in_use_after": [
+  0,
+  1,
+  2,
+  3,
+  4,
+  5,
+  6,
+  7,
+  8,
+  9,
+  10,
+  11,
+  12,
+  13,
+  14,
+  15
+ ],
+ "after": {
+  "explain": 0.8952,
+  "transfer_strict": 0.3898,
+  "transfer_strict_depth1": 0.5583941605839416,
+  "single_primitive_tasks": {
+   "same code": {
+    "share": 0.4578226387887527,
+    "transferred": 1.0
+   },
+   "different codes": {
+    "share": 0.1521268925739005,
+    "transferred": 0.33886255924170616
+   },
+   "not covered": {
+    "share": 0.12869502523431867,
+    "transferred": 0.011204481792717087
+   },
+   "not one code": {
+    "share": 0.26135544340302813,
+    "transferred": 0.21793103448275863
+   }
+  }
+ },
+ "flops": {
+  "memory": 285777305600000.0,
+  "repair": 1.3168618242048e+16,
+  "checks": 929004865044480.0,
+  "total": 1.438340041269248e+16,
+  "one_training_step_of_the_run": 16354376417280.0,
+  "total_in_training_steps": 879.483267701666
+ }
+}

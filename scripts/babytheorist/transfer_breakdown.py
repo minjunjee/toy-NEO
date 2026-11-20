@@ -31,9 +31,7 @@ GROUPS = ("same code", "different codes", "not covered", "not one code")
 
 
 @torch.no_grad()
-def breakdown(run: Path, split: str, checkpoint: Path | None, device: torch.device) -> dict:
-    model, data, config, step = load_run(run, checkpoint, device)
-    infer = next((dict(b.get("infer", {})) for b in config["evals"] if b["type"] == "babytheorist_observe"), {})
+def breakdown_model(model, data, split: str, infer: dict, device: torch.device) -> dict:
     counts: dict = collections.defaultdict(lambda: {g: [0, 0] for g in GROUPS})
     for batch in data.eval_loader(split, 500):
         keep = torch.nonzero(batch["depth"] == 1).flatten()
@@ -45,16 +43,24 @@ def breakdown(run: Path, split: str, checkpoint: Path | None, device: torch.devi
         one = lambda out, target: (out["pred"].eq(target).flatten(1).all(1) & (out["n_steps"] == 1)).cpu()  # noqa: E731
         code = lambda out: out["indices"][0].view(len(keep), -1)[:, 0].cpu()  # noqa: E731
         s_one, q_one, s_code, q_code = one(support, sy), one(query, qy), code(support), code(query)
+        vectors = model.code.codebook(torch.arange(model.code.size, device=device)).cpu()
         for i, row in enumerate(keep.tolist()):
             primitive = json.loads(batch["transitions"][row])[0]["primitive"]
             if s_one[i] and q_one[i]:
-                group = "same code" if int(s_code[i]) == int(q_code[i]) else "different codes"
+                # two indices that hold the same vector are one code
+                group = "same code" if torch.equal(vectors[int(s_code[i])], vectors[int(q_code[i])]) else "different codes"
             else:
                 group = "not covered" if s_one[i] else "not one code"
             for name in (primitive, "all"):
                 counts[name][group][0] += int(transferred[i])
                 counts[name][group][1] += 1
-    return {"run": run.name, "step": step, "by_primitive": {k: v for k, v in counts.items()}}
+    return {k: v for k, v in counts.items()}
+
+
+def breakdown(run: Path, split: str, checkpoint: Path | None, device: torch.device) -> dict:
+    model, data, config, step = load_run(run, checkpoint, device)
+    infer = next((dict(b.get("infer", {})) for b in config["evals"] if b["type"] == "babytheorist_observe"), {})
+    return {"run": run.name, "step": step, "by_primitive": breakdown_model(model, data, split, infer, device)}
 
 
 def main() -> None:
