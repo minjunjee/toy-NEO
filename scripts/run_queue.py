@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Train a list of configs on the given GPUs, a fixed number at a time per GPU.
 
-The jobs file has one job per line: a config path, optionally followed by `after=<run name>[,<run name>...]`. A job
-starts only when every run it names has finished without error. The file is read again on every pass, so lines can
+The jobs file has one job per line: a config path, optionally followed by `after=<run name>[,<run name>...]` and
+`resume=<checkpoint>`. A job starts only when every run it names has finished without error; with resume= it continues
+from that checkpoint. The file is read again on every pass, so lines can
 be appended while the runner is alive. The runner ends when every line has run and nothing is running. A run whose
 directory already holds a DONE file is not started again.
 
@@ -27,14 +28,15 @@ def say(text: str) -> None:
     print(f"{datetime.now(ZoneInfo('Asia/Seoul')):%F %T} KST {text}", flush=True)
 
 
-def read_jobs(path: Path) -> list[tuple[str, list[str]]]:
+def read_jobs(path: Path) -> list[tuple[str, list[str], str | None]]:
     jobs = []
     for line in path.read_text().splitlines():
         parts = line.split()
         if not parts or parts[0].startswith("#"):
             continue
         after = [name for p in parts[1:] if p.startswith("after=") for name in p[6:].split(",") if name]
-        jobs.append((parts[0], after))
+        resume = next((p[7:] for p in parts[1:] if p.startswith("resume=")), None)
+        jobs.append((parts[0], after, resume))
     return jobs
 
 
@@ -58,7 +60,7 @@ def main() -> None:
                     (args.output_root / name / "DONE").write_text("0\n")
                 say(f"{'done' if code == 0 else f'FAILED ({code})'} {name}")
         waiting = 0
-        for config, after in read_jobs(args.jobs):
+        for config, after, resume in read_jobs(args.jobs):
             name = Path(config).stem
             if name in running or name in finished:
                 continue
@@ -83,6 +85,8 @@ def main() -> None:
             env = {**os.environ, "CUDA_VISIBLE_DEVICES": gpu, "OMP_NUM_THREADS": str(args.threads), "MKL_NUM_THREADS": str(args.threads)}
             log = open(directory / "stdout.log", "w")
             command = [sys.executable, str(REPO / "scripts" / "train.py"), "--config", config, "--output-root", str(args.output_root), "--wandb-mode", "disabled"]
+            if resume:
+                command += ["--resume", resume]
             running[name] = (subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=REPO), gpu)
             say(f"start {name} on {gpu}")
         if not running and not waiting:

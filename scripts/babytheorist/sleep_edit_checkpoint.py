@@ -50,6 +50,9 @@ def main() -> None:
     parser.add_argument("--min-use", type=int, default=50)
     parser.add_argument("--margin", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--freed", choices=("unexplained", "alias", "random"), default="unexplained",
+                        help="what a freed index becomes: the programmer's action on an unexplained pair (the phase as described), a copy of the code it was merged into "
+                             "(merge only), or a random direction (no pointing at what is unexplained). The last two are controls.")
     args = parser.parse_args()
     import_all()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,14 +122,18 @@ def main() -> None:
             pick = int(unexplained[torch.randint(len(unexplained), (1,), generator=generator)])
             action = model.programmer(model.encoder(x[pick:pick + 1].to(device)), model.encoder(y[pick:pick + 1].to(device)))
             scale = model.code.embedding.weight.norm(dim=-1).mean()
-            new_vectors[drop] = (F.normalize(action.reshape(-1).float(), dim=-1) * scale).cpu()
-            report["freed"].append({"code": drop, "from_training_pair": int(chosen[pick])})
+            if args.freed == "unexplained":
+                new_vectors[drop] = (F.normalize(action.reshape(-1).float(), dim=-1) * scale).cpu()
+            elif args.freed == "random":
+                new_vectors[drop] = (F.normalize(torch.randn(action.numel(), generator=generator), dim=-1) * scale.cpu())
+            report["freed"].append({"code": drop, "becomes": args.freed, "from_training_pair": int(chosen[pick]) if args.freed == "unexplained" else None})
 
+    merged_into = {m["codes"][1]: m["codes"][0] for m in report["merges"] if m["accepted"]}
     for key in ("model", "raw_model"):
         if key in payload and gone:
             weights = payload[key][EMBEDDING]
-            for drop, vector in new_vectors.items():
-                weights[drop] = vector.to(weights.dtype)
+            for drop in gone:
+                weights[drop] = weights[merged_into[drop]].clone() if args.freed == "alias" else new_vectors[drop].to(weights.dtype)
     output = REPO / "runs" / args.new_run
     (output / "ckpt").mkdir(parents=True, exist_ok=True)
     torch.save(payload, output / "ckpt" / args.ckpt.name)
