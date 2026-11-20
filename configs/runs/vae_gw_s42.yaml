@@ -1,0 +1,12 @@
+data:
+  type: gridworld_pairs
+  sampling: episode
+  train: data/gridworld/New_lvl1-3_8c_10x10_1sup_4prim_sp_n1000000_practice.h5
+  id: data/gridworld/New_lvl1-3_8c_10x10_1sup_4prim_sp_n10000_exam.h5
+model:
+  type: vae
+  encoder: {type: cnn_vae, grid_size: 10, num_colors: 9, state_dim: 32, num_state_tokens: 1, dropout: 0.1, variational: true, deterministic: false}
+  decoder: {type: cnn_vae, grid_size: 10, num_colors: 9, state_dim: 32, num_state_tokens: 1, dropout: 0.1}
+method: {type: vae_pretrain, lr: 5.0e-3, weight_decay: 0.01, warmup_ratio: 0.1, min_lr_ratio: 0.005, grad_clip: 1.0, kl_weight: 0.0, total_steps: 122256}
+evals: []
+train: {steps: 122256, batch_size: 2048, seed: 42, precision: bf16, ckpt_every: 2445, log_every: 100, num_workers: 4, init_from: null, wandb_project: generalizedL2T}

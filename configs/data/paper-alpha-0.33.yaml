@@ -1,0 +1,3 @@
+profile: paper-alpha-0.33
+shape_pool: data/gridworld/shape_pool.pkl
+output: data/gw-a033-s1127

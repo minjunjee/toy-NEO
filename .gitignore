@@ -1,7 +1,7 @@
-runs/
-data/
-wandb/
-.venv/
+/runs
+/data
+/wandb
+/.venv
 __pycache__/
 *.pyc
 *.h5

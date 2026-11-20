@@ -1,0 +1,32 @@
+# Transformer NEO on the paper alpha-0.33 data. Cell-token codec from ae_tok_gw_s42 (frozen), 2D-RoPE token-query
+# programmer, AdaLN-Zero executor, soft re-encode between steps, deterministic VQ with the commitment gradient.
+# Length rule as in the official NEO (0.95^k x CE, shortest exact wins); VQ loss averaged over steps 1..L*. EMA 0.999.
+data:
+  type: gridworld_pairs
+  sampling: episode
+  train: data/gridworld/GridWorld_0107_lvl1-3_8c_10x10_1sup_4prim_sp_alpha0.33_seed1127_n100000_practice.h5
+  id: data/gridworld/GridWorld_0107_lvl1-3_8c_10x10_1sup_4prim_sp_alpha0.33_seed1127_n10000_exam.h5
+  ood_comp: data/gridworld/GridWorld_0107_lvl1-3_8c_10x10_1sup_4prim_sp_alpha0.33_seed1127_n10000_ood_test.h5
+  ood_len: data/gridworld/GridWorld_0107_lvl4-8_8c_10x10_1sup_4prim_sp_alpha1.00_seed1127_n20000_exam.h5
+model:
+  type: neo
+  encoder: {type: token_embed, vocab: 9, d_model: 128}
+  decoder: {type: linear_head, d_model: 128, vocab: 9, layer_norm_eps: 1.0e-6, spatial: [10, 10]}
+  programmer: {type: token_query_transformer, d_model: 128, action_dim: 16, num_heads: 8, d_ff: 1024, num_layers: 6, grid_dim: 10, dropout: 0.0, layer_norm_eps: 1.0e-6}
+  code: {type: vq, size: 16, dim: 16, num_tokens: 1, commitment: 0.25, stochastic: false, commitment_grad: true}
+  executor: {type: adaln_transformer, state_dim: 128, cond_dim: 16, d_model: 128, num_layers: 4, num_heads: 8, d_ff: 512, dropout: 0.0, grid_dim: 10}
+  max_length: 5
+  length_coefficient: 0.95
+  state_update: reencode_soft
+method: {type: neo, lr: 3.0e-4, programmer_lr_scale: 0.25, executor_lr_scale: 1.0, weight_decay: 0.01, warmup_ratio: 0.05, min_lr_ratio: 0.1, grad_clip: 1.0, grounding_weight: 0.1, code_weight: 1.0, auto_weight: 0.0, total_steps: 78200, freeze: [encoder, decoder], code_loss_scope: prefix}
+evals:
+  - {type: self_explain_exact, every: 1955, split: id, batch_size: 256, infer: {max_steps: 5, rollout: carry}}
+  - {type: transfer_exact, every: 3910, split: id, batch_size: 256, group_by_program: true, infer: {max_steps: 5, rollout: carry}}
+  - {type: transfer_exact, name: hard_strict_transfer, every: 3910, split: id, batch_size: 256, group_by_program: true, infer: {max_steps: 5, rollout: hard}}
+  - {type: self_explain_exact, every: 3910, split: ood_comp, batch_size: 256, infer: {max_steps: 5, rollout: carry}}
+  - {type: transfer_exact, every: 3910, split: ood_comp, batch_size: 256, group_by_program: true, infer: {max_steps: 5, rollout: carry}}
+  - {type: transfer_exact, name: hard_strict_transfer, every: 3910, split: ood_comp, batch_size: 256, group_by_program: true, infer: {max_steps: 5, rollout: hard}}
+  - {type: self_explain_exact, every: 3910, split: ood_len, batch_size: 256, infer: {max_steps: 10, rollout: carry}}
+  - {type: transfer_exact, every: 3910, split: ood_len, batch_size: 256, group_by_program: true, infer: {max_steps: 10, rollout: carry}}
+  - {type: transfer_exact, name: hard_strict_transfer, every: 3910, split: ood_len, batch_size: 256, group_by_program: true, infer: {max_steps: 10, rollout: hard}}
+train: {steps: 78200, batch_size: 256, seed: 43, precision: bf16, ckpt_every: 1955, log_every: 50, num_workers: 4, init_from: runs/ae_tok_gw_s42/ckpt/step-003000.pt, wandb_project: generalizedL2T, wandb_mode: online, ema: 0.999}

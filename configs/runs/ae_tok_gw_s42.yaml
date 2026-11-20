@@ -1,0 +1,12 @@
+data:
+  type: gridworld_pairs
+  sampling: episode
+  train: data/gridworld/GridWorld_0107_lvl1-3_8c_10x10_1sup_4prim_sp_alpha0.33_seed1127_n100000_practice.h5
+  id: data/gridworld/GridWorld_0107_lvl1-3_8c_10x10_1sup_4prim_sp_alpha0.33_seed1127_n10000_exam.h5
+model:
+  type: vae
+  encoder: {type: token_embed, vocab: 9, d_model: 128}
+  decoder: {type: linear_head, d_model: 128, vocab: 9, layer_norm_eps: 1.0e-6, spatial: [10, 10]}
+method: {type: vae_pretrain, lr: 1.0e-3, weight_decay: 0.01, warmup_ratio: 0.1, min_lr_ratio: 0.1, grad_clip: 1.0, kl_weight: 0.0, total_steps: 3000}
+evals: []
+train: {steps: 3000, batch_size: 512, seed: 42, precision: bf16, ckpt_every: 1000, log_every: 50, num_workers: 4, init_from: null, wandb_project: generalizedL2T}

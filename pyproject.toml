@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "GeneralizedL2T"
+version = "0.0.0"
+description = "Minimal codebase for learning-to-theorize experiments (NEO, NLI, LPN and variants)."
+requires-python = ">=3.10"
+dependencies = [
+    "h5py>=3.14,<4",
+    "numpy>=2.0,<3",
+    "PyYAML>=6.0,<7",
+    "torch>=2.8",
+    "wandb>=0.20,<1",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
