@@ -1,0 +1,295 @@
+[
+ {
+  "run": "neo_transformer_12k_single_a_lv1_s42",
+  "points": [
+   {
+    "step": 1200,
+    "flops": 1.9625251700736e+16,
+    "explain": 0.0,
+    "transfer": 0.0,
+    "transfer_depth1": 0.0
+   },
+   {
+    "step": 2400,
+    "flops": 3.9250503401472e+16,
+    "explain": 0.0275,
+    "transfer": 0.0135,
+    "transfer_depth1": 0.04693140794223827
+   },
+   {
+    "step": 3600,
+    "flops": 5.8875755102208e+16,
+    "explain": 0.0375,
+    "transfer": 0.021,
+    "transfer_depth1": 0.0740072202166065
+   },
+   {
+    "step": 4800,
+    "flops": 7.8501006802944e+16,
+    "explain": 0.0485,
+    "transfer": 0.012,
+    "transfer_depth1": 0.032490974729241874
+   },
+   {
+    "step": 6000,
+    "flops": 9.812625850368e+16,
+    "explain": 0.059,
+    "transfer": 0.0115,
+    "transfer_depth1": 0.021660649819494584
+   },
+   {
+    "step": 7200,
+    "flops": 1.17751510204416e+17,
+    "explain": 0.0725,
+    "transfer": 0.014,
+    "transfer_depth1": 0.030685920577617327
+   },
+   {
+    "step": 8400,
+    "flops": 1.37376761905152e+17,
+    "explain": 0.105,
+    "transfer": 0.038,
+    "transfer_depth1": 0.07942238267148015
+   },
+   {
+    "step": 9600,
+    "flops": 1.57002013605888e+17,
+    "explain": 0.175,
+    "transfer": 0.0565,
+    "transfer_depth1": 0.12093862815884476
+   },
+   {
+    "step": 10800,
+    "flops": 1.76627265306624e+17,
+    "explain": 0.256,
+    "transfer": 0.0785,
+    "transfer_depth1": 0.1588447653429603
+   },
+   {
+    "step": 12000,
+    "flops": 1.9625251700736e+17,
+    "explain": 0.2985,
+    "transfer": 0.078,
+    "transfer_depth1": 0.15342960288808663
+   }
+  ]
+ },
+ {
+  "run": "neo_transformer_12k_single_a_lv1_s43",
+  "points": [
+   {
+    "step": 1200,
+    "flops": 1.9625251700736e+16,
+    "explain": 0.0,
+    "transfer": 0.0,
+    "transfer_depth1": 0.0
+   },
+   {
+    "step": 2400,
+    "flops": 3.9250503401472e+16,
+    "explain": 0.0255,
+    "transfer": 0.0095,
+    "transfer_depth1": 0.030685920577617327
+   },
+   {
+    "step": 3600,
+    "flops": 5.8875755102208e+16,
+    "explain": 0.0985,
+    "transfer": 0.054,
+    "transfer_depth1": 0.13357400722021662
+   },
+   {
+    "step": 4800,
+    "flops": 7.8501006802944e+16,
+    "explain": 0.139,
+    "transfer": 0.11,
+    "transfer_depth1": 0.2490974729241877
+   },
+   {
+    "step": 6000,
+    "flops": 9.812625850368e+16,
+    "explain": 0.1675,
+    "transfer": 0.13,
+    "transfer_depth1": 0.2924187725631769
+   },
+   {
+    "step": 7200,
+    "flops": 1.17751510204416e+17,
+    "explain": 0.1605,
+    "transfer": 0.079,
+    "transfer_depth1": 0.17870036101083034
+   },
+   {
+    "step": 8400,
+    "flops": 1.37376761905152e+17,
+    "explain": 0.4115,
+    "transfer": 0.15,
+    "transfer_depth1": 0.30685920577617326
+   },
+   {
+    "step": 9600,
+    "flops": 1.57002013605888e+17,
+    "explain": 0.5185,
+    "transfer": 0.2005,
+    "transfer_depth1": 0.38267148014440433
+   },
+   {
+    "step": 10800,
+    "flops": 1.76627265306624e+17,
+    "explain": 0.595,
+    "transfer": 0.241,
+    "transfer_depth1": 0.43862815884476536
+   },
+   {
+    "step": 12000,
+    "flops": 1.9625251700736e+17,
+    "explain": 0.6335,
+    "transfer": 0.2495,
+    "transfer_depth1": 0.45306859205776173
+   }
+  ]
+ },
+ {
+  "run": "neo_transformer_12k_single_a_lv1_s44",
+  "points": [
+   {
+    "step": 1200,
+    "flops": 1.9625251700736e+16,
+    "explain": 0.002,
+    "transfer": 0.0,
+    "transfer_depth1": 0.0
+   },
+   {
+    "step": 2400,
+    "flops": 3.9250503401472e+16,
+    "explain": 0.0215,
+    "transfer": 0.011,
+    "transfer_depth1": 0.036101083032490974
+   },
+   {
+    "step": 3600,
+    "flops": 5.8875755102208e+16,
+    "explain": 0.125,
+    "transfer": 0.048,
+    "transfer_depth1": 0.13537906137184116
+   },
+   {
+    "step": 4800,
+    "flops": 7.8501006802944e+16,
+    "explain": 0.2795,
+    "transfer": 0.051,
+    "transfer_depth1": 0.13537906137184116
+   },
+   {
+    "step": 6000,
+    "flops": 9.812625850368e+16,
+    "explain": 0.3915,
+    "transfer": 0.0615,
+    "transfer_depth1": 0.15342960288808663
+   },
+   {
+    "step": 7200,
+    "flops": 1.17751510204416e+17,
+    "explain": 0.4775,
+    "transfer": 0.097,
+    "transfer_depth1": 0.22382671480144403
+   },
+   {
+    "step": 8400,
+    "flops": 1.37376761905152e+17,
+    "explain": 0.5405,
+    "transfer": 0.1355,
+    "transfer_depth1": 0.29061371841155237
+   },
+   {
+    "step": 9600,
+    "flops": 1.57002013605888e+17,
+    "explain": 0.5925,
+    "transfer": 0.155,
+    "transfer_depth1": 0.315884476534296
+   },
+   {
+    "step": 10800,
+    "flops": 1.76627265306624e+17,
+    "explain": 0.5935,
+    "transfer": 0.1575,
+    "transfer_depth1": 0.30866425992779783
+   },
+   {
+    "step": 12000,
+    "flops": 1.9625251700736e+17,
+    "explain": 0.6155,
+    "transfer": 0.17,
+    "transfer_depth1": 0.3285198555956679
+   }
+  ]
+ },
+ {
+  "run": "neo_transformer_36k_single_a_lv1_s42",
+  "points": [
+   {
+    "step": 3600,
+    "flops": 5.8875755102208e+16,
+    "explain": 0.044,
+    "transfer": 0.018,
+    "transfer_depth1": 0.05956678700361011
+   },
+   {
+    "step": 7200,
+    "flops": 1.17751510204416e+17,
+    "explain": 0.526,
+    "transfer": 0.156,
+    "transfer_depth1": 0.2545126353790614
+   },
+   {
+    "step": 10800,
+    "flops": 1.76627265306624e+17,
+    "explain": 0.7035,
+    "transfer": 0.276,
+    "transfer_depth1": 0.42418772563176893
+   },
+   {
+    "step": 14400,
+    "flops": 2.35503020408832e+17,
+    "explain": 0.751,
+    "transfer": 0.3225,
+    "transfer_depth1": 0.4657039711191336
+   },
+   {
+    "step": 18000,
+    "flops": 2.9437877551104e+17,
+    "explain": 0.798,
+    "transfer": 0.3575,
+    "transfer_depth1": 0.5090252707581228
+   },
+   {
+    "step": 21600,
+    "flops": 3.53254530613248e+17,
+    "explain": 0.815,
+    "transfer": 0.3885,
+    "transfer_depth1": 0.5505415162454874
+   },
+   {
+    "step": 25200,
+    "flops": 4.12130285715456e+17,
+    "explain": 0.862,
+    "transfer": 0.3965,
+    "transfer_depth1": 0.5523465703971119
+   },
+   {
+    "step": 28800,
+    "flops": 4.71006040817664e+17,
+    "explain": 0.8735,
+    "transfer": 0.3925,
+    "transfer_depth1": 0.5487364620938628
+   },
+   {
+    "step": 32400,
+    "flops": 5.29881795919872e+17,
+    "explain": 0.8865,
+    "transfer": 0.395,
+    "transfer_depth1": 0.5487364620938628
+   }
+  ]
+ }
+]
