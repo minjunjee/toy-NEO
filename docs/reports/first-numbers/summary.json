@@ -353,51 +353,46 @@
   ],
   "minutes": 36.36951045025554
  },
- "neo_transformer_12k_single_a_lv1": {
+ "neo_transformer_12k_depth1_single_a_lv1": {
   "seeds": [
-   42,
-   43
+   42
   ],
-  "explain": 0.46654999999999996,
-  "transfer_lab": 0.15815,
-  "transfer_strict": 0.15815,
-  "transfer_consistent": 0.17155,
+  "explain": 0.0642,
+  "transfer_lab": 0.064,
+  "transfer_strict": 0.064,
+  "transfer_consistent": 0.0641,
   "explain_per_seed": [
-   0.3026,
-   0.6305
+   0.0642
   ],
   "transfer_lab_per_seed": [
-   0.0712,
-   0.2451
+   0.064
   ],
   "transfer_strict_per_seed": [
-   0.0712,
-   0.2451
+   0.064
   ],
   "transfer_consistent_per_seed": [
-   0.0873,
-   0.2558
+   0.0641
   ],
-  "explain_depth1": 0.6322999279019467,
-  "explain_depth2": 0.4709267711847589,
-  "explain_depth3": 0.3320079522862823,
-  "explain_depth4": 0.23059006211180122,
-  "explain_depth5": 0.1042830540037244,
-  "transfer_lab_depth1": 0.2986661860129776,
-  "transfer_lab_depth2": 0.130779916650129,
-  "transfer_lab_depth3": 0.06262425447316103,
-  "transfer_lab_depth4": 0.04114906832298137,
-  "transfer_lab_depth5": 0.008379888268156424,
-  "transfer_strict_depth1": 0.2986661860129776,
-  "transfer_strict_depth2": 0.130779916650129,
-  "transfer_strict_depth3": 0.06262425447316103,
-  "transfer_strict_depth4": 0.04114906832298137,
-  "transfer_strict_depth5": 0.008379888268156424,
-  "transfer_consistent_depth1": 0.32372025955299205,
-  "transfer_consistent_depth2": 0.14100019845207382,
-  "transfer_consistent_depth3": 0.07306163021868788,
-  "transfer_consistent_depth4": 0.043478260869565216,
-  "transfer_consistent_depth5": 0.010242085661080074,
+  "explain_depth1": 0.23107426099495312,
+  "explain_depth2": 0.00019845207382417147,
+  "explain_depth3": 0.0,
+  "explain_depth4": 0.0,
+  "explain_depth5": 0.0,
+  "transfer_lab_depth1": 0.22999279019466473,
+  "transfer_lab_depth2": 0.00039690414764834294,
+  "transfer_lab_depth3": 0.0,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.22999279019466473,
+  "transfer_strict_depth2": 0.00039690414764834294,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.23035328046142753,
+  "transfer_consistent_depth2": 0.00039690414764834294,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
   "tasks_by_depth": [
    2774,
    5039,
@@ -405,6 +400,114 @@
    644,
    537
   ],
-  "minutes": 141.83129381481558
+  "minutes": 120.92416959709178
+ },
+ "neo_transformer_12k_single_a_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.5192333333333333,
+  "transfer_lab": 0.16273333333333334,
+  "transfer_strict": 0.16273333333333334,
+  "transfer_consistent": 0.17590000000000003,
+  "explain_per_seed": [
+   0.3026,
+   0.6305,
+   0.6246
+  ],
+  "transfer_lab_per_seed": [
+   0.0712,
+   0.2451,
+   0.1719
+  ],
+  "transfer_strict_per_seed": [
+   0.0712,
+   0.2451,
+   0.1719
+  ],
+  "transfer_consistent_per_seed": [
+   0.0873,
+   0.2558,
+   0.1846
+  ],
+  "explain_depth1": 0.6856524873828406,
+  "explain_depth2": 0.5273533108420984,
+  "explain_depth3": 0.38568588469184895,
+  "explain_depth4": 0.2743271221532091,
+  "explain_depth5": 0.12725015518311608,
+  "transfer_lab_depth1": 0.3013698630136986,
+  "transfer_lab_depth2": 0.13646887609975525,
+  "transfer_lab_depth3": 0.0682571239231279,
+  "transfer_lab_depth4": 0.04140786749482402,
+  "transfer_lab_depth5": 0.015518311607697082,
+  "transfer_strict_depth1": 0.3013698630136986,
+  "transfer_strict_depth2": 0.13646887609975525,
+  "transfer_strict_depth3": 0.0682571239231279,
+  "transfer_strict_depth4": 0.04140786749482402,
+  "transfer_strict_depth5": 0.015518311607697082,
+  "transfer_consistent_depth1": 0.32480173035328047,
+  "transfer_consistent_depth2": 0.14764834292518356,
+  "transfer_consistent_depth3": 0.07654075546719681,
+  "transfer_consistent_depth4": 0.044513457556935816,
+  "transfer_consistent_depth5": 0.015518311607697082,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 134.86195206093706
+ },
+ "neo_transformer_12k_translate_lv1": {
+  "seeds": [
+   42
+  ],
+  "explain": 0.2481,
+  "transfer_lab": 0.0226,
+  "transfer_strict": 0.0226,
+  "transfer_consistent": 0.0264,
+  "explain_per_seed": [
+   0.2481
+  ],
+  "transfer_lab_per_seed": [
+   0.0226
+  ],
+  "transfer_strict_per_seed": [
+   0.0226
+  ],
+  "transfer_consistent_per_seed": [
+   0.0264
+  ],
+  "explain_depth1": 0.3054630246502332,
+  "explain_depth2": 0.22990249187432285,
+  "explain_depth3": 0.2277825711820535,
+  "explain_depth4": 0.19324324324324324,
+  "explain_depth5": 0.19834710743801653,
+  "transfer_lab_depth1": 0.03231179213857428,
+  "transfer_lab_depth2": 0.023401950162513542,
+  "transfer_lab_depth3": 0.012079378774805867,
+  "transfer_lab_depth4": 0.004054054054054054,
+  "transfer_lab_depth5": 0.008264462809917356,
+  "transfer_strict_depth1": 0.03231179213857428,
+  "transfer_strict_depth2": 0.023401950162513542,
+  "transfer_strict_depth3": 0.012079378774805867,
+  "transfer_strict_depth4": 0.004054054054054054,
+  "transfer_strict_depth5": 0.008264462809917356,
+  "transfer_consistent_depth1": 0.03697534976682212,
+  "transfer_consistent_depth2": 0.02925243770314193,
+  "transfer_consistent_depth3": 0.012942191544434857,
+  "transfer_consistent_depth4": 0.0013513513513513514,
+  "transfer_consistent_depth5": 0.004132231404958678,
+  "tasks_by_depth": [
+   3002,
+   4615,
+   1159,
+   740,
+   484
+  ],
+  "minutes": 121.21943016039829
  }
 }
