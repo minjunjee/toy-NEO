@@ -8,7 +8,7 @@
 
 1. `docs/HANDOFF.md`: 지금 어디까지 됐고 다음에 무엇을 하는지.
 2. `docs/research-plan.md`: 연구의 질문, 순서, 관찰할 설정.
-3. `docs/discussion-2026-11-20.md`: 이 연구를 이렇게 잡게 된 논의. 사용자의 말이 그대로 들어 있다.
+3. `docs/discussion-2026-11-20.md`와 `docs/discussion-2026-11-20-autoresearch-and-arc.md`: 이 연구를 이렇게 잡게 된 논의. 사용자의 말이 그대로 들어 있다.
 4. `docs/facts.md`: 계획이 기대는 사실과 근거의 종류, 아직 모르는 것.
 5. `docs/decisions.md`: 정한 것과 이유, 바꿔도 되는 신호.
 6. `docs/research-log.md`: 진행 기록.

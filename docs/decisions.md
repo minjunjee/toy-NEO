@@ -11,4 +11,5 @@
 | 2026-11-20 | 사용자 | 새 레포 `minjunjee/toy-NEO`에서 한다. claude.ai 채팅의 Claude와 Claude Code가 `chat/`과 `code/` 브랜치로 번갈아 진행한다 | 이전 레포의 방식을 그대로 잇는다 | 없음 |
 | 2026-11-20 | Claude Code | 랩 NEO 코드를 첫 commit에 넣지 않는다 | 이 레포가 공개 상태이고 랩 코드는 내부 코드다 | 사용자가 레포를 비공개로 바꾸거나 올려도 된다고 할 때 |
 | 2026-11-20 | 사용자 | 레포를 비공개로 바꾼다. 랩 NEO 코드를 들여와도 된다 | Claude Code가 공개 상태인 것을 알렸고 사용자가 비공개로 바꾼 뒤 push하는 쪽을 골랐다 | 없음 |
+| 2026-11-20 | 사용자 | 무대로 BabyTheorist를 쓴다 | 사용자가 "Babytheorist자체는 동의해"라고 답했다 | 없음 |
 | 2026-11-20 | Claude Code 제안 | 처음 돌릴 설정값. codebook의 code 수는 primitive 여덟에 열둘, program의 최대 길이는 4, state의 크기는 랩의 GridWorld 설정 그대로 | 랩 설정의 비율을 따른 것이고 근거는 그것뿐이다 | 랩이 논문에서 쓴 설정을 받을 때 |
