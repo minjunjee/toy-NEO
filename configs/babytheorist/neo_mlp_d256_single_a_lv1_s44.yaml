@@ -1,0 +1,44 @@
+data:
+  type: babytheorist_pairs
+  train: [data/babytheorist/single_a/lv1_train.h5]
+  evals: {lv1: data/babytheorist/single_a/lv1_eval.h5}
+model:
+  type: neo
+  encoder: {type: cnn_vae_any, grid_size: 15, num_colors: 10, state_dim: 256, num_state_tokens: 1, dropout: 0.0, variational: true, deterministic: true}
+  decoder: {type: cnn_vae_any, grid_size: 15, num_colors: 10, state_dim: 256, num_state_tokens: 1, dropout: 0.0}
+  programmer: {type: film_mlp, state_dim: 256, action_dim: 16, num_state_tokens: 1, num_action_tokens: 1, hidden: 128, dropout: 0.0, max_length: 4}
+  code: {type: vq, size: 12, dim: 16, num_tokens: 1, commitment: 0.25, stochastic: true, tau_start: 0.3, tau_end: 0.1, tau_steps: 19550}
+  executor: {type: film_mlp, state_dim: 256, action_dim: 16, num_state_tokens: 1, num_action_tokens: 1, hidden: 128, dropout: 0.0, residual: true}
+  max_length: 4
+  length_coefficient: 0.95
+  state_update: carry_latent
+method:
+  type: neo
+  lr: 0.0005
+  programmer_lr_scale: 0.25
+  executor_lr_scale: 1.0
+  weight_decay: 0.01
+  warmup_ratio: 0.1
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  grounding_weight: 0.1
+  code_weight: 1.0
+  auto_weight: 0.0
+  total_steps: 39100
+  freeze: [encoder, decoder]
+evals:
+- type: babytheorist_observe
+  name: observe
+  every: 3910
+  split: lv1
+  batch_size: 250
+  max_samples: 2000
+  tables: false
+  infer: &id001 {max_steps: 4}
+- type: babytheorist_observe
+  name: observe_full
+  every: 39100
+  split: lv1
+  batch_size: 250
+  infer: *id001
+train: {steps: 39100, batch_size: 256, seed: 44, precision: bf16, ckpt_every: 3910, log_every: 50, num_workers: 0, init_from: runs/codec_cnn_d256/ckpt/step-040000.pt, wandb_project: toy-neo, wandb_mode: disabled}

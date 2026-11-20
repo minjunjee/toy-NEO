@@ -42,9 +42,11 @@ def import_all() -> None:
     """Import every module that registers something, so registries are populated."""
 
     import data.datasets  # noqa: F401
+    import data.babytheorist  # noqa: F401
     import components.codes  # noqa: F401
     import components.decoders  # noqa: F401
     import components.encoders  # noqa: F401
+    import components.cnn_any_size  # noqa: F401
     import components.executors  # noqa: F401
     import components.programmers  # noqa: F401
     import models.neo  # noqa: F401
@@ -53,3 +55,4 @@ def import_all() -> None:
     import methods.vae_pretrain  # noqa: F401
     import evals.self_explain_exact  # noqa: F401
     import evals.transfer_exact  # noqa: F401
+    import evals.babytheorist  # noqa: F401

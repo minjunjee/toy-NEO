@@ -1,0 +1,19 @@
+data:
+  type: babytheorist_pairs
+  train: [data/babytheorist/single_a/lv1_train.h5, data/babytheorist/single_a_2obj/lv1_train.h5, data/babytheorist/single_a_3obj/lv1_train.h5]
+  evals: {objects1: data/babytheorist/single_a/lv1_eval.h5, objects2: data/babytheorist/single_a_2obj/lv1_eval.h5, objects3: data/babytheorist/single_a_3obj/lv1_eval.h5}
+model:
+  type: vae
+  encoder: {type: token_embed, vocab: 10, d_model: 128}
+  decoder:
+    type: linear_head
+    d_model: 128
+    vocab: 10
+    layer_norm_eps: 1.0e-06
+    spatial: [15, 15]
+method: {type: vae_pretrain, lr: 0.001, weight_decay: 0.01, warmup_ratio: 0.1, min_lr_ratio: 0.1, grad_clip: 1.0, kl_weight: 0.0, total_steps: 3000}
+evals:
+- {type: reconstruct_exact, every: 3000, split: objects1, batch_size: 1024}
+- {type: reconstruct_exact, every: 3000, split: objects2, batch_size: 1024}
+- {type: reconstruct_exact, every: 3000, split: objects3, batch_size: 1024}
+train: {steps: 3000, batch_size: 512, seed: 42, precision: bf16, ckpt_every: 3000, log_every: 50, num_workers: 0, init_from: null, wandb_project: toy-neo, wandb_mode: disabled}
