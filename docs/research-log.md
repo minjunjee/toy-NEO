@@ -24,3 +24,4 @@
 - 19:33 transformer NEO seed 42가 12,000스텝을 마침. 예시 쌍 재현 30.3%, transfer 정확도 7.1%. 길이가 1인 과제에서 재현 45.5%, transfer 14.1%. 마지막 3,000스텝 동안 재현이 10%에서 30%로 올랐다.
 - 19:33 밤사이 돌 줄을 세움. GPU 4번에 primitive 하나짜리 과제만 쓰는 진단, 이동 넷만 쓰는 진단, seed 44. GPU 5번에 seed 43과 36,000스텝짜리 긴 학습.
 - 19:35 보고서 `docs/reports/2026-11-20-first-numbers.md`를 쓰고 `code/baseline-observation`을 push함.
+- 19:50 그림에서 본 설명을 숫자로 확인함. transformer NEO seed 42의 primitive 하나짜리 이동 과제에서 새 object의 크기가 예시와 같으면 transfer 17.3%, 다르면 9.2%다. 크기 차이가 절반을 설명하지만 주된 원인은 아니다. 보고서의 문장을 고쳤다.
