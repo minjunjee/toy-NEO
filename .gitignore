@@ -1,0 +1,9 @@
+runs/
+data/
+wandb/
+.venv/
+__pycache__/
+*.pyc
+*.h5
+*.pt
+.pytest_cache/
