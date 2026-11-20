@@ -1,0 +1,405 @@
+{
+ "neo_mlp_d128_h512_single_a_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.0,
+  "transfer_lab": 0.0,
+  "transfer_strict": 0.0,
+  "transfer_consistent": 0.0,
+  "explain_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_lab_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_strict_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_consistent_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "explain_depth1": 0.0,
+  "explain_depth2": 0.0,
+  "explain_depth3": 0.0,
+  "explain_depth4": 0.0,
+  "explain_depth5": 0.0,
+  "transfer_lab_depth1": 0.0,
+  "transfer_lab_depth2": 0.0,
+  "transfer_lab_depth3": 0.0,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0,
+  "transfer_strict_depth2": 0.0,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0,
+  "transfer_consistent_depth2": 0.0,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 29.85278963179638
+ },
+ "neo_mlp_d256_h1024_single_a_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.0,
+  "transfer_lab": 0.0,
+  "transfer_strict": 0.0,
+  "transfer_consistent": 0.0,
+  "explain_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_lab_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_strict_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_consistent_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "explain_depth1": 0.0,
+  "explain_depth2": 0.0,
+  "explain_depth3": 0.0,
+  "explain_depth4": 0.0,
+  "explain_depth5": 0.0,
+  "transfer_lab_depth1": 0.0,
+  "transfer_lab_depth2": 0.0,
+  "transfer_lab_depth3": 0.0,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0,
+  "transfer_strict_depth2": 0.0,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0,
+  "transfer_consistent_depth2": 0.0,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 29.890701113703347
+ },
+ "neo_mlp_d256_h1024_translate_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.0,
+  "transfer_lab": 0.0,
+  "transfer_strict": 0.0,
+  "transfer_consistent": 0.0,
+  "explain_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_lab_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_strict_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_consistent_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "explain_depth1": 0.0,
+  "explain_depth2": 0.0,
+  "explain_depth3": 0.0,
+  "explain_depth4": 0.0,
+  "explain_depth5": 0.0,
+  "transfer_lab_depth1": 0.0,
+  "transfer_lab_depth2": 0.0,
+  "transfer_lab_depth3": 0.0,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0,
+  "transfer_strict_depth2": 0.0,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0,
+  "transfer_consistent_depth2": 0.0,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   3002,
+   4615,
+   1159,
+   740,
+   484
+  ],
+  "minutes": 30.512436240745917
+ },
+ "neo_mlp_d256_single_a_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.0,
+  "transfer_lab": 0.0,
+  "transfer_strict": 0.0,
+  "transfer_consistent": 0.0,
+  "explain_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_lab_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_strict_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "transfer_consistent_per_seed": [
+   0.0,
+   0.0,
+   0.0
+  ],
+  "explain_depth1": 0.0,
+  "explain_depth2": 0.0,
+  "explain_depth3": 0.0,
+  "explain_depth4": 0.0,
+  "explain_depth5": 0.0,
+  "transfer_lab_depth1": 0.0,
+  "transfer_lab_depth2": 0.0,
+  "transfer_lab_depth3": 0.0,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0,
+  "transfer_strict_depth2": 0.0,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0,
+  "transfer_consistent_depth2": 0.0,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 26.729697721844747
+ },
+ "neo_mlp_d32_single_a_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.010433333333333334,
+  "transfer_lab": 0.0023666666666666667,
+  "transfer_strict": 0.0002,
+  "transfer_consistent": 0.0003333333333333333,
+  "explain_per_seed": [
+   0.0068,
+   0.0173,
+   0.0072
+  ],
+  "transfer_lab_per_seed": [
+   0.002,
+   0.0043,
+   0.0008
+  ],
+  "transfer_strict_per_seed": [
+   0.0001,
+   0.0004,
+   0.0001
+  ],
+  "transfer_consistent_per_seed": [
+   0.0001,
+   0.0008,
+   0.0001
+  ],
+  "explain_depth1": 0.021028598894496514,
+  "explain_depth2": 0.007607329496593239,
+  "explain_depth3": 0.00530152418820411,
+  "explain_depth4": 0.0015527950310559007,
+  "explain_depth5": 0.002482929857231533,
+  "transfer_lab_depth1": 0.005888007690459024,
+  "transfer_lab_depth2": 0.0012568631342197527,
+  "transfer_lab_depth3": 0.0009940357852882703,
+  "transfer_lab_depth4": 0.0,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0004806536890170632,
+  "transfer_strict_depth2": 0.00013230138254944764,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0007209805335255948,
+  "transfer_consistent_depth2": 0.0002646027650988953,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 26.591240268780126
+ },
+ "neo_mlp_d32_translate_lv1": {
+  "seeds": [
+   42,
+   43,
+   44
+  ],
+  "explain": 0.0014333333333333333,
+  "transfer_lab": 0.00016666666666666666,
+  "transfer_strict": 3.3333333333333335e-05,
+  "transfer_consistent": 3.3333333333333335e-05,
+  "explain_per_seed": [
+   0.0,
+   0.0043,
+   0.0
+  ],
+  "transfer_lab_per_seed": [
+   0.0,
+   0.0005,
+   0.0
+  ],
+  "transfer_strict_per_seed": [
+   0.0,
+   0.0001,
+   0.0
+  ],
+  "transfer_consistent_per_seed": [
+   0.0,
+   0.0001,
+   0.0
+  ],
+  "explain_depth1": 0.0017765933821896514,
+  "explain_depth2": 0.0012278801011195376,
+  "explain_depth3": 0.0014380212827149843,
+  "explain_depth4": 0.00045045045045045046,
+  "explain_depth5": 0.0027548209366391185,
+  "transfer_lab_depth1": 0.00011103708638685321,
+  "transfer_lab_depth2": 0.0001444564824846515,
+  "transfer_lab_depth3": 0.00028760425654299687,
+  "transfer_lab_depth4": 0.00045045045045045046,
+  "transfer_lab_depth5": 0.0,
+  "transfer_strict_depth1": 0.0,
+  "transfer_strict_depth2": 7.222824124232574e-05,
+  "transfer_strict_depth3": 0.0,
+  "transfer_strict_depth4": 0.0,
+  "transfer_strict_depth5": 0.0,
+  "transfer_consistent_depth1": 0.0,
+  "transfer_consistent_depth2": 7.222824124232574e-05,
+  "transfer_consistent_depth3": 0.0,
+  "transfer_consistent_depth4": 0.0,
+  "transfer_consistent_depth5": 0.0,
+  "tasks_by_depth": [
+   3002,
+   4615,
+   1159,
+   740,
+   484
+  ],
+  "minutes": 36.36951045025554
+ },
+ "neo_transformer_12k_single_a_lv1": {
+  "seeds": [
+   42
+  ],
+  "explain": 0.3026,
+  "transfer_lab": 0.0712,
+  "transfer_strict": 0.0712,
+  "transfer_consistent": 0.0873,
+  "explain_per_seed": [
+   0.3026
+  ],
+  "transfer_lab_per_seed": [
+   0.0712
+  ],
+  "transfer_strict_per_seed": [
+   0.0712
+  ],
+  "transfer_consistent_per_seed": [
+   0.0873
+  ],
+  "explain_depth1": 0.45457822638788753,
+  "explain_depth2": 0.29708275451478466,
+  "explain_depth3": 0.19383697813121273,
+  "explain_depth4": 0.08540372670807453,
+  "explain_depth5": 0.0335195530726257,
+  "transfer_lab_depth1": 0.14095169430425378,
+  "transfer_lab_depth2": 0.054574320301647154,
+  "transfer_lab_depth3": 0.02882703777335984,
+  "transfer_lab_depth4": 0.023291925465838508,
+  "transfer_lab_depth5": 0.0037243947858473,
+  "transfer_strict_depth1": 0.14095169430425378,
+  "transfer_strict_depth2": 0.054574320301647154,
+  "transfer_strict_depth3": 0.02882703777335984,
+  "transfer_strict_depth4": 0.023291925465838508,
+  "transfer_strict_depth5": 0.0037243947858473,
+  "transfer_consistent_depth1": 0.18348954578226387,
+  "transfer_consistent_depth2": 0.06171859495931732,
+  "transfer_consistent_depth3": 0.032803180914512925,
+  "transfer_consistent_depth4": 0.027950310559006212,
+  "transfer_consistent_depth5": 0.0037243947858473,
+  "tasks_by_depth": [
+   2774,
+   5039,
+   1006,
+   644,
+   537
+  ],
+  "minutes": 131.70180174391717
+ }
+}

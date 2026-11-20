@@ -93,20 +93,30 @@ def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, 
 
 
 SINGLE_A_LV1 = ([f"{DATA}/single_a/lv1_train.h5"], {"lv1": f"{DATA}/single_a/lv1_eval.h5"})
+# one object and the four translations only: the lab GridWorld's kind of task on the benchmark's grids
+TRANSLATE_LV1 = ([f"{DATA}/single_translate/lv1_train.h5"], {"lv1": f"{DATA}/single_translate/lv1_eval.h5"})
 
 
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     configs = {f"codec_cnn_d{d}": codec_cnn(d) for d in (32, 64, 128, 256, 512)}
     configs["codec_token"] = codec_token()
+    # the 12,000-step run was still improving when its schedule ended; three times as long, one seed
+    configs["neo_transformer_36k_single_a_lv1_s42"] = neo_transformer(*SINGLE_A_LV1, 42, steps=36000)
     for seed in (42, 43, 44):
         # the lab schedule is 78,200 steps; at 15x15 that is two days per run, so the first look uses 12,000 (about 25 passes over the data)
         configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)
+        configs[f"neo_transformer_12k_translate_lv1_s{seed}"] = neo_transformer(*TRANSLATE_LV1, seed, steps=12000)
+        depth_one = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)  # diagnostic: trained on single-primitive tasks only
+        depth_one["data"]["train_max_depth"] = 1
+        configs[f"neo_transformer_12k_depth1_single_a_lv1_s{seed}"] = depth_one
         for state_dim in (32, 256):
             configs[f"neo_mlp_d{state_dim}_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, state_dim)
         # the lab's MLP width of 128 is narrower than a 128-d or 256-d state; these widen the programmer and executor only
         configs[f"neo_mlp_d128_h512_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, 128, hidden=512)
         configs[f"neo_mlp_d256_h1024_single_a_lv1_s{seed}"] = neo_mlp(*SINGLE_A_LV1, seed, 256, hidden=1024)
+        configs[f"neo_mlp_d32_translate_lv1_s{seed}"] = neo_mlp(*TRANSLATE_LV1, seed, 32, codes=6)
+        configs[f"neo_mlp_d256_h1024_translate_lv1_s{seed}"] = neo_mlp(*TRANSLATE_LV1, seed, 256, hidden=1024, codes=6)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(sorted(configs))

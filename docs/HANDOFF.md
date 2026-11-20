@@ -1,5 +1,39 @@
 # 인수인계
 
+## 2026-11-20 저녁, 첫 숫자를 뽑은 뒤의 상태
+
+Claude Code가 썼다. 브랜치는 `code/baseline-observation`이다. 먼저 `docs/reports/2026-11-20-first-numbers.md`를 읽는다.
+
+### 나온 것
+
+- 랩 코드를 그대로 들여왔고, BabyTheorist 파일을 읽는 dataset, 15칸 격자를 받는 CNN state encoder와 state decoder, 길이별 정확도와 code 대 primitive 표를 내는 평가, 틀린 과제를 그리는 스크립트, 작업 줄을 돌리는 스크립트를 더했다. 테스트 35개가 통과한다.
+- 랩 NEO는 GridWorld 설정 그대로는 `single-A` 레벨 1에서 transfer 정확도가 0이다. state를 키우거나 MLP를 넓히거나 primitive를 이동 넷으로 줄여도 0이다.
+- 32차원 latent 하나는 15칸 격자를 그대로 다시 그리지 못한다. 칸마다 token을 두면 완전히 다시 그린다.
+- transformer NEO는 12,000스텝에서 예시 쌍 재현 30%, transfer 정확도 7%이고 끝까지 오르는 중이었다. seed 하나의 값이다.
+- transformer NEO는 primitive 하나를 code 여러 개의 열로 설명한다. 길이가 1인 과제의 절반에서 code를 넷 이상 썼다.
+- BabyTheorist의 기본 primitive만으로 풀리는 ARC 과제는 ARC-AGI-1 학습 400개 가운데 8개, 평가 400개 가운데 0개다.
+
+### 지금 돌고 있는 것
+
+19:35 현재 GPU 4번과 5번에서 작업 줄이 돌고 있다. 줄은 `runs/queue/jobs_gpu4.txt`와 `runs/queue/jobs_gpu5.txt`에 있고 진행은 같은 폴더의 `runner_gpu4.log`와 `runner_gpu5.log`에 적힌다.
+
+- GPU 4번: primitive 하나짜리 과제만으로 학습하는 transformer NEO, 이동 넷만 쓰는 데이터로 학습하는 transformer NEO, transformer NEO의 seed 44. 각각 2시간쯤이다.
+- GPU 5번: transformer NEO의 seed 43, 그다음 36,000스텝짜리 긴 학습. 긴 학습은 6시간쯤이다.
+
+끝난 run의 seed 평균 표는 `python scripts/babytheorist/summarize.py`로 뽑는다.
+
+### 다음에 할 일
+
+1. 긴 학습이 끝나면 transformer NEO가 어디까지 가는지와 code 대 primitive 표가 어떻게 달라지는지 본다.
+2. 진단 둘의 결과로 transformer NEO가 primitive 하나를 배우는 데서 막히는지, 이어 붙이는 데서 막히는지 가른다.
+3. autoresearch의 한 바퀴로 쓸 빠른 설정을 정한다. transformer NEO는 한 번에 두 시간이 넘어서 그대로는 바퀴가 느리다.
+
+### 사용자가 정해야 하는 것
+
+1. 랩이 논문에서 BabyTheorist에 쓴 NEO의 설정과 코드를 받을 수 있는가. 공개된 GridWorld 설정으로는 논문의 점수가 나오지 않는다. 지금 가장 값이 큰 일이다.
+2. Agent가 뜻하는 것이 배운 theory로 목표에 닿는 것인가, 무엇을 실험할지 스스로 고르는 것인가.
+3. 평가의 기본을 정답을 보여 주지 않는 엄격한 방식으로 삼아도 되는가. 랩 평가기는 새 입력에 실행하다가 정답과 같아지면 멈춘다.
+
 ## 2026-11-20 레포를 만든 직후의 상태
 
 Claude Code가 썼다. claude.ai 채팅의 Claude가 이어서 본다.

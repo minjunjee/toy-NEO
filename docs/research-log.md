@@ -19,3 +19,8 @@
 - 17:20 transformer NEO seed 42를 GPU 4번에서 12,000스텝으로 시작함.
 - 17:37 랩 NEO를 32차원과 256차원 state로 seed 셋씩 시작함. 18:05에 끝남. 전부 transfer 정확도가 0에 가깝다.
 - 18:05 MLP의 폭을 state보다 넓게 키운 변형 둘을 seed 셋씩 시작함. 128차원 state에 폭 512, 256차원 state에 폭 1,024다.
+- 18:35 MLP의 폭을 키운 랩 NEO 여섯 개가 끝남. 전부 0이다. state를 넘기는 방식을 바꿔 다시 평가하면 예시 쌍 재현이 0에서 5% 사이다.
+- 18:18 이동 넷만 쓰는 데이터 `single_translate`를 만들고 랩 NEO를 학습함. 19:10에 끝남. 여기서도 0에 가깝다.
+- 19:33 transformer NEO seed 42가 12,000스텝을 마침. 예시 쌍 재현 30.3%, transfer 정확도 7.1%. 길이가 1인 과제에서 재현 45.5%, transfer 14.1%. 마지막 3,000스텝 동안 재현이 10%에서 30%로 올랐다.
+- 19:33 밤사이 돌 줄을 세움. GPU 4번에 primitive 하나짜리 과제만 쓰는 진단, 이동 넷만 쓰는 진단, seed 44. GPU 5번에 seed 43과 36,000스텝짜리 긴 학습.
+- 19:35 보고서 `docs/reports/2026-11-20-first-numbers.md`를 쓰고 `code/baseline-observation`을 push함.

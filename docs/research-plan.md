@@ -1,6 +1,6 @@
 # 연구 계획
 
-2026-11-20 KST. Claude Code가 썼다. 사용자가 "연구 계획 구체화해봐"라고 해서 쓴 첫 판이고, 사용자와 claude.ai 채팅의 Claude가 고치면 그쪽이 우선한다. 근거가 되는 사실은 `docs/facts.md`에, 이 계획에 이른 논의는 `docs/discussion-2026-11-20.md`에 있다.
+2026-11-20 KST. Claude Code가 썼다. 같은 날 저녁에 3.2절과 3.3절에 해당하는 첫 결과가 나왔고 `docs/reports/2026-11-20-first-numbers.md`에 있다. 아래 본문은 결과를 보기 전에 쓴 그대로다. 사용자가 "연구 계획 구체화해봐"라고 해서 쓴 첫 판이고, 사용자와 claude.ai 채팅의 Claude가 고치면 그쪽이 우선한다. 근거가 되는 사실은 `docs/facts.md`에, 이 계획에 이른 논의는 `docs/discussion-2026-11-20.md`에 있다.
 
 ## 1. 무엇을 하는 연구인가
 

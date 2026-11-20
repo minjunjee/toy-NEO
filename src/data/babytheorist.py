@@ -23,12 +23,13 @@ from data.datasets import RepeatedDistributedBatchSampler
 class TrainPairs(Dataset):
     """All pairs of the given train files in memory; a batch of indices is returned as one dict."""
 
-    def __init__(self, paths: list[str]) -> None:
+    def __init__(self, paths: list[str], max_depth: int | None = None) -> None:
         xs, ys = [], []
         for path in paths:
             with h5py.File(path, "r") as file:
-                xs.append(torch.from_numpy(file["inputs"][:, 0].astype(np.uint8)))
-                ys.append(torch.from_numpy(file["outputs"][:, 0].astype(np.uint8)))
+                keep = slice(None) if max_depth is None else np.nonzero(file["depths"][:] <= max_depth)[0]
+                xs.append(torch.from_numpy(file["inputs"][:, 0][keep].astype(np.uint8)))
+                ys.append(torch.from_numpy(file["outputs"][:, 0][keep].astype(np.uint8)))
         self.x, self.y = torch.cat(xs), torch.cat(ys)
 
     def __len__(self) -> int:
@@ -71,7 +72,11 @@ def passthrough(batch: dict) -> dict:
 
 
 class BabyTheoristPairs:
-    def __init__(self, train: list[str] | str, evals: dict[str, str] | None = None) -> None:
+    def __init__(self, train: list[str] | str, evals: dict[str, str] | None = None, train_max_depth: int | None = None) -> None:
+        """train_max_depth keeps only the train tasks whose hidden program is at most that deep. It is a diagnostic
+        setting, outside the benchmark's protocol: the stored depth picks the data, it is still never a training target."""
+
+        self.train_max_depth = train_max_depth
         self.train_paths = [train] if isinstance(train, str) else list(train)
         self.eval_paths = dict(evals or {})
         for path in [*self.train_paths, *self.eval_paths.values()]:
@@ -85,7 +90,7 @@ class BabyTheoristPairs:
 
     def train_loader(self, batch_size: int, steps: int, start_step: int, seed: int, rank: int, world_size: int, num_workers: int, pin_memory: bool) -> DataLoader:
         if self._train is None:
-            self._train = TrainPairs(self.train_paths)
+            self._train = TrainPairs(self.train_paths, self.train_max_depth)
         sampler = RepeatedDistributedBatchSampler(len(self._train), batch_size, steps - start_step, seed=seed, rank=rank, world_size=world_size, start_step=start_step)
         return DataLoader(self._train, batch_sampler=sampler, collate_fn=passthrough, num_workers=num_workers, pin_memory=pin_memory, persistent_workers=num_workers > 0)
 
