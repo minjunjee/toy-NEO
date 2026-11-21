@@ -374,6 +374,15 @@ def main() -> None:
         if config["model"].get("state_update", "") is None:
             del config["model"]["state_update"]
         configs[f"fastneo_12k_{name}_single_a_lv1_s42"] = config
+    # grid-only handover learns with the fast parts (76% self-explanation and 33% transfer at 7,200 steps, both measured
+    # with grid-only handover). The one-step search says a codebook with little slack and smaller, more frequent updates
+    # carry over best; the same here
+    hard = {"model.state_update": "reencode_hard", "model.code.restart_every": 0}
+    for name, codes, steps, changes in (("hard_c10_norestart", 10, 12000, hard), ("hard_c12_norestart", 12, 12000, hard),
+                                        ("hard_c10_norestart_b128", 10, 48000, {**hard, "train.batch_size": 128}),
+                                        ("hard_c16_norestart_b128", 16, 48000, {**hard, "train.batch_size": 128}),
+                                        ("hard_c12_norestart_b128", 12, 48000, {**hard, "train.batch_size": 128})):
+        configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, codes=codes, changes=changes)
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
