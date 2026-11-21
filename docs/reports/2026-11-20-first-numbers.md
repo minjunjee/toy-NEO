@@ -280,6 +280,6 @@ NEO와 무관하게, BabyTheorist의 진짜 primitive 여덟을 이어 붙이는
 
 ## 9. 지금 돌고 있는 것과 다음
 
-2026-11-21 13:30 현재 다른 seed에서 같은 효과가 나오는지 보는 학습이 돈다. seed 43을 code 8개로, GPU 4번에서는 잠 없이, GPU 5번에서는 3,600스텝마다 잠을 넣어 학습한다. 잠은 7,200스텝부터 넣는다. 끝나면 seed 44가 같은 식으로 이어진다. 잠을 주기적으로 넣는 실행은 `scripts/babytheorist/train_with_sleep.py`다. code를 10개로 준 학습은 이 실험에 GPU를 내주려고 멈췄다.
+2026-11-21 15:00 현재 GPU 4번에서 seed 43의 code 8개 학습이 잠 없이 돈다. GPU 5번에서는 codebook이 자라는 학습이 seed 42부터 돈다. code 8개 학습의 7,200스텝 체크포인트에서 갈라져 3,600스텝마다 잠을 넣고, 잠은 설명하지 못하는 쌍이 남아 있으면 code를 하나씩 켠다. 끝나면 seed 43이 같은 규칙으로 이어진다. 실행은 `scripts/babytheorist/train_with_sleep.py`다. 겹친 code가 있을 때만 비우는 잠은 그런 쌍이 좁은 때에만 있어서 seed 43에서는 멈췄다.
 
 그다음에 볼 것은 code와 primitive의 표다. 표는 run마다 이미 저장되고 있다.
