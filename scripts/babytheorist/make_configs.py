@@ -250,6 +250,8 @@ def one_step_scale_screen() -> dict:
     screen = {}
     for tag, data, primitives in (("a8", "single_a", 8), ("m8", "many_p8", 8), ("b11", "single_11prim", 11), ("m16", "many_p16", 16), ("m24", "many_p24", 24), ("m32", "many_p32", 32)):
         screen[f"s_{tag}_wide"] = (data, 2 * primitives, 24000, no_restart)
+        # the fifth screen: with 8 primitives, 10 codes carried 97%, 16 codes 90%, 32 codes 84%, 8 codes found too few
+        screen[f"s_{tag}_tight"] = (data, primitives + max(2, primitives // 4), 24000, no_restart)
         screen[f"s_{tag}_restart"] = (data, 2 * primitives, 24000, restart)
     screen["s_m32_wide_c32"] = ("many_p32", 32, 24000, no_restart)
     screen["s_m32_wide_48k"] = ("many_p32", 64, 48000, no_restart)
