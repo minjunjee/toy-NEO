@@ -45,6 +45,7 @@ def import_all() -> None:
     import data.babytheorist  # noqa: F401
     import components.codes  # noqa: F401
     import components.codes_growable  # noqa: F401
+    import components.codes_restart  # noqa: F401
     import components.decoders  # noqa: F401
     import components.encoders  # noqa: F401
     import components.cnn_any_size  # noqa: F401

@@ -6,6 +6,8 @@
 
 from __future__ import annotations
 
+import copy
+
 from pathlib import Path
 
 import yaml
@@ -95,7 +97,7 @@ def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None
     config["data"]["train_max_depth"] = 1
     config["train"]["compile"] = "parts"
     for path, value in (changes or {}).items():
-        set_path(config, path, value)
+        set_path(config, path, copy.deepcopy(value))  # a shared dict such as PAIR_PROGRAMMER must not be changed by a later path
     return config
 
 
@@ -121,6 +123,41 @@ ONE_STEP_SCREEN_2 = {
     "pair256": (16, {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}}),
     "pair256_exec256": (16, {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "model.executor.d_model": 256, "model.executor.d_ff": 1024}),
 }
+
+
+def one_step_screen_3() -> dict:
+    """Third screen, all on the cheaper programmer: how the codebook is found. The cheaper programmer learns from step 300
+    but stays on three codes; these vary what decides whether more codes come into use."""
+
+    pair = {"model.programmer": PAIR_PROGRAMMER}
+    restart = {"type": "vq_restart", "restart_every": 100, "restart_below": 0.1, "usage_decay": 0.99}
+    sample = {"model.code.stochastic": True, "model.code.tau_start": 0.3, "model.code.tau_end": 0.1, "model.code.tau_steps": 3000}
+    screen = {
+        "p_codes8": (8, pair),
+        "p_codes32": (32, pair),
+        "p_commit005": (16, {**pair, "model.code.commitment": 0.05}),
+        "p_commit1": (16, {**pair, "model.code.commitment": 1.0}),
+        "p_nocommitgrad": (16, {**pair, "model.code.commitment_grad": False}),
+        "p_dim4": (16, {**pair, "model.code.dim": 4, "model.programmer.action_dim": 4, "model.executor.cond_dim": 4}),
+        "p_dim64": (16, {**pair, "model.code.dim": 64, "model.programmer.action_dim": 64, "model.executor.cond_dim": 64}),
+        "p_sample": (16, {**pair, **sample}),
+        "p_sample_hot": (16, {**pair, **sample, "model.code.tau_start": 1.0}),
+        "p_proglr1": (16, {**pair, "method.programmer_lr_scale": 1.0}),
+        "p_lr1e3": (16, {**pair, "method.lr": 1.0e-3}),
+        "p_lr1e3_proglr1": (16, {**pair, "method.lr": 1.0e-3, "method.programmer_lr_scale": 1.0}),
+        "p_restart": (16, {**pair, "model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}),
+        "p_restart_fast": (16, {**pair, "model.code.type": "vq_restart", "model.code.restart_every": 25, "model.code.restart_below": 0.3, "model.code.usage_decay": 0.95}),
+        "p_restart_codes8": (8, {**pair, "model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}),
+        "p_restart_codes32": (32, {**pair, "model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}),
+        "p_restart_proglr1": (16, {**pair, "method.programmer_lr_scale": 1.0, "model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}),
+        "p_restart_sample": (16, {**pair, **sample, "model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}),
+        "p_noema": (16, {**pair, "train.ema": 0.0}),
+        "p_exec8l": (16, {**pair, "model.executor.num_layers": 8}),
+        "p_exec256": (16, {**pair, "model.executor.d_model": 256, "model.executor.d_ff": 1024}),
+        "p_prog3l": (16, {"model.programmer": {**PAIR_PROGRAMMER, "num_layers": 3}}),
+    }
+    del restart
+    return screen
 
 
 def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, steps: int = 39100, codes: int = 12, max_length: int = 4, codec_steps: int = 40000, hidden: int = 128) -> dict:
@@ -182,6 +219,8 @@ def main() -> None:
     for name, (codes, changes) in ONE_STEP_SCREEN_1.items():
         for seed in ((42, 43) if name == "base" else (42,)):
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
+    for name, (codes, changes) in one_step_screen_3().items():
+        configs[f"onestep_{name}_s42"] = one_step(42, codes=codes, changes=changes)
     for name, (codes, changes) in ONE_STEP_SCREEN_2.items():
         for seed in ((42, 43) if name == "pair" else (42,)):
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
