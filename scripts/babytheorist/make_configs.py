@@ -85,7 +85,7 @@ def set_path(config: dict, path: str, value) -> None:
     config[last] = value
 
 
-def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None = None) -> dict:
+def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None = None, data: tuple | None = None) -> dict:
     """The transformer NEO cut down to one program step, trained on single-primitive tasks only.
 
     The programmer picks one code from a pair and the executor applies it once, so a run costs a fifth of the full one.
@@ -93,7 +93,7 @@ def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None
     file is still evaluated, but only the single-primitive tasks (depth 1) can be solved. `changes` overrides settings by
     dotted path, for searching over the parts."""
 
-    config = neo_transformer(*SINGLE_A_LV1, seed, steps=steps, codes=codes, max_length=1)
+    config = neo_transformer(*(data or SINGLE_A_LV1), seed, steps=steps, codes=codes, max_length=1)
     config["data"]["train_max_depth"] = 1
     config["train"]["compile"] = "parts"
     config["train"]["ckpt_every"] = steps  # one checkpoint per run: a search starts dozens of these and the disks are small
@@ -232,6 +232,31 @@ def one_step_screen_5() -> dict:
     }
 
 
+def suite(name: str) -> tuple:
+    return [f"data/babytheorist/{name}/lv1_train.h5"], {"lv1": f"data/babytheorist/{name}/lv1_eval.h5"}
+
+
+def one_step_scale_screen() -> dict:
+    """More primitives, one program step: how many primitives get a code that carries to a new input as their number
+    grows. `single_a` (8) and `single_11prim` (11) are the benchmark's generator; `many_p*` are from
+    scripts/babytheorist/generate_many_primitives.py (8 is the same set as single_a, to compare the two generators).
+    Two recipes from the earlier screens, both with batch 128 and 24,000 steps and no weight average; the codebook has
+    twice as many codes as there are primitives. name -> (data, codes, steps, changes)"""
+
+    wide = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}
+    no_restart = {"model.programmer": wide, "train.ema": 0.0, "train.batch_size": 128}
+    restart = {"model.programmer": PAIR_PROGRAMMER, "train.ema": 0.0, "train.batch_size": 128, "model.code.type": "vq_restart", "model.code.restart_every": 100,
+               "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}
+    screen = {}
+    for tag, data, primitives in (("a8", "single_a", 8), ("m8", "many_p8", 8), ("b11", "single_11prim", 11), ("m16", "many_p16", 16), ("m24", "many_p24", 24), ("m32", "many_p32", 32)):
+        screen[f"s_{tag}_wide"] = (data, 2 * primitives, 24000, no_restart)
+        screen[f"s_{tag}_restart"] = (data, 2 * primitives, 24000, restart)
+    screen["s_m32_wide_c32"] = ("many_p32", 32, 24000, no_restart)
+    screen["s_m32_wide_48k"] = ("many_p32", 64, 48000, no_restart)
+    screen["s_m32_wide_x"] = ("many_p32", 64, 24000, {**no_restart, "model.executor.d_model": 256, "model.executor.d_ff": 1024})
+    return screen
+
+
 def fast_neo(train: list[str], evals: dict[str, str], seed: int, steps: int = 12000, codes: int = 16, max_length: int = 5, changes: dict | None = None) -> dict:
     """The full multi-step transformer NEO with the standard parts that the one-step search settled on.
 
@@ -334,6 +359,8 @@ def main() -> None:
                           "c16_norestart_noema": {"model.code.restart_every": 0, "train.ema": 0.0}}.items():
         steps = 48000 if "b128" in name else 12000
         configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, changes=changes)
+    for name, (data, codes, steps, changes) in one_step_scale_screen().items():
+        configs[f"onestep_{name}_s42"] = one_step(42, steps=steps, codes=codes, changes=changes, data=suite(data))
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
