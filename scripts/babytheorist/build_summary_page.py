@@ -1,0 +1,394 @@
+#!/usr/bin/env python3
+"""Builds docs/reports/2026-11-21-summary.html: the Korean summary page with its inline SVG figures.
+
+Figure text is English, prose is Korean. The numbers are written into this file by hand from the report
+(docs/reports/2026-11-20-first-numbers.md); the three arguments fill in the time and the state of the two running trainings.
+
+    python scripts/babytheorist/build_summary_page.py "<time>" "<state of the reencode_hard run>" "<state of the neo_visible_state run>"
+"""
+from pathlib import Path
+
+OUT = Path(__file__).resolve().parents[2] / "docs" / "reports" / "2026-11-21-summary.html"
+
+
+# ---------------------------------------------------------------- figure 1: what is measured
+def task_figure() -> str:
+    def grid(x, y, cells, cell=11, n=6):
+        parts = [f'<rect x="{x}" y="{y}" width="{cell * n}" height="{cell * n}" class="gridbg"/>']
+        for i in range(1, n):
+            parts.append(f'<line x1="{x + i * cell}" y1="{y}" x2="{x + i * cell}" y2="{y + cell * n}" class="gridline"/>')
+            parts.append(f'<line x1="{x}" y1="{y + i * cell}" x2="{x + cell * n}" y2="{y + i * cell}" class="gridline"/>')
+        for r, c in cells:
+            parts.append(f'<rect x="{x + c * cell}" y="{y + r * cell}" width="{cell}" height="{cell}" class="obj"/>')
+        return "".join(parts)
+
+    f = [(1, 1), (1, 2), (2, 1), (3, 1)]                                  # an asymmetric object, two cells wide
+    f_right = [(3, 3), (3, 4), (2, 3), (1, 3)]                            # moved right by its own width, then flipped upside-down
+    t = [(2, 0), (2, 1), (3, 1), (4, 1), (4, 0), (3, 0), (1, 1)]          # another object for the new input
+    s = ['<svg viewBox="0 0 720 250" role="img" aria-label="One task: a support pair, the program written from it, and the two checks">']
+    s.append('<text x="20" y="22" class="t b">support pair</text>')
+    s.append(grid(20, 34, f)); s.append('<text x="53" y="116" class="t2 mid">input</text>')
+    s.append('<path d="M92 67 H112" class="arrow"/>')
+    s.append(grid(118, 34, f_right)); s.append('<text x="151" y="116" class="t2 mid">output</text>')
+    s.append('<path d="M192 67 H232" class="arrow"/>')
+    s.append('<rect x="238" y="44" width="118" height="46" rx="6" class="box"/><text x="297" y="63" class="t mid b">programmer</text><text x="297" y="80" class="t2 mid">picks codes</text>')
+    s.append('<path d="M360 67 H400" class="arrow"/>')
+    s.append('<text x="406" y="38" class="t b">program</text>')
+    s.append('<rect x="406" y="48" width="64" height="38" rx="6" class="code"/><text x="438" y="72" class="t mid mono">code 5</text>')
+    s.append('<rect x="476" y="48" width="64" height="38" rx="6" class="code"/><text x="508" y="72" class="t mid mono">code 1</text>')
+    s.append('<text x="556" y="64" class="t2">the executor runs</text><text x="556" y="80" class="t2">the codes in order</text>')
+    # the two checks
+    s.append('<path d="M438 90 V141 H404" class="arrow"/>')
+    s.append('<path d="M508 90 V205 H404" class="arrow"/>')
+    s.append('<rect x="20" y="124" width="380" height="34" rx="6" class="box"/>')
+    s.append('<text x="32" y="146" class="t"><tspan class="b">check 1.</tspan> on the support input: gives the support output?</text>')
+    s.append('<rect x="20" y="188" width="380" height="34" rx="6" class="box"/>')
+    s.append('<text x="32" y="210" class="t"><tspan class="b">check 2.</tspan> on a new input: gives the hidden answer?</text>')
+    s.append(grid(560, 150, t)); s.append('<text x="593" y="232" class="t2 mid">new input</text>')
+    s.append('<path d="M632 183 H646" class="arrow"/>')
+    s.append('<rect x="650" y="150" width="56" height="66" rx="6" class="box dashed"/><text x="678" y="188" class="t mid b">?</text>')
+    s.append('</svg>')
+    return "".join(s)
+
+
+# ---------------------------------------------------------------- figure 2: the same code twice
+def flip_figure() -> str:
+    cell, n = 13, 6
+    base = [(0, 0), (0, 1), (0, 2), (1, 0), (2, 0), (2, 1), (3, 0)]       # rows 0..3, cols 0..2 inside the box
+    def place(cells):
+        return [(r + 1, c + 1) for r, c in cells]
+    updown = [(3 - r, c) for r, c in base]
+    leftright = [(r, 2 - c) for r, c in base]
+    def grid(x, y, cells, cls="obj"):
+        parts = [f'<rect x="{x}" y="{y}" width="{cell * n}" height="{cell * n}" class="gridbg"/>']
+        for i in range(1, n):
+            parts.append(f'<line x1="{x + i * cell}" y1="{y}" x2="{x + i * cell}" y2="{y + cell * n}" class="gridline"/>')
+            parts.append(f'<line x1="{x}" y1="{y + i * cell}" x2="{x + cell * n}" y2="{y + i * cell}" class="gridline"/>')
+        for r, c in place(cells):
+            parts.append(f'<rect x="{x + c * cell}" y="{y + r * cell}" width="{cell}" height="{cell}" class="{cls}"/>')
+        return "".join(parts)
+    g = cell * n
+    s = ['<svg viewBox="0 0 740 356" role="img" aria-label="The same code applied twice: what the second application does depends on what it is handed">']
+    y_mid, y_top, y_bot = 132, 22, 236
+    xi = 14
+    s.append(f'<text x="{xi}" y="{y_mid - 12}" class="t b">input</text>')
+    s.append(grid(xi, y_mid, base))
+    s.append(f'<path d="M{xi + g + 8} {y_mid + g / 2} H{xi + g + 50}" class="arrow"/><text x="{xi + g + 29}" y="{y_mid + g / 2 - 9}" class="t mid mono">code A</text>')
+    x1 = xi + g + 58
+    s.append(f'<text x="{x1}" y="{y_mid - 12}" class="t b">after step 1</text>')
+    s.append(grid(x1, y_mid, updown))
+    s.append(f'<text x="{x1}" y="{y_mid + g + 18}" class="t2">flipped upside-down,</text><text x="{x1}" y="{y_mid + g + 33}" class="t2">in all 318 tasks</text>')
+    xb, xe = x1 + g + 12, 600
+    for y_end, start, cls in ((y_top + g / 2, -10, "soft"), (y_bot + g / 2, 10, "hard")):
+        s.append(f'<path d="M{xb} {y_mid + g / 2 + start} C{xb + 60} {y_mid + g / 2 + start}, {xb + 40} {y_end}, {xb + 110} {y_end} H{xe}" class="arrow {cls}"/>')
+    xl = xb + 112
+    s.append(f'<text x="{xl}" y="{y_top + g / 2 - 26}" class="t softt b">handed the cell probabilities</text>')
+    s.append(f'<text x="{xl}" y="{y_top + g / 2 - 10}" class="t2">98% on the top colour, 2% elsewhere</text>')
+    s.append(f'<text x="{xl + 110}" y="{y_top + g / 2 + 18}" class="t mid mono">step 2: code A again</text>')
+    s.append(f'<text x="{xl}" y="{y_bot + g / 2 - 26}" class="t hardt b">handed only the grid</text>')
+    s.append(f'<text x="{xl}" y="{y_bot + g / 2 - 10}" class="t2">what the picture shows, nothing else</text>')
+    s.append(f'<text x="{xl + 110}" y="{y_bot + g / 2 + 18}" class="t mid mono">step 2: code A again</text>')
+    xr = xe + 8
+    s.append(grid(xr, y_top, leftright))
+    s.append(f'<text x="{xr + g / 2}" y="{y_top + g + 17}" class="t mid b">flipped left-right</text><text x="{xr + g / 2}" y="{y_top + g + 32}" class="t2 mid">the right answer, 318 of 318</text>')
+    s.append(grid(xr, y_bot, base))
+    s.append(f'<text x="{xr + g / 2}" y="{y_bot + g + 17}" class="t mid b">the input again</text><text x="{xr + g / 2}" y="{y_bot + g + 32}" class="t2 mid">260 of 260</text>')
+    s.append('</svg>')
+    return "".join(s)
+
+
+# ---------------------------------------------------------------- figure 3: five runs under the two rules
+def bars_figure() -> str:
+    rows = [("16 codes", "", 89.8, 83.2, 39.8, 40.0),
+            ("8 codes", "", 68.0, 53.4, 44.2, 41.8),
+            ("8 codes", "another seed", 78.7, 55.9, 42.2, 39.8),
+            ("8 to 14 codes", "one switched on per sleep", 79.6, 65.1, 43.3, 42.8),
+            ("8 codes, one sleep", "the 61% run", 77.5, 42.1, 61.4, 36.8)]
+    left, pw, gap = 176, 222, 56
+    xa, xb = left, left + pw + gap
+    top, rh = 70, 50
+    height = top + rh * len(rows) + 34
+    s = [f'<svg viewBox="0 0 740 {height}" role="img" aria-label="Five trained models measured under the two handover rules">']
+    s.append('<rect x="20" y="10" width="12" height="12" rx="2" class="softf"/><text x="38" y="21" class="t">next step is handed the cell probabilities, as in training</text>')
+    s.append('<rect x="400" y="10" width="12" height="12" rx="2" class="hardf"/><text x="418" y="21" class="t">next step is handed only the grid</text>')
+    for x0, title in ((xa, "support pair reproduced"), (xb, "transferred to a new input")):
+        s.append(f'<text x="{x0}" y="54" class="t b">{title}</text>')
+        for tick in (0, 50, 100):
+            x = x0 + pw * tick / 100
+            s.append(f'<line x1="{x}" y1="{top - 6}" x2="{x}" y2="{top + rh * len(rows) - 8}" class="{"axis" if tick == 0 else "gridline"}"/>')
+            s.append(f'<text x="{x}" y="{top + rh * len(rows) + 8}" class="t2 mid">{tick}%</text>')
+    for i, (name, sub, es, eh, ts, th) in enumerate(rows):
+        y = top + i * rh
+        s.append(f'<text x="{left - 12}" y="{y + (15 if sub else 21)}" class="t end b">{name}</text>')
+        if sub:
+            s.append(f'<text x="{left - 12}" y="{y + 30}" class="t2 end">{sub}</text>')
+        for x0, soft, hard in ((xa, es, eh), (xb, ts, th)):
+            for k, (value, cls) in enumerate(((soft, "softf"), (hard, "hardf"))):
+                w = pw * value / 100
+                yy = y + 4 + k * 16
+                s.append(f'<path d="M{x0} {yy} H{x0 + w - 3} a3 3 0 0 1 3 3 V{yy + 11} a3 3 0 0 1 -3 3 H{x0} Z" class="{cls}"/>')
+                s.append(f'<text x="{x0 + w + 6}" y="{yy + 11}" class="t mono">{value:.0f}%</text>')
+    s.append('</svg>')
+    return "".join(s)
+
+
+# ---------------------------------------------------------------- figure 4: transfer against training compute
+def curve_figure() -> str:
+    per_step = 16.354e12 / 1e15                      # PFLOPs per training step
+    steps = [18000, 25200, 32400, 36000]
+    series = [("sleep, probabilities", "soft", False, [36.8, 51.4, 58.6, 61.4], 0),
+              ("no sleep, probabilities", "soft", True, [26.1, 34.8, 42.8, 44.2], -4),
+              ("no sleep, grid only", "hard", True, [27.2, 34.5, 40.2, 41.8], 5),
+              ("sleep, grid only", "hard", False, [37.1, 36.3, 34.6, 36.8], 2)]
+    x0, x1, y0, y1 = 56, 500, 250, 26
+    fmin, fmax, vmin, vmax = 220, 600, 20, 65
+    fx = lambda f: x0 + (x1 - x0) * (f - fmin) / (fmax - fmin)   # noqa: E731
+    vy = lambda v: y0 + (y1 - y0) * (v - vmin) / (vmax - vmin)   # noqa: E731
+    s = ['<svg viewBox="0 0 740 300" role="img" aria-label="Transfer against training compute for the run with one sleep and the same run without it, under the two handover rules">']
+    for v in (20, 30, 40, 50, 60):
+        s.append(f'<line x1="{x0}" y1="{vy(v)}" x2="{x1}" y2="{vy(v)}" class="gridline"/><text x="{x0 - 8}" y="{vy(v) + 4}" class="t2 end">{v}%</text>')
+    for f in (300, 400, 500, 600):
+        s.append(f'<text x="{fx(f)}" y="{y0 + 18}" class="t2 mid">{f}</text>')
+    s.append(f'<text x="{(x0 + x1) / 2}" y="{y0 + 38}" class="t2 mid">training compute so far, in PFLOPs (1 PFLOP = 10^15 floating-point operations)</text>')
+    s.append(f'<text x="{x0}" y="14" class="t2">share of tasks transferred to a new input</text>')
+    sleep_x = fx(14400 * per_step)
+    s.append(f'<line x1="{sleep_x}" y1="{y1}" x2="{sleep_x}" y2="{y0}" class="marker"/><text x="{sleep_x + 6}" y="{y1 + 12}" class="t2">sleep at 14,400 steps</text>')
+    for name, rule, dashed, values, dy in series:
+        points = [(fx(st * per_step), vy(v)) for st, v in zip(steps, values)]
+        path = "M" + " L".join(f"{x:.1f} {y:.1f}" for x, y in points)
+        s.append(f'<path d="{path}" class="line {rule}{" dash" if dashed else ""}"/>')
+        for x, y in points:
+            s.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="4" class="dot {rule}"/>')
+        ex, ey = points[-1]
+        s.append(f'<text x="{ex + 12}" y="{ey + 4 + dy}" class="t"><tspan class="mono b">{values[-1]:.0f}%</tspan> {name}</text>')
+    s.append('</svg>')
+    return "".join(s)
+
+
+PAGE = r"""<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>toy-NEO 실험 정리</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+KR:wght@400;500;600&display=swap">
+<style>
+/* layout: one reading column of about 44 Korean characters; figures and tables may use the full column and scroll on their own */
+:root {
+  --bg: #f6f7f9; --surface: #ffffff; --ink: #151a21; --ink-2: #505a68; --rule: #dde2e8; --grid: #e7ebf0;
+  --soft: #2a78d6; --hard: #eb6834; --soft-ink: #1d5fb0; --hard-ink: #b9481c; --obj: #3a4553; --note: #eef3fa;
+  --sans: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #111418; --surface: #191d23; --ink: #e9ecf1; --ink-2: #a9b2bf; --rule: #2b323c; --grid: #252b34;
+    --soft: #3987e5; --hard: #d95926; --soft-ink: #7fb2f0; --hard-ink: #f0946a; --obj: #c9d1dc; --note: #1a222e;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #111418; --surface: #191d23; --ink: #e9ecf1; --ink-2: #a9b2bf; --rule: #2b323c; --grid: #252b34;
+  --soft: #3987e5; --hard: #d95926; --soft-ink: #7fb2f0; --hard-ink: #f0946a; --obj: #c9d1dc; --note: #1a222e;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink); font-family: var(--sans); font-size: 16px; line-height: 1.78;
+  padding-block: 40px 72px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  word-break: keep-all; overflow-wrap: anywhere;
+}
+main { max-width: 740px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+header { display: flex; flex-direction: column; gap: 10px; padding-bottom: 8px; }
+.eyebrow { font-family: var(--mono); font-size: 12.5px; letter-spacing: .04em; color: var(--ink-2); }
+h1 { font-size: 30px; line-height: 1.3; font-weight: 600; margin: 0; text-wrap: balance; }
+h2 { font-size: 21px; line-height: 1.4; font-weight: 600; margin: 28px 0 0; padding-top: 22px; border-top: 1px solid var(--rule); text-wrap: balance; }
+h2 .n { font-family: var(--mono); font-weight: 500; color: var(--ink-2); margin-right: 10px; font-size: 17px; }
+p { margin: 0; }
+.lead { font-size: 17px; color: var(--ink-2); }
+ol.first { margin: 0; padding: 18px 22px 18px 44px; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; display: flex; flex-direction: column; gap: 10px; }
+ol.first li::marker { font-family: var(--mono); color: var(--ink-2); }
+code, .mono { font-family: var(--mono); font-size: .92em; }
+code { background: var(--grid); padding: 1px 5px; border-radius: 4px; }
+.softw { color: var(--soft-ink); font-weight: 600; }
+.hardw { color: var(--hard-ink); font-weight: 600; }
+figure { margin: 6px 0; display: flex; flex-direction: column; gap: 10px; }
+.scroll { overflow-x: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 14px; }
+.scroll svg { display: block; width: 100%; min-width: 640px; height: auto; }
+figcaption { font-size: 14px; line-height: 1.65; color: var(--ink-2); }
+.tablewrap { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 14.5px; line-height: 1.5; font-variant-numeric: tabular-nums; }
+th, td { text-align: left; padding: 9px 12px 9px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+th { font-weight: 600; color: var(--ink-2); font-size: 13px; border-bottom: 1px solid var(--ink-2); }
+td.num, th.num { text-align: right; padding-right: 16px; font-family: var(--mono); font-size: 13.5px; white-space: nowrap; }
+tr.hl td { background: var(--note); }
+.fix { background: var(--note); border-radius: 10px; padding: 18px 22px; display: flex; flex-direction: column; gap: 10px; }
+.fix h3 { margin: 0; font-size: 16px; font-weight: 600; }
+dl { margin: 0; display: grid; grid-template-columns: minmax(120px, 190px) 1fr; gap: 10px 20px; font-size: 15px; line-height: 1.65; }
+dt { font-weight: 600; } dd { margin: 0; color: var(--ink-2); min-width: 0; }
+@media (max-width: 560px) { h1 { font-size: 25px; } dl { grid-template-columns: 1fr; gap: 2px 0; } dd { margin-bottom: 10px; } }
+/* figure parts */
+svg text { font-family: var(--sans); }
+svg .t { font-size: 12.5px; fill: var(--ink); } svg .t2 { font-size: 11.5px; fill: var(--ink-2); }
+svg .b { font-weight: 600; } svg .mono { font-family: var(--mono); } svg .mid { text-anchor: middle; } svg .end { text-anchor: end; }
+svg .softt { fill: var(--soft-ink); } svg .hardt { fill: var(--hard-ink); }
+svg .gridbg { fill: var(--surface); stroke: var(--ink-2); stroke-width: 1; } svg .gridline { stroke: var(--grid); stroke-width: 1; fill: none; }
+svg .axis { stroke: var(--ink-2); stroke-width: 1; fill: none; }
+svg .obj { fill: var(--obj); }
+svg .box { fill: var(--bg); stroke: var(--rule); stroke-width: 1; } svg .box.dashed { stroke-dasharray: 4 3; stroke: var(--ink-2); }
+svg .code { fill: var(--note); stroke: var(--soft); stroke-width: 1; }
+svg .arrow { fill: none; stroke: var(--ink-2); stroke-width: 1.5; marker-end: url(#tip); }
+svg .arrow.soft { stroke: var(--soft); stroke-width: 2; marker-end: url(#tip-soft); } svg .arrow.hard { stroke: var(--hard); stroke-width: 2; marker-end: url(#tip-hard); }
+svg .softf { fill: var(--soft); } svg .hardf { fill: var(--hard); }
+svg .line { fill: none; stroke-width: 2; } svg .line.soft { stroke: var(--soft); } svg .line.hard { stroke: var(--hard); } svg .line.dash { stroke-dasharray: 6 4; }
+svg .dot { stroke: var(--surface); stroke-width: 2; } svg .dot.soft { fill: var(--soft); } svg .dot.hard { fill: var(--hard); }
+svg .marker { stroke: var(--ink-2); stroke-width: 1; stroke-dasharray: 2 3; fill: none; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+<marker id="tip" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--ink-2)"/></marker>
+<marker id="tip-soft" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--soft)"/></marker>
+<marker id="tip-hard" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" style="fill:var(--hard)"/></marker>
+</defs></svg>
+<main>
+<header>
+<div class="eyebrow">toy-NEO · 2026-11-20부터 11-21 밤까지 · @@NOW@@ 기준</div>
+<h1>NEO를 BabyTheorist에서 돌려 보고 알게 된 것</h1>
+<p class="lead">무엇을 쟀는지부터 시작해서, 결과가 나온 순서대로 적었다. 오전에 보고한 결론 하나가 저녁에 뒤집혔고, 그 이유가 이 문서의 가운데다.</p>
+</header>
+
+<ol class="first">
+<li>랩의 transformer NEO는 BabyTheorist 레벨 1에서 새 입력에 정답을 내는 비율이 40% 근처에서 멈춘다. code를 16개에서 8개로 줄여도, 잠을 넣어도, 잠마다 code를 새로 켜도 이 값은 움직이지 않았다.</li>
+<li>오전에 보고한 "잠 한 번으로 61%"는 잘못 읽은 것이다. 그 모델은 program의 한 단계가 다음 단계에, 격자로 그리면 보이지 않는 정보를 넘겨서 정답을 맞혔다. 그 길을 막고 재면 37%다.</li>
+<li>그래서 지금은 그 길을 학습할 때부터 막은 모델 둘을 돌리고 있다. 결과는 22일 새벽에 나온다.</li>
+</ol>
+
+<h2><span class="n">1</span>무엇을 재고 있나</h2>
+<p>과제는 BabyTheorist의 레벨 1이다. 15칸 격자 위에 object가 하나 있고, 숨은 program이 그 object를 바꾼다. 숨은 program은 primitive 여덟 가운데 몇 개를 이어 붙인 것이다. primitive는 색 바꾸기, 위아래 뒤집기, 좌우 뒤집기, 회전, 그리고 위, 아래, 왼쪽, 오른쪽 이동이다. 평가 과제의 28%는 primitive 하나짜리이고 50%는 둘짜리다.</p>
+<p>과제 하나에는 입력 격자와 출력 격자로 된 예시 쌍이 있고, 같은 숨은 program을 적용해야 하는 새 입력이 하나 있다. NEO의 programmer는 예시 쌍을 보고 codebook에서 code를 하나씩 골라 program을 쓴다. executor는 그 code들을 차례로 실행해 state를 바꾼다.</p>
+<figure>
+<div class="scroll">@@FIG_TASK@@</div>
+<figcaption>과제 하나에서 재는 것 둘. 그림 속 격자와 code 번호는 설명을 위한 예시다.</figcaption>
+</figure>
+<p>숫자는 둘을 쟀다. 첫째는 재현이다. 예시 쌍에서 쓴 program을 그 예시의 입력에 실행했을 때 예시의 출력이 칸 하나 틀리지 않고 나오는 과제의 비율이다. 둘째는 transfer다. 같은 program을 새 입력에 실행했을 때 정답과 격자 전체가 같은 과제의 비율이다. 정답은 모델에게 보여 주지 않는다. 재현은 되는데 transfer가 안 되면, 모델이 그 예시 하나에만 맞는 설명을 쓴 것이다.</p>
+<p>학습에 든 양은 스텝 수가 아니라 계산량으로 적는다. transformer NEO의 학습 한 스텝은 16.4 TFLOPs이고, 아래의 긴 학습은 36,000스텝에 589 PFLOPs다. GPU 하나로 여섯 시간쯤 걸린다. 값은 모두 직접 돌려서 잰 것이고 평가 과제는 10,000개다.</p>
+
+<h2><span class="n">2</span>처음 나온 숫자</h2>
+<div class="tablewrap"><table>
+<tr><th>모델</th><th class="num">재현</th><th class="num">transfer</th></tr>
+<tr><td>랩 NEO. 격자 전체를 latent 하나로 줄이고 programmer와 executor가 MLP다</td><td class="num">1%</td><td class="num">0%</td></tr>
+<tr><td>transformer NEO, 12,000스텝, seed 다섯의 평균</td><td class="num">42%</td><td class="num">14%</td></tr>
+<tr><td>transformer NEO, 36,000스텝</td><td class="num">90%</td><td class="num">40%</td></tr>
+</table></div>
+<p>랩 NEO가 0인 이유는 state에 있다. 32차원 latent 하나로는 15칸 격자를 그대로 다시 그리지도 못한다. object가 하나일 때 격자를 정확히 다시 그리는 비율이 89%이고 셋이면 23%다. latent를 256차원으로 키우면 다시 그리기는 되지만, 그 위에서 MLP가 변환을 배우지 못했다. 칸마다 token을 하나씩 두는 transformer NEO는 격자를 완전하게 다시 그린다. 그래서 그 뒤의 실험은 전부 transformer NEO다.</p>
+<p>transformer NEO는 길게 학습하면 예시의 90%를 설명한다. 그런데 새 입력에서 맞는 것은 40%다. 설명한 것의 절반 넘게가 새 입력으로 옮겨 가지 않는다. 이 간격이 그 뒤 모든 실험이 붙잡은 대상이다.</p>
+
+<h2><span class="n">3</span>왜 새 입력으로 옮겨 가지 않는가</h2>
+<p>primitive 하나짜리 과제 2,774개만 골라서 봤다. 예시 쌍과 새 입력 쌍을 모델에게 각각 따로 설명시키고, 두 설명이 같은 code를 쓰는지 비교했다. 새 입력 쌍의 정답은 이 진단에서만 보여 줬다.</p>
+<div class="tablewrap"><table>
+<tr><th>두 쌍을 따로 설명시켰을 때</th><th class="num">과제의 비율</th><th class="num">그 가운데 transfer</th></tr>
+<tr><td>둘 다 같은 code 하나로 설명된다</td><td class="num">47%</td><td class="num">100%</td></tr>
+<tr><td>둘 다 code 하나로 설명되는데 서로 다른 code다</td><td class="num">15%</td><td class="num">32%</td></tr>
+<tr><td>예시는 code 하나로 되는데 새 입력 쌍은 안 된다</td><td class="num">13%</td><td class="num">2%</td></tr>
+<tr><td>예시부터 code 하나로 설명되지 않는다</td><td class="num">25%</td><td class="num">21%</td></tr>
+</table></div>
+<p>transfer는 같은 code 하나가 어떤 입력에서도 그 primitive를 해낼 때 된다. 실패는 primitive 하나를 code 여러 개가 입력에 따라 나눠 맡는 데서 온다. 예를 들어 색 바꾸기를 object의 색에 따라 code 둘이 나눠 맡는다. 이 모델은 primitive 여덟에 code 열넷을 쓴다. 예시에서 고른 code가 새 입력의 object에는 맞지 않는 쪽이면 틀린다.</p>
+
+<h2><span class="n">4</span>잠을 넣은 실험과 오전의 결론</h2>
+<p>code를 나눠 맡을 여유를 없애려고 code를 primitive 수와 같은 8개만 줬다. 재현은 68%로 내려가고 transfer는 44%가 됐다.</p>
+<p>이 학습을 14,400스텝에서 들여다보니 색 바꾸기가 code 둘을 차지하고 있었다. 남은 primitive 일곱이 code 여섯을 나눠 써야 해서 몇몇은 code를 얻지 못했다. 여기에 잠을 한 번 넣었다. 잠은 학습을 잠깐 멈추고 codebook을 고치는 단계다. 한 일은 둘이다. 겹친 code 둘을 하나로 합쳐서 code 하나를 비운다. 그리고 비운 code를 모델이 아직 설명하지 못하는 학습 쌍 하나에 배정한다. 그 쌍을 보고 programmer가 낸 벡터를 그 code의 벡터로 삼는다. 든 계산은 학습 24스텝 분량이다.</p>
+<div class="tablewrap"><table>
+<tr><th>14,400스텝에서 한 일. 그 뒤로는 똑같이 36,000스텝까지 학습</th><th class="num">재현</th><th class="num">transfer</th></tr>
+<tr><td>아무것도 하지 않음</td><td class="num">68.0%</td><td class="num">44.2%</td></tr>
+<tr><td>겹친 code를 합치기만 함</td><td class="num">69.6%</td><td class="num">44.5%</td></tr>
+<tr><td>비운 code를 아무 방향에나 둠</td><td class="num">72.3%</td><td class="num">47.6%</td></tr>
+<tr class="hl"><td>비운 code를 설명하지 못하는 쌍에 배정함</td><td class="num">77.5%</td><td class="num">61.4%</td></tr>
+</table></div>
+<p>오전에는 이것을 "잠 한 번으로 transfer가 17%p 올랐다"고 보고했다. 다음 절에서 이 읽기가 틀렸다는 것이 드러난다.</p>
+
+<h2><span class="n">5</span>뒤집힌 것. program의 단계 사이로 격자에 보이지 않는 정보가 넘어간다</h2>
+<p>61%가 나온 모델이 primitive 하나짜리 과제에 어떤 program을 쓰는지 하나하나 적어 봤다. 이상한 것이 있었다. 이 모델은 위아래 뒤집기를 어떤 code 하나로 설명한다. 그리고 좌우 뒤집기를 바로 그 code를 두 번 이어서 설명하고, 그 program은 새 입력에서 85% 맞는다. 그런데 위아래로 두 번 뒤집으면 원래 격자로 돌아와야 한다. 좌우로 뒤집힌 격자가 나올 수 없다.</p>
+<p>이유는 랩의 transformer NEO 설정에 있었다. 한 단계가 끝나면 state decoder가 칸마다 색의 확률을 낸다. 다음 단계는 그 확률을 state encoder에 다시 넣어 만든 state에서 시작한다. 격자로 그리면 칸마다 확률이 가장 높은 색만 보인다. 하지만 state에는 나머지 확률이 어떻게 퍼져 있는지도 들어간다. 모델은 그 보이지 않는 부분에 정보를 실어 다음 단계로 넘기고 있었다.</p>
+<figure>
+<div class="scroll">@@FIG_FLIP@@</div>
+<figcaption>같은 code를 두 번 쓴 과제 318개에서 직접 확인한 것. 첫 단계의 결과는 전부 위아래로 뒤집힌 격자다. 둘째 단계가 <span class="softw">확률을 넘겨받으면</span> 좌우로 뒤집힌 정답이 나오고, <span class="hardw">격자만 넘겨받으면</span> 원래 입력으로 돌아간다. object가 위아래 대칭이라 구별이 안 되는 58개는 아래쪽 수에서 뺐다. 격자 그림은 설명용 예시다.</figcaption>
+</figure>
+<p>그러니 이 code는 위아래 뒤집기라는 함수 하나가 아니다. 눈에 보이는 격자가 같아도, 넘겨받은 확률이 어떻게 퍼져 있느냐에 따라 다른 일을 한다. 첫 단계가 확률의 2%쯤에 표시를 남기고, 둘째 단계가 그 표시를 읽는다.</p>
+<p>긴 학습 다섯을 두 방식으로 다시 쟀다. 하나는 학습할 때처럼 <span class="softw">확률을 넘기는 방식</span>이고, 다른 하나는 <span class="hardw">격자만 넘기는 방식</span>이다. code 하나짜리 program은 두 방식에서 결과가 같다.</p>
+<figure>
+<div class="scroll">@@FIG_BARS@@</div>
+<figcaption>36,000스텝 학습 다섯. seed를 따로 적지 않은 것은 seed 42다. 격자만 넘기면 다섯 모두 transfer가 37%에서 43% 사이다.</figcaption>
+</figure>
+<p>이 그림에서 읽은 것은 셋이다.</p>
+<p>첫째, 격자만 넘기면 다섯 모델의 transfer가 모두 40% 근처다. code의 수도, 잠도, 잠마다 code를 켜는 규칙도 이 값을 움직이지 못했다. 61%였던 모델은 37%로 다섯 가운데 가장 낮다.</p>
+<p>둘째, code가 적을수록 모델이 이 길에 더 기댄다. 격자만 넘겼을 때 재현이 내려가는 폭이 code 16개 모델은 7%p이고, code 8개 모델들은 15%p에서 23%p이고, 잠을 넣은 모델은 35%p다. code가 모자라면 단계 사이의 확률을 code 대신 쓰는 것으로 보인다. 이 문장은 내 해석이고 따로 확인하지 않았다.</p>
+<p>셋째, 잠이 준 이득 가운데 진짜인 부분과 아닌 부분이 갈린다. 아래 그림은 잠을 넣은 학습과 넣지 않은 같은 학습을 도중에도 두 방식으로 잰 것이다.</p>
+<figure>
+<div class="scroll">@@FIG_CURVE@@</div>
+<figcaption>가로축은 학습에 든 계산이다. 잠 한 번의 계산은 0.4 PFLOPs라 이 축에서는 보이지 않는다. 도중의 값은 평가 과제 2,000개로, 마지막 값은 10,000개로 쟀다.</figcaption>
+</figure>
+<p>잠 직후인 18,000스텝에서는 두 방식의 값이 같고, 잠을 넣은 쪽이 10%p 앞선다. 비운 code가 오른쪽 이동을 맡게 된 것이고, 이것은 격자만 넘겨도 남는 이득이다. 그 뒤가 문제다. 잠을 넣은 학습은 확률을 넘기는 값만 37%에서 61%로 오르고, 격자만 넘기는 값은 제자리다. 18,000스텝 뒤에 새로 배운 것이 전부 단계 사이의 확률에 기댄 program이라는 뜻이다. 잠을 넣지 않은 학습은 두 값이 함께 올라서 마지막에는 격자만 넘기는 값에서 앞선다.</p>
+<div class="fix">
+<h3>오전 보고에서 고쳐야 하는 문장 둘</h3>
+<p>"잠 한 번으로 transfer가 17%p 올랐다"는 확률을 넘길 때에만 맞다. 격자만 넘기면 잠을 넣은 쪽이 5%p 낮다.</p>
+<p>"code가 적으면 transfer가 는다"도 확률을 넘길 때에만 맞다. 격자만 넘기면 code 16개가 40.0%, code 8개가 41.8%와 39.8%로 차이가 없다.</p>
+</div>
+<p>이 일은 평가라는 주제에 바로 닿는다. 같은 code 두 번이라는 program은 새 입력의 85%에서 정답을 내므로 transfer 정확도로는 성공이다. 하지만 그것은 격자 위의 연산 둘을 이은 program이 아니다. transfer 정확도 하나로는 이 둘이 구별되지 않고, 두 방식으로 재면 구별된다.</p>
+
+<h2><span class="n">6</span>잠에 대해 지금 말할 수 있는 것</h2>
+<p>잠은 세 가지 모양으로 돌려 봤다.</p>
+<div class="tablewrap"><table>
+<tr><th>잠이 한 일</th><th>결과</th></tr>
+<tr><td>겹친 code를 합쳐서 비우고, 비운 code를 설명하지 못하는 쌍에 배정. seed 42에서 한 번</td><td>직후에 transfer 10%p 이득. 격자만 넘겨도 남는다. 다만 겹친 code는 14,400스텝 근처에만 있었고 seed 43에는 아예 없었다</td></tr>
+<tr><td>설명하지 못하는 쌍이 남아 있으면 잠마다 code를 하나씩 새로 켬. 8개에서 14개가 됨</td><td>재현은 68%에서 80%로 올랐고 transfer는 44%에서 43%로 그대로다. 새 code는 이미 code를 가진 primitive를 입력에 따라 나누는 데 쓰였다</td></tr>
+<tr><td>새로 켤 수 있는 code를 하나로 막음. seed 43</td><td>21,600스텝에서 transfer 35%로, 잠 없는 같은 학습의 45%보다 낮다. 격자만 넘겨도 31%와 41%다. 여기서 멈췄다</td></tr>
+</table></div>
+<p>지금까지의 증거로는, 설명하지 못하는 쌍에 code를 새로 주는 것만으로는 transfer가 오르지 않는다. 지금 모양의 잠은 답이 아니다.</p>
+<p>남아 있는 문제는 따로 있다. 뒤집기 둘과 회전이 어떤 설정에서도 "어떤 입력에서도 통하는 code 하나"를 얻지 못한다. code 8개를 준 seed 43의 학습에서 primitive별 transfer는 색 바꾸기 100%, 위 100%, 아래 98%, 왼쪽 100%, 오른쪽 67%인데, 좌우 뒤집기 12%, 위아래 뒤집기 27%, 회전 11%다. 이동과 색은 배우고 뒤집기와 회전은 못 배운다.</p>
+<p>그리고 전체 transfer는 이 수로 거의 정해진다. primitive 둘짜리 과제의 transfer가 하나짜리 과제의 transfer를 제곱한 값과 거의 같았다. seed 43은 예상 39%에 실제 40%였다. 내가 한 산수이고 따로 검증한 것은 아니다. 맞다면 program이 길어서 틀리는 것이 아니라, code 하나를 가진 primitive가 여덟 가운데 다섯쯤이라서 틀리는 것이다.</p>
+
+<h2><span class="n">7</span>지금 돌고 있는 것</h2>
+<p>위의 다섯 모델은 확률을 넘기며 학습했다. 격자만 넘기는 평가는 그 모델들이 학습 때 겪지 않은 조건이다. 처음부터 격자만 넘기며 학습하면 얼마나 하는지는 아직 모른다. 그래서 그 길을 학습 때부터 막은 학습 둘을 돌리고 있다. 둘 다 code 8개, seed 42다.</p>
+<div class="tablewrap"><table>
+<tr><th>학습</th><th>다음 단계가 받는 것</th><th>단계 사이의 gradient</th><th>지금까지</th></tr>
+<tr><td>랩 설정 그대로</td><td>칸마다의 확률</td><td>흐른다</td><td>끝났다. 위의 값들이다</td></tr>
+<tr><td>랩 코드에 있는 다른 옵션 <code>reencode_hard</code></td><td>격자만</td><td>끊긴다</td><td>@@HARD_NOW@@</td></tr>
+<tr><td>새로 만든 부품 <code>neo_visible_state</code></td><td>격자만</td><td>흐른다</td><td>@@VISIBLE_NOW@@</td></tr>
+</table></div>
+<p>랩 설정 그대로인 학습은 7,200스텝에서 재현 14%, transfer 10%였고 18,000스텝에서 38%, 26%였다. 새 부품은 그보다 느리게 오르고, <code>reencode_hard</code>는 초반에 오히려 조금 빠르다. 아직 초반이라 어느 쪽도 결론이 아니다. 새 부품의 학습은 22일 02:20쯤, <code>reencode_hard</code>의 학습은 04:20쯤 끝나고 각각 seed 43이 이어진다.</p>
+<p>끝나면 볼 것은 하나다. 격자만 넘기며 학습한 모델의 transfer가 40%를 넘는가. 넘지 못하면 남는 문제는 6절의 것, 곧 뒤집기와 회전이다.</p>
+
+<h2><span class="n">8</span>아직 모르는 것과 정해 줄 것</h2>
+<p>랩이 논문에서 BabyTheorist에 쓴 NEO의 설정을 모른다. 이전 문서에 적힌 논문 점수는 레벨 1의 정확도가 수십 %여야 나오는데, 공개된 GridWorld 설정을 그대로 가져오면 위의 숫자가 나온다. 그 설정이나 코드를 받을 수 있으면 지금 가장 값이 큰 정보다.</p>
+<p>뒤집기와 회전이 왜 code 하나를 얻지 못하는지 모른다. 이동과 색 바꾸기는 칸의 내용을 그대로 옮기거나 색만 바꾸면 되고, 뒤집기와 회전은 object 안의 칸들을 서로 다른 거리만큼 옮겨야 한다는 차이가 있다. 이것이 이유인지는 추측이고 확인하지 않았다.</p>
+<p>정해 줄 것은 하나다. transfer를 앞으로 어느 방식으로 적을지다. 내 제안은 격자만 넘기는 값을 기본으로 삼고, 확률을 넘기는 값을 옆에 함께 적는 것이다. program의 각 단계가 격자에서 격자로 가는 연산이기를 바란다면 그쪽이 맞는 잣대다.</p>
+
+<h2><span class="n">9</span>이 문서에서 쓴 말</h2>
+<dl>
+<dt>재현</dt><dd>예시 쌍에서 쓴 program을 그 예시의 입력에 실행했을 때 예시의 출력이 그대로 나오는 과제의 비율. 랩 코드의 지표 이름은 self-explanation이다.</dd>
+<dt>transfer</dt><dd>그 program을 새 입력에 실행했을 때 정답과 격자 전체가 같은 과제의 비율. 정답은 보여 주지 않는다.</dd>
+<dt>확률을 넘기는 방식</dt><dd>한 단계가 낸 칸마다의 색 확률을 다음 단계의 출발점으로 삼는 것. 랩 설정의 <code>reencode_soft</code>다.</dd>
+<dt>격자만 넘기는 방식</dt><dd>칸마다 확률이 가장 높은 색만 남긴 격자를 다음 단계의 출발점으로 삼는 것. 평가 설정의 <code>rollout: hard</code>다.</dd>
+<dt>잠</dt><dd>학습을 잠깐 멈추고, 저장해 둔 학습 쌍을 다시 보면서 codebook을 고치는 단계. gradient로 하는 학습과 따로 돈다.</dd>
+<dt>PFLOPs</dt><dd>부동소수점 연산 10의 15제곱 번. 학습에 든 계산량의 단위로 썼다.</dd>
+</dl>
+<p class="lead" style="font-size:14px">숫자의 원본과 자세한 과정은 레포의 <code>docs/reports/2026-11-20-first-numbers.md</code> 5.9절부터 5.12절에 있다. 브랜치는 <code>code/baseline-observation</code>이다.</p>
+</main>
+</body>
+</html>
+"""
+
+
+def main() -> None:
+    import sys
+    now, hard_now, visible_now = sys.argv[1:4]
+    page = (PAGE.replace("@@FIG_TASK@@", task_figure()).replace("@@FIG_FLIP@@", flip_figure()).replace("@@FIG_BARS@@", bars_figure())
+            .replace("@@FIG_CURVE@@", curve_figure()).replace("@@NOW@@", now).replace("@@HARD_NOW@@", hard_now).replace("@@VISIBLE_NOW@@", visible_now))
+    assert "@@" not in page
+    OUT.write_text(page)
+    print(OUT, len(page))
+
+
+if __name__ == "__main__":
+    main()
