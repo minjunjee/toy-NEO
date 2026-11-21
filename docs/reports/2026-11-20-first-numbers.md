@@ -306,6 +306,8 @@ primitive별 transfer를 보면 어디서 차이가 났는지 보인다.
 | code 8개로 시작해 잠마다 하나씩 켬, seed 42 | 79.6%, 43.3% | 65.1%, 42.8% |
 | code 8개에 잠 한 번, seed 42 | 77.5%, 61.4% | 42.1%, 36.8% |
 
+같은 값을 그린 것이 `docs/reports/first-numbers/handover_rules.png`다. 중간 격자를 보는 스크립트는 `scripts/babytheorist/intermediate_states.py`다.
+
 읽은 것을 넷 적는다.
 
 첫째, 격자만 넘기면 다섯 모두 transfer가 40% 근처다. code의 수도, 잠도, code를 켜는 규칙도 이 값을 움직이지 못했다. 5.9절에 적은 "code가 적으면 옮겨 가는 양이 는다"와 "잠 한 번으로 17%p"는 확률을 넘길 때에만 성립한다.
