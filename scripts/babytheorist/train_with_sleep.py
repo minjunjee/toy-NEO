@@ -47,11 +47,13 @@ def main() -> None:
             print("wake ", " ".join(command), flush=True)
             if not args.dry_run:
                 subprocess.run(command, check=True, cwd=REPO)
-        if stop < total and not (run / "ckpt" / f"step-{stop:06d}.before_sleep.pt").exists():
+        slept = run / "ckpt" / f"step-{stop:06d}.slept"  # written after the phase, whether or not it changed the checkpoint
+        if stop < total and not slept.exists():
             command = [sys.executable, str(REPO / "scripts" / "babytheorist" / "sleep_edit_checkpoint.py"), "--ckpt", str(checkpoint), "--in-place", "--split", args.split, *sleep_options]
             print("sleep", " ".join(command), flush=True)
             if not args.dry_run:
                 subprocess.run(command, check=True, cwd=REPO)
+                slept.write_text("")
         done = stop
 
 

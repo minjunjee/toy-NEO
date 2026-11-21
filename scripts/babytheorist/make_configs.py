@@ -108,6 +108,12 @@ def main() -> None:
     configs["neo_transformer_36k_codes10_single_a_lv1_s42"] = neo_transformer(*SINGLE_A_LV1, 42, steps=36000, codes=10)
     # other seeds of the eight-code run, each once as it is and once trained in segments with an offline phase between them
     # (same config under another name; the phases come from scripts/babytheorist/train_with_sleep.py)
+    # a codebook that grows by need: eight codes at the start, one more switched on per offline phase while training pairs
+    # stay unexplained, sixteen at most (trained with scripts/babytheorist/train_with_sleep.py)
+    for seed in (42, 43):
+        grow = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=16)
+        grow["model"]["code"] = {**grow["model"]["code"], "type": "vq_growable", "initial": 8}
+        configs[f"neo_transformer_36k_grow8to16_single_a_lv1_s{seed}"] = grow
     for seed in (43, 44):
         configs[f"neo_transformer_36k_codes8_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
         configs[f"neo_transformer_36k_codes8_sleeps_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)

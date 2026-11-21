@@ -71,6 +71,23 @@ def test_any_size_cnn_is_the_official_cnn_at_ten() -> None:
     assert CNNVAEAnyDecoder(15, 10, 32)(CNNVAEAnyEncoder(15, 10, 32)(torch.randint(0, 10, (2, 15, 15)))).shape == (2, 15, 15, 10)
 
 
+def test_growable_codebook_is_the_lab_codebook_when_every_row_is_active_and_never_picks_an_inactive_row() -> None:
+    from components.codes import VQ
+    from components.codes_growable import GrowableVQ
+
+    torch.manual_seed(0)
+    lab = VQ(8, 16, stochastic=False, commitment_grad=True)
+    grown = GrowableVQ(8, 16, stochastic=False, commitment_grad=True)
+    grown.embedding.load_state_dict(lab.embedding.state_dict())
+    actions = torch.randn(64, 1, 16)
+    a, b = lab(actions, training=True), grown(actions, training=True)
+    assert torch.equal(a.indices, b.indices) and torch.equal(a.values, b.values) and torch.equal(a.loss_per_sample, b.loss_per_sample)
+    partial = GrowableVQ(8, 16, initial=3, stochastic=False, commitment_grad=True)
+    assert int(partial(actions, training=False).indices.max()) <= 2 and partial.active.tolist() == [True] * 3 + [False] * 5
+    partial.active[6] = True
+    assert set(partial(actions, training=False).indices.tolist()) <= {0, 1, 2, 6}
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

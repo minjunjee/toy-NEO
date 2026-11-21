@@ -38,6 +38,8 @@ def read_jobs(path: Path) -> list[tuple[str, list[str], str | None]]:
         after = [name for p in parts[1:] if p.startswith("after=") for name in p[6:].split(",") if name]
         resume = next((p[7:] for p in parts[1:] if p.startswith("resume=")), None)
         sleep = next((p[12:] for p in parts[1:] if p.startswith("sleep_every=")), None)
+        if sleep:
+            sleep = (sleep, next((p[12:] for p in parts[1:] if p.startswith("first_sleep=")), str(2 * int(sleep))))
         jobs.append((parts[0], after, (resume, sleep)))
     return jobs
 
@@ -89,9 +91,9 @@ def main() -> None:
             command = [sys.executable, str(REPO / "scripts" / "train.py"), "--config", config, "--output-root", str(args.output_root), "--wandb-mode", "disabled"]
             if resume:
                 command += ["--resume", resume]
-            if sleep:  # wake and sleep in turns: first phase after two periods, eval split named lv1
+            if sleep:  # wake and sleep in turns: first phase after two periods unless first_sleep= says otherwise, eval split named lv1
                 command = [sys.executable, str(REPO / "scripts" / "babytheorist" / "train_with_sleep.py"), "--config", config, "--output-root", str(args.output_root),
-                           "--split", "lv1", "--sleep-every", sleep, "--first-sleep", str(2 * int(sleep)), "--candidates", "3"]
+                           "--split", "lv1", "--sleep-every", sleep[0], "--first-sleep", sleep[1], "--candidates", "3"]
             running[name] = (subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=REPO), gpu)
             say(f"start {name} on {gpu}")
         if not running and not waiting:

@@ -7,6 +7,8 @@ The phase does two things, reading nothing from the hidden programs:
    (within a margin) with no repair at all, b was a duplicate: the merge is kept and index b becomes free.
 2. Hand the freed index to what is not explained. Each freed index gets the programmer's first action on a training
    pair the model cannot reproduce (drawn at random among them), so the code starts where an unexplained pair asks for it.
+   With a codebook that can grow (code type vq_growable) a merged-away row is switched off, and while enough training
+   pairs are unexplained one switched-off row per phase is switched on in the same way: the codebook grows by need.
 
 The same edit is written into the averaged weights and the raw weights of the checkpoint; optimizer state is left as it is.
 The edited checkpoint is saved under runs/<new run>/ckpt/ with the step unchanged, and the compute spent is written to
@@ -51,6 +53,8 @@ def main() -> None:
     parser.add_argument("--min-use", type=int, default=50)
     parser.add_argument("--margin", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--allocate", type=int, default=1, help="codebook that can grow: rows switched on per phase at most")
+    parser.add_argument("--grow-threshold", type=float, default=0.05, help="codebook that can grow: switch a row on only while at least this share of training pairs is not reproduced")
     parser.add_argument("--freed", choices=("unexplained", "alias", "random"), default="unexplained",
                         help="what a freed index becomes: the programmer's action on an unexplained pair (the phase as described), a copy of the code it was merged into "
                              "(merge only), or a random direction (no pointing at what is unexplained). The last two are controls.")
@@ -80,7 +84,7 @@ def main() -> None:
 
     vectors = F.normalize(model.code.embedding.weight.float(), dim=-1)
     similarity = vectors @ vectors.T
-    used = [c for c in range(model.code.size) if int(usage[c]) >= args.min_use]
+    used = [c for c in range(model.code.size) if int(usage[c]) >= args.min_use and (not hasattr(model.code, "active") or bool(model.code.active[c]))]
     candidates = sorted(((float(similarity[a, b]), a, b) for i, a in enumerate(used) for b in used[i + 1:]), reverse=True)[: args.candidates]
     gone: set[int] = set()
     for cosine, a, b in candidates:
@@ -104,9 +108,17 @@ def main() -> None:
             model.code.embedding.weight[drop] = old_vector
             memory["codes"] = old_codes
 
-    # the freed indices go to pairs the model cannot reproduce
+    # codes go to pairs the model cannot reproduce: every index freed by a merge, and in a codebook that can grow, also
+    # rows that are switched off, at most --allocate of them per phase and only while enough pairs are unexplained
+    growable = hasattr(model.code, "active")
+    if growable:
+        for drop in gone:
+            model.code.active[drop] = False
+        slots = [c for c in range(model.code.size) if not bool(model.code.active[c])]
+    else:
+        slots = sorted(gone)
     new_vectors: dict[int, torch.Tensor] = {}
-    if gone:
+    if slots:
         generator = torch.Generator().manual_seed(args.seed + 2)
         chosen = torch.randperm(len(pairs), generator=generator)[:4000]
         x, y = pairs.x[chosen].long(), pairs.y[chosen].long()
@@ -119,26 +131,42 @@ def main() -> None:
         flops += per_pair * len(chosen)
         unexplained = torch.nonzero(missed).flatten()
         report["unexplained_share_of_training_pairs"] = float(missed.float().mean())
-        for slot, drop in enumerate(sorted(gone)):
+        if growable:
+            slots = slots[: args.allocate] if report["unexplained_share_of_training_pairs"] >= args.grow_threshold else []
+        for drop in slots:
+            if len(unexplained) == 0:
+                break
             pick = int(unexplained[torch.randint(len(unexplained), (1,), generator=generator)])
             action = model.programmer(model.encoder(x[pick:pick + 1].to(device)), model.encoder(y[pick:pick + 1].to(device)))
-            scale = model.code.embedding.weight.norm(dim=-1).mean()
+            scale = model.code.embedding.weight[model.code.active].norm(dim=-1).mean() if growable else model.code.embedding.weight.norm(dim=-1).mean()
             if args.freed == "unexplained":
                 new_vectors[drop] = (F.normalize(action.reshape(-1).float(), dim=-1) * scale).cpu()
             elif args.freed == "random":
                 new_vectors[drop] = (F.normalize(torch.randn(action.numel(), generator=generator), dim=-1) * scale.cpu())
-            report["freed"].append({"code": drop, "becomes": args.freed, "from_training_pair": int(chosen[pick]) if args.freed == "unexplained" else None})
+            report["freed"].append({"code": drop, "becomes": args.freed, "was": "merged away" if drop in gone else "switched off",
+                                    "from_training_pair": int(chosen[pick]) if args.freed == "unexplained" else None})
 
     merged_into = {m["codes"][1]: m["codes"][0] for m in report["merges"] if m["accepted"]}
+    changed = bool(gone) or bool(new_vectors)
     for key in ("model", "raw_model"):
-        if key in payload and gone:
-            weights = payload[key][EMBEDDING]
-            for drop in gone:
-                weights[drop] = weights[merged_into[drop]].clone() if args.freed == "alias" else new_vectors[drop].to(weights.dtype)
+        if key not in payload or not changed:
+            continue
+        weights = payload[key][EMBEDDING]
+        for drop in gone:
+            if growable:
+                payload[key]["code.active"][drop] = False
+            elif args.freed == "alias":
+                weights[drop] = weights[merged_into[drop]].clone()
+        for drop, vector in new_vectors.items():
+            weights[drop] = vector.to(weights.dtype)
+            if growable:
+                payload[key]["code.active"][drop] = True
+    if growable:
+        report["active_codes_after"] = int(payload["model"]["code.active"].sum())
     report["flops"] = flops
     if args.in_place:
         output = args.ckpt.parents[1]
-        if gone:
+        if changed:
             args.ckpt.rename(args.ckpt.with_name(args.ckpt.stem + ".before_sleep.pt"))
             torch.save(payload, args.ckpt)
         phases = json.loads((output / "extra_flops.json").read_text()) if (output / "extra_flops.json").exists() else []
