@@ -163,6 +163,107 @@ def one_step_screen_3() -> dict:
     return screen
 
 
+def one_step_screen_4() -> dict:
+    """Fourth screen: combinations of what helped early in the third (restarts of unused codes, a wider or shallower
+    programmer), more and smaller updates, and longer runs. The weight average is off in all of them, so the evaluations
+    during training show the trained weights. name -> (codes, steps, changes)"""
+
+    restart = {"model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99}
+    wide = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}
+    base = {"model.programmer": PAIR_PROGRAMMER, "train.ema": 0.0, **restart}
+    exec_wide = {"model.executor.d_model": 256, "model.executor.d_ff": 1024}
+    small_batch = {"train.batch_size": 128}
+    return {
+        "q_r": (16, 6000, base),
+        "q_r_w": (16, 6000, {**base, "model.programmer": wide}),
+        "q_r_3l": (16, 6000, {**base, "model.programmer": {**PAIR_PROGRAMMER, "num_layers": 3}}),
+        "q_r_w_3l": (16, 6000, {**base, "model.programmer": {**wide, "num_layers": 3}}),
+        "q_r_w_x": (16, 6000, {**base, "model.programmer": wide, **exec_wide}),
+        "q_r_w_3l_x": (16, 6000, {**base, "model.programmer": {**wide, "num_layers": 3}, **exec_wide}),
+        "q_r_b128": (16, 24000, {**base, **small_batch}),
+        "q_r_w_b128": (16, 24000, {**base, "model.programmer": wide, **small_batch}),
+        "q_r_c8": (8, 6000, base),
+        "q_r_w_c8": (8, 6000, {**base, "model.programmer": wide}),
+        "q_r_w_c32": (32, 6000, {**base, "model.programmer": wide}),
+        "q_r_w_until3k": (16, 6000, {**base, "model.programmer": wide, "model.code.restart_until": 3000}),
+        "q_r_w_commit005": (16, 6000, {**base, "model.programmer": wide, "model.code.commitment": 0.05}),
+        "q_r_w_nocommitgrad": (16, 6000, {**base, "model.programmer": wide, "model.code.commitment_grad": False}),
+        "q_r_w_12k": (16, 12000, {**base, "model.programmer": wide}),
+        "q_r_w_3l_12k": (16, 12000, {**base, "model.programmer": {**wide, "num_layers": 3}}),
+        "q_w_noema": (16, 6000, {"model.programmer": wide, "train.ema": 0.0}),
+        # added after the third screen's first 3,000 steps: a small code dimension and no commitment gradient both sped up
+        # the discovery of codes about as much as restarts did
+        "q_r_w_dim4": (16, 6000, {**base, "model.programmer": {**wide, "action_dim": 4}, "model.code.dim": 4, "model.executor.cond_dim": 4}),
+        "q_r_w_dim4_nocommitgrad": (16, 6000, {**base, "model.programmer": {**wide, "action_dim": 4}, "model.code.dim": 4, "model.executor.cond_dim": 4, "model.code.commitment_grad": False}),
+        "q_r_w_3l_dim4_nocommitgrad": (16, 6000, {**base, "model.programmer": {**wide, "action_dim": 4, "num_layers": 3}, "model.code.dim": 4, "model.executor.cond_dim": 4, "model.code.commitment_grad": False}),
+        "q_r_dim4_nocommitgrad": (16, 6000, {**base, "model.programmer": {**PAIR_PROGRAMMER, "action_dim": 4}, "model.code.dim": 4, "model.executor.cond_dim": 4, "model.code.commitment_grad": False}),
+        "q_r_w_dim4_nocommitgrad_c32": (32, 6000, {**base, "model.programmer": {**wide, "action_dim": 4}, "model.code.dim": 4, "model.executor.cond_dim": 4, "model.code.commitment_grad": False}),
+    }
+
+
+def one_step_screen_5() -> dict:
+    """Fifth screen: transfer instead of explanation. The fourth screen brought explanation to 99% but restarts put every
+    code to use and primitives got split over several codes; the best transfer came without restarts (wide programmer, no
+    weight average) and with four times as many, four times smaller updates. These vary those two things and the number
+    of codes. name -> (codes, steps, changes); the weight average is off in all."""
+
+    wide = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}
+    base = {"model.programmer": wide, "train.ema": 0.0}
+    exec_wide = {"model.executor.d_model": 256, "model.executor.d_ff": 1024}
+    restart_early = {"model.code.type": "vq_restart", "model.code.restart_every": 100, "model.code.restart_below": 0.1, "model.code.usage_decay": 0.99, "model.code.restart_until": 500}
+    b128, b64 = {"train.batch_size": 128}, {"train.batch_size": 64}
+    return {
+        "t_w_b128": (16, 24000, {**base, **b128}),
+        "t_w_x_b128": (16, 24000, {**base, **exec_wide, **b128}),
+        "t_w_b64": (16, 48000, {**base, **b64}),
+        "t_n_b128": (16, 24000, {"model.programmer": PAIR_PROGRAMMER, "train.ema": 0.0, **b128}),
+        "t_w_early": (16, 6000, {**base, **restart_early}),
+        "t_w_early_b128": (16, 24000, {**base, **restart_early, **b128}),
+        "t_w_b128_c8": (8, 24000, {**base, **b128}),
+        "t_w_b128_c10": (10, 24000, {**base, **b128}),
+        "t_w_b128_c12": (12, 24000, {**base, **b128}),
+        "t_w_b128_c32": (32, 24000, {**base, **b128}),
+        "t_w_x": (16, 6000, {**base, **exec_wide}),
+        "t_w_12k": (16, 12000, base),
+        "t_w_b128_nocommitgrad": (16, 24000, {**base, **b128, "model.code.commitment_grad": False}),
+        "t_w_b128_lr1e4": (16, 24000, {**base, **b128, "method.lr": 1.0e-4}),
+        "t_w_b128_lr6e4": (16, 24000, {**base, **b128, "method.lr": 6.0e-4}),
+        "t_w_b128_48k": (16, 48000, {**base, **b128}),
+    }
+
+
+def fast_neo(train: list[str], evals: dict[str, str], seed: int, steps: int = 12000, codes: int = 16, max_length: int = 5, changes: dict | None = None) -> dict:
+    """The full multi-step transformer NEO with the standard parts that the one-step search settled on.
+
+    Against the lab config (neo_transformer): the programmer joins the current and the target state cell by cell and is
+    wider and shallower (256 wide, 3 layers), the executor is 256 wide, unused codes are restarted, and the programmer's
+    and the executor's forward are compiled. The rollout, the length rule, the losses and the state handed between steps
+    are the lab's. `changes` overrides settings by dotted path."""
+
+    config = neo_transformer(train, evals, seed, steps=steps, codes=codes, max_length=max_length)
+    config["model"]["programmer"] = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024, "num_layers": 3}
+    config["model"]["executor"] = {**config["model"]["executor"], "d_model": 256, "d_ff": 1024}
+    config["model"]["code"] = {**config["model"]["code"], "type": "vq_restart", "restart_every": 100, "restart_below": 0.1, "usage_decay": 0.99}
+    config["train"]["compile"] = "parts"
+    config["train"]["ckpt_every"] = steps // 4
+    for path, value in (changes or {}).items():
+        set_path(config, path, copy.deepcopy(value))
+    return config
+
+
+def fast_neo_screen_1() -> dict:
+    """First multi-step runs with the searched parts on the benchmark's level 1. name -> (codes, changes)"""
+
+    return {
+        "c16": (16, {}),
+        "c8": (8, {}),
+        "c32": (32, {}),
+        "c16_norestart": (16, {"model.code.restart_every": 0}),
+        "c16_dim4_nocommitgrad": (16, {"model.code.dim": 4, "model.programmer.action_dim": 4, "model.executor.cond_dim": 4, "model.code.commitment_grad": False}),
+        "c16_until6k": (16, {"model.code.restart_until": 6000}),
+    }
+
+
 def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, steps: int = 39100, codes: int = 12, max_length: int = 4, codec_steps: int = 40000, hidden: int = 128) -> dict:
     """The lab's official NEO (neo_gw033_k4_cb6_s42.yaml) with the 15x15 CNN state encoder and decoder."""
 
@@ -224,6 +325,21 @@ def main() -> None:
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
     for name, (codes, changes) in one_step_screen_3().items():
         configs[f"onestep_{name}_s42"] = one_step(42, codes=codes, changes=changes)
+    for name, (codes, steps, changes) in one_step_screen_5().items():
+        for seed in ((42, 43, 44) if name == "t_w_b128" else (42,)):
+            configs[f"onestep_{name}_s{seed}"] = one_step(seed, steps=steps, codes=codes, changes=changes)
+    # the full model with what the fifth screen is testing: no restarts, no weight average, smaller and more updates
+    for name, changes in {"c16_norestart_b128": {"model.code.restart_every": 0, "train.batch_size": 128, "train.ema": 0.0},
+                          "c16_b128": {"train.batch_size": 128, "train.ema": 0.0},
+                          "c16_norestart_noema": {"model.code.restart_every": 0, "train.ema": 0.0}}.items():
+        steps = 48000 if "b128" in name else 12000
+        configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, changes=changes)
+    for name, (codes, changes) in fast_neo_screen_1().items():
+        for seed in ((42, 43) if name == "c16" else (42,)):
+            configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
+    for name, (codes, steps, changes) in one_step_screen_4().items():
+        for seed in ((42, 43) if name in ("q_r", "q_r_w") else (42,)):
+            configs[f"onestep_{name}_s{seed}"] = one_step(seed, steps=steps, codes=codes, changes=changes)
     for name, (codes, changes) in ONE_STEP_SCREEN_2.items():
         for seed in ((42, 43) if name == "pair" else (42,)):
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
