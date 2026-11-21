@@ -74,6 +74,55 @@ def neo_transformer(train: list[str], evals: dict[str, str], seed: int, steps: i
             "train": train_block(steps, 512, seed, "runs/codec_token/ckpt/step-003000.pt", steps // 10, ema=0.999)}
 
 
+def set_path(config: dict, path: str, value) -> None:
+    """config["a"]["b"]["c"] = value for path "a.b.c"."""
+
+    *parents, last = path.split(".")
+    for key in parents:
+        config = config[key]
+    config[last] = value
+
+
+def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None = None) -> dict:
+    """The transformer NEO cut down to one program step, trained on single-primitive tasks only.
+
+    The programmer picks one code from a pair and the executor applies it once, so a run costs a fifth of the full one.
+    It asks one thing of the standard parts: can they learn every primitive as one code that works on any input? The full
+    file is still evaluated, but only the single-primitive tasks (depth 1) can be solved. `changes` overrides settings by
+    dotted path, for searching over the parts."""
+
+    config = neo_transformer(*SINGLE_A_LV1, seed, steps=steps, codes=codes, max_length=1)
+    config["data"]["train_max_depth"] = 1
+    config["train"]["compile"] = "parts"
+    for path, value in (changes or {}).items():
+        set_path(config, path, value)
+    return config
+
+
+PAIR_PROGRAMMER = {"type": "token_pair_transformer", "state_dim": 128, "d_model": 128, "action_dim": 16, "num_heads": 8, "d_ff": 512, "num_layers": 6, "grid_dim": GRID,
+                   "dropout": 0.0, "layer_norm_eps": 1.0e-6}
+
+# first screen of the standard parts on the one-step task: name -> (codes, changes)
+ONE_STEP_SCREEN_1 = {
+    "base": (16, {}),
+    "codes8": (8, {}),
+    "exec8l": (16, {"model.executor.num_layers": 8}),
+    "exec256": (16, {"model.executor.d_model": 256, "model.executor.d_ff": 1024}),
+    "exec256x8l": (16, {"model.executor.d_model": 256, "model.executor.d_ff": 1024, "model.executor.num_layers": 8}),
+    "lr1e3": (16, {"method.lr": 1.0e-3}),
+    "proglr1": (16, {"method.programmer_lr_scale": 1.0}),
+    "vqsample": (16, {"model.code.stochastic": True, "model.code.tau_start": 0.3, "model.code.tau_end": 0.1, "model.code.tau_steps": 3000}),
+}
+
+# second screen: the cheaper programmer that joins the current and the target state cell by cell
+ONE_STEP_SCREEN_2 = {
+    "pair": (16, {"model.programmer": PAIR_PROGRAMMER}),
+    "pair_ff1024": (16, {"model.programmer": {**PAIR_PROGRAMMER, "d_ff": 1024}}),
+    "pair256": (16, {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}}),
+    "pair256_exec256": (16, {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "model.executor.d_model": 256, "model.executor.d_ff": 1024}),
+}
+
+
 def neo_mlp(train: list[str], evals: dict[str, str], seed: int, state_dim: int, steps: int = 39100, codes: int = 12, max_length: int = 4, codec_steps: int = 40000, hidden: int = 128) -> dict:
     """The lab's official NEO (neo_gw033_k4_cb6_s42.yaml) with the 15x15 CNN state encoder and decoder."""
 
@@ -129,6 +178,18 @@ def main() -> None:
         configs[f"neo_transformer_36k_codes8_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
         configs[f"neo_transformer_36k_codes8_sleeps_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
     # more seeds of the same run: the first two differed threefold, so the spread over seeds comes before any comparison
+    # the search over the standard parts on the one-step task (the base twice, to see the spread over seeds)
+    for name, (codes, changes) in ONE_STEP_SCREEN_1.items():
+        for seed in ((42, 43) if name == "base" else (42,)):
+            configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
+    for name, (codes, changes) in ONE_STEP_SCREEN_2.items():
+        for seed in ((42, 43) if name == "pair" else (42,)):
+            configs[f"onestep_{name}_s{seed}"] = one_step(seed, codes=codes, changes=changes)
+    # the full five-step model with the cheaper programmer, for timing and later for the long runs
+    fast = neo_transformer(*SINGLE_A_LV1, 42, steps=36000)
+    fast["model"]["programmer"] = dict(PAIR_PROGRAMMER)
+    fast["train"]["compile"] = "parts"
+    configs["neo_pair_36k_single_a_lv1_s42"] = fast
     for seed in (45, 46, 47, 48):
         configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)
     for seed in (42, 43, 44):

@@ -23,7 +23,7 @@ from torch import nn
 
 from core.registry import EVALS
 
-DEPTH_BUCKETS = (1, 2, 3, 4, 5)  # 5 stands for 5 and deeper
+DEPTH_BUCKETS = (1, 2, 3, 4, 5)  # the default buckets; 5 stands for 5 and deeper
 
 
 def on_device(batch: dict, device: torch.device) -> dict:
@@ -56,6 +56,8 @@ def babytheorist_observe(model: nn.Module, data, cfg: dict, step: int, device: t
     infer = dict(cfg.get("infer", {}))
     official = infer.get("rollout", "official") == "official"
     max_steps = infer.get("max_steps") or model.max_length
+    # depths are reported one by one up to cfg["deepest_bucket"], which also stands for everything deeper (default 5)
+    DEPTH_BUCKETS = tuple(range(1, int(cfg.get("deepest_bucket", 5)) + 1))
     names = ("explain", "transfer_lab", "transfer_strict", "transfer_consistent")
     hits = {name: torch.zeros(len(DEPTH_BUCKETS) + 1) for name in names}
     counts = torch.zeros(len(DEPTH_BUCKETS) + 1)

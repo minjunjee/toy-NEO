@@ -75,3 +75,9 @@
 - 00:15 사용자가 랩 결과의 재현이 안 되는 것이냐고 물음. 랩이 BabyTheorist에 쓴 설정을 돌려 본 적이 없다고 답함. `autoresearch-neo`의 README가 출처로 BabyTheorist의 commit `e51a7d1`을 적고 코드 주석이 그 레포의 모델 파일을 가리키는데, 가진 공개 `babytheorist`에는 모델 코드도 그 commit도 없다. 모델 코드가 든 BabyTheorist 레포, learning-to-theorize, World-Theory-Model의 링크를 요청함.
 - 00:20 사용자가 방향을 정함. 지금 도는 학습이 끝나면 primitive의 수와 program의 길이를 크게 늘려서, 못하는 것을 보이고 이유를 분석하는 데 집중한다. 고치는 것은 그 뒤다.
 - 00:21 데이터 생성을 시작함. primitive 11개에 레벨 1인 `single_11prim`, primitive 8개에 레벨 5와 7인 `single_a`다.
+- 00:25 사용자가 부수적인 부품과 설정은 도움 없이 직접 범위를 잡아 돌리라고 함. 주제는 NEO의 아키텍처다. 통로를 막은 학습 둘을 멈춤. `neo_visible_state`는 24,850스텝, `reencode_hard`는 12,750스텝에서 멈췄고 마지막 평가는 각각 재현 25.4%에 transfer 16.3%, 재현 14.5%에 transfer 12.6%다.
+- 00:29 빠른 판을 만듦. primitive 하나짜리 학습 쌍만 쓰고 program을 한 단계로 제한한 학습이다. 한 step의 계산이 3.3 TFLOPs로 다섯 단계짜리의 5분의 1이다. 부품이 primitive 여덟을 code 하나씩으로 배울 수 있는지를 본다. 첫 묶음은 아홉 개다. 기본 설정 seed 둘, code 8개, executor 8층, executor 폭 256, 둘 다, 학습률 1e-3, programmer 학습률 배율 1, code를 확률로 뽑기.
+- 00:33 사용자가 GPU를 제대로 쓰는지, 병목이 무엇인지 물음. 학습 한 step을 프로파일함. GPU는 RTX PRO 6000 Blackwell 96GB 두 장이고 내 프로세스만 쓴다. 처리량은 초당 840쌍이고 batch를 키워도 같다. GPU는 계속 일하지만 행렬곱은 시간의 15%에서 20%이고 나머지는 layer norm, attention, 자잘한 원소별 연산이다. step마다 kernel을 만 번 가까이 부른다.
+- 00:37 `torch.compile`을 programmer와 executor의 forward에 걸면 batch 128에서 152ms가 88ms가 된다. 첫 step의 loss는 2.80432와 2.80433으로 같다. `train.compile: parts` 설정으로 넣음. 기본값은 끔이라 기존 config의 동작은 같다. AdamW의 fused 옵션과 max-autotune 모드는 차이가 없었다.
+- 00:44 새 부품 `token_pair_transformer`를 만듦. 랩의 programmer는 state와 목표를 칸마다 token 둘로 늘어놓아 token 451개를 처리하는데, 이 부품은 칸마다 둘을 이어 붙여 하나로 투영해 226개를 처리한다. 다섯 단계짜리 모델에서 컴파일까지 켜면 152ms가 44ms가 되고 메모리는 16.3GB에서 7.6GB가 된다. 정확도가 유지되는지는 빠른 판에서 확인한다.
+- 00:41 레벨 1로 학습한 code 16개 모델을 레벨 3의 평가 과제에 시험함. program을 5단계까지 허용하면 재현 64.9%, transfer 17.2%이고 10단계까지 허용하면 재현 79.3%, transfer 17.2%다. transfer는 숨은 program의 길이가 1, 2, 3, 4, 5, 6일 때 58%, 39%, 24%, 16%, 10%, 6%로 한 단계마다 0.65배쯤 줄고 7 이상은 거의 0이다. 격자만 넘기는 방식으로는 50%, 38%, 25%, 18%, 11%, 12%다.

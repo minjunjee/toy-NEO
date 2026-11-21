@@ -23,6 +23,7 @@ class TrainConfig:
     wandb_project: str
     wandb_mode: str = "online"
     ema: float = 0.0  # decay of an exponential moving average of the weights used for eval and checkpoints; 0 = off
+    compile: str = "none"  # "parts": torch.compile on the programmer's and the executor's forward (GPU only); same numbers, faster steps
 
     def __post_init__(self) -> None:
         if self.steps < 1 or self.batch_size < 1:
@@ -35,6 +36,8 @@ class TrainConfig:
             raise ValueError("wandb_mode must be online, offline, or disabled")
         if not 0.0 <= self.ema < 1.0:
             raise ValueError("ema must be in [0, 1)")
+        if self.compile not in ("none", "parts"):
+            raise ValueError("compile must be none or parts")
 
 
 def load_config(path: str | Path) -> dict:

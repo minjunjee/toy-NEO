@@ -144,6 +144,13 @@ def train(config: dict, output_dir: Path, resume: Path | None = None) -> Path | 
         if checkpoint is not None and "raw_model" in checkpoint:
             ema.module.load_state_dict(checkpoint["model"])
     averaged = ema.module if ema is not None else module
+    if tc.compile == "parts" and rt.device.type == "cuda":
+        # after the averaged copy is made, so the copy used for evaluation and checkpoints stays a plain module; the forward
+        # of the trained parts is replaced by its compiled version, parameters and state_dict keys are untouched
+        for name in ("programmer", "executor"):
+            part = getattr(module, name, None)
+            if part is not None:
+                part.forward = torch.compile(part.forward)
 
     loader = data.train_loader(tc.batch_size, tc.steps, start_step, tc.seed, rt.rank, rt.world_size, tc.num_workers, rt.device.type == "cuda")
     git = git_state(Path(__file__).resolve().parents[2])
