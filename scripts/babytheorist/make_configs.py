@@ -114,6 +114,7 @@ def main() -> None:
         grow = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=16)
         grow["model"]["code"] = {**grow["model"]["code"], "type": "vq_growable", "initial": 8}
         configs[f"neo_transformer_36k_grow8to16_single_a_lv1_s{seed}"] = grow
+        configs[f"neo_transformer_36k_grow8to9_single_a_lv1_s{seed}"] = grow  # the same model; the offline phase is told --max-active 9
     for seed in (43, 44):
         configs[f"neo_transformer_36k_codes8_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
         configs[f"neo_transformer_36k_codes8_sleeps_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)

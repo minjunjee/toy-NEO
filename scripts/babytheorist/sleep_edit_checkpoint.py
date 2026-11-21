@@ -54,6 +54,7 @@ def main() -> None:
     parser.add_argument("--margin", type=float, default=0.01)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--allocate", type=int, default=1, help="codebook that can grow: rows switched on per phase at most")
+    parser.add_argument("--max-active", type=int, help="codebook that can grow: never more than this many rows switched on (default: all rows)")
     parser.add_argument("--grow-threshold", type=float, default=0.05, help="codebook that can grow: switch a row on only while at least this share of training pairs is not reproduced")
     parser.add_argument("--freed", choices=("unexplained", "alias", "random"), default="unexplained",
                         help="what a freed index becomes: the programmer's action on an unexplained pair (the phase as described), a copy of the code it was merged into "
@@ -132,7 +133,8 @@ def main() -> None:
         unexplained = torch.nonzero(missed).flatten()
         report["unexplained_share_of_training_pairs"] = float(missed.float().mean())
         if growable:
-            slots = slots[: args.allocate] if report["unexplained_share_of_training_pairs"] >= args.grow_threshold else []
+            room = (args.max_active or model.code.size) - int(model.code.active.sum())
+            slots = slots[: max(0, min(args.allocate, room))] if report["unexplained_share_of_training_pairs"] >= args.grow_threshold else []
         for drop in slots:
             if len(unexplained) == 0:
                 break
