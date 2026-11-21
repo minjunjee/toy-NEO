@@ -35,7 +35,8 @@ def main() -> None:
         for file in sorted((run / "eval").glob(f"observe_{args.split}_step*.json")):
             d = json.loads(file.read_text())
             light[int(file.stem.split("step")[1])] = (d["explain_depth1"], d["transfer_strict_depth1"])
-        entry = {"run": run.name, "done": (run / "DONE").exists(), "tflops_per_step": flops.get(run.name, {}).get("train_flops_per_step", 0) / 1e12, "light": light}
+        state = "done" if (run / "DONE").exists() else "stopped" if (run / "STOPPED.txt").exists() else "running" if light or (run / "train.jsonl").stat().st_size else "queued"
+        entry = {"run": run.name, "done": (run / "DONE").exists(), "state": state, "tflops_per_step": flops.get(run.name, {}).get("train_flops_per_step", 0) / 1e12, "light": light}
         full = sorted((run / "eval").glob(f"observe_full_{args.split}_step*.json"))
         if full:
             d = json.loads(full[-1].read_text())
@@ -49,7 +50,7 @@ def main() -> None:
     for entry in report:
         steps = sorted(entry["light"])
         last = steps[-1] if steps else None
-        head = f"{entry['run']:34s} {entry['tflops_per_step']:5.2f} TFLOPs/step  {'done' if entry['done'] else 'running':7s}"
+        head = f"{entry['run']:34s} {entry['tflops_per_step']:5.2f} TFLOPs/step  {entry['state']:7s}"
         if "full" in entry:
             per = "  ".join(f"{SHORT.get(n, n)} {v['transfer']:.2f}/{v['codes']}" for n, v in entry["primitives"].items())
             print(f"{head} depth-1 explain {entry['full']['explain_depth1']:.3f} transfer {entry['full']['transfer_depth1']:.3f}  primitives carried {entry['solved']}/{len(entry['primitives'])}  codes used {entry['codes_used']}")

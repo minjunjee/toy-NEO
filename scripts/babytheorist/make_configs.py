@@ -96,6 +96,9 @@ def one_step(seed: int, steps: int = 6000, codes: int = 16, changes: dict | None
     config = neo_transformer(*SINGLE_A_LV1, seed, steps=steps, codes=codes, max_length=1)
     config["data"]["train_max_depth"] = 1
     config["train"]["compile"] = "parts"
+    config["train"]["ckpt_every"] = steps  # one checkpoint per run: a search starts dozens of these and the disks are small
+    # (the averaged weights lag the trained ones by about a thousand steps, which hides most of a run this short; the
+    # screens from the fourth on switch the average off through `changes`)
     for path, value in (changes or {}).items():
         set_path(config, path, copy.deepcopy(value))  # a shared dict such as PAIR_PROGRAMMER must not be changed by a later path
     return config

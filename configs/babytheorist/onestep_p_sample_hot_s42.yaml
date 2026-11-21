@@ -48,5 +48,5 @@ evals:
   split: lv1
   batch_size: 250
   infer: *id001
-train: {steps: 6000, batch_size: 512, seed: 42, precision: bf16, ckpt_every: 600, log_every: 50, num_workers: 0, init_from: runs/codec_token/ckpt/step-003000.pt, wandb_project: toy-neo, wandb_mode: disabled,
+train: {steps: 6000, batch_size: 512, seed: 42, precision: bf16, ckpt_every: 6000, log_every: 50, num_workers: 0, init_from: runs/codec_token/ckpt/step-003000.pt, wandb_project: toy-neo, wandb_mode: disabled,
   ema: 0.999, compile: parts}

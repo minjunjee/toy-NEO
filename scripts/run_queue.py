@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -45,6 +46,14 @@ def read_jobs(path: Path) -> list[tuple[str, list[str], str | None]]:
     return jobs
 
 
+def free_memory(gpus: list[str]) -> dict[str, int]:
+    """Free memory in MiB per GPU UUID, from nvidia-smi."""
+
+    out = subprocess.run(["nvidia-smi", "--query-gpu=uuid,memory.free", "--format=csv,noheader,nounits"], capture_output=True, text=True).stdout
+    table = {line.split(",")[0].strip(): int(line.split(",")[1]) for line in out.splitlines() if "," in line}
+    return {gpu: table.get(gpu, 0) for gpu in gpus}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--jobs", type=Path, required=True)
@@ -52,19 +61,44 @@ def main() -> None:
     parser.add_argument("--per-gpu", type=int, default=4)
     parser.add_argument("--output-root", type=Path, default=REPO / "runs")
     parser.add_argument("--threads", type=int, default=8)
+    parser.add_argument("--min-free-mb", type=int, default=0, help="start a job on a GPU only while that much memory is free there, and at most one job per GPU per pass")
+    parser.add_argument("--retries", type=int, default=0, help="start a failed job again this many times (for runs that lost a race for memory)")
+    parser.add_argument("--min-free-gb", type=float, default=40.0, help="start no new job while the disk under the output root, or the one under the home directory, has less than this free")
     args = parser.parse_args()
+    attempts: dict[str, int] = {}
+    low_disk = False
+    # compile caches go next to the runs (the big disk), not under the home directory or /tmp, which share a small disk
+    cache = args.output_root.resolve() / "_cache"
+    cache_env = {"TORCHINDUCTOR_CACHE_DIR": str(cache / "inductor"), "TRITON_CACHE_DIR": str(cache / "triton")}
     running: dict[str, tuple[subprocess.Popen, str]] = {}
     finished: dict[str, int] = {}
     while True:
         for name, (process, gpu) in list(running.items()):
             code = process.poll()
             if code is not None:
-                finished[name] = code
                 del running[name]
+                if code != 0 and attempts.get(name, 0) < args.retries:
+                    attempts[name] = attempts.get(name, 0) + 1
+                    say(f"failed ({code}) {name}, will try again ({attempts[name]} of {args.retries})")
+                    continue
+                finished[name] = code
                 if code == 0:
                     (args.output_root / name / "DONE").write_text("0\n")
                 say(f"{'done' if code == 0 else f'FAILED ({code})'} {name}")
         waiting = 0
+        disk = min(shutil.disk_usage(path).free for path in (args.output_root.resolve(), Path.home())) / 2**30
+        if disk < args.min_free_gb:
+            if not low_disk:
+                say(f"disk low: {disk:.0f} GB free, below --min-free-gb {args.min_free_gb:.0f}; no new job is started until space is freed")
+            low_disk = True
+            if not running:
+                say("nothing running and the disk is low: stopping")
+                return
+            time.sleep(60)
+            continue
+        low_disk = False
+        free = free_memory(args.gpus) if args.min_free_mb else {}
+        started_on: set[str] = set()
         for config, after, (resume, sleep) in read_jobs(args.jobs):
             name = Path(config).stem
             if name in running or name in finished:
@@ -81,13 +115,17 @@ def main() -> None:
                     waiting += 1
                 continue
             load = {gpu: sum(1 for _, g in running.values() if g == gpu) for gpu in args.gpus}
-            gpu = min(load, key=load.get)
-            if load[gpu] >= args.per_gpu:
+            # with --min-free-mb a GPU takes one new job per pass (a job's memory shows up only after it has started) and only
+            # while enough memory is free; the pass repeats every few seconds
+            usable = [gpu for gpu in args.gpus if load[gpu] < args.per_gpu and (not args.min_free_mb or (gpu not in started_on and free.get(gpu, 0) >= args.min_free_mb))]
+            if not usable:
                 waiting += 1
                 continue
+            gpu = min(usable, key=load.get)
+            started_on.add(gpu)
             directory = args.output_root / name
             directory.mkdir(parents=True, exist_ok=True)
-            env = {**os.environ, "CUDA_VISIBLE_DEVICES": gpu, "OMP_NUM_THREADS": str(args.threads), "MKL_NUM_THREADS": str(args.threads)}
+            env = {**os.environ, **cache_env, "CUDA_VISIBLE_DEVICES": gpu, "OMP_NUM_THREADS": str(args.threads), "MKL_NUM_THREADS": str(args.threads)}
             log = open(directory / "stdout.log", "w")
             command = [sys.executable, str(REPO / "scripts" / "train.py"), "--config", config, "--output-root", str(args.output_root), "--wandb-mode", "disabled"]
             if resume:
@@ -100,7 +138,7 @@ def main() -> None:
         if not running and not waiting:
             say(f"all done, failed: {[n for n, c in finished.items() if c != 0]}")
             return
-        time.sleep(5)
+        time.sleep(20 if args.min_free_mb else 5)
 
 
 if __name__ == "__main__":
