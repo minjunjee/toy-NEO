@@ -383,6 +383,17 @@ def main() -> None:
                                         ("hard_c16_norestart_b128", 16, 48000, {**hard, "train.batch_size": 128}),
                                         ("hard_c12_norestart_b128", 12, 48000, {**hard, "train.batch_size": 128})):
         configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, codes=codes, changes=changes)
+    # a model trained with one program step on single-primitive pairs composes at inference (83% transfer on level 1 with
+    # five steps and grid-only handover, against 40% for every model trained with several steps). Picking single-primitive
+    # pairs reads the hidden depth, which the benchmark does not allow. The same one-step training on ALL pairs, where the
+    # pairs that need more than one primitive cannot be reproduced and only add loss:
+    wide_all = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0}
+    for name, codes, steps, changes in (("u_w_c16", 16, 12000, wide_all), ("u_w_b128_c10", 10, 24000, {**wide_all, "train.batch_size": 128}),
+                                        ("u_w_b128_c16", 16, 24000, {**wide_all, "train.batch_size": 128}), ("u_w_b128_c32", 32, 24000, {**wide_all, "train.batch_size": 128}),
+                                        ("u_w_c16_36k", 16, 36000, wide_all)):
+        config = one_step(42, steps=steps, codes=codes, changes=changes)
+        del config["data"]["train_max_depth"]
+        configs[f"onestep_{name}_s42"] = config
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
