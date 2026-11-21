@@ -51,6 +51,7 @@ def import_all() -> None:
     import components.executors  # noqa: F401
     import components.programmers  # noqa: F401
     import models.neo  # noqa: F401
+    import models.neo_visible_state  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.vae_pretrain  # noqa: F401

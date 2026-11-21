@@ -1,5 +1,15 @@
 # 인수인계
 
+## 2026-11-21 밤, 단계 사이로 넘어가는 정보를 찾은 뒤의 상태
+
+Claude Code가 썼다. 보고서의 5.11절이 근거다. 아래 저녁 상태의 내용 가운데 "잠 한 번만 61%"는 이것으로 고쳐 읽는다.
+
+- 랩의 transformer NEO 설정은 program의 한 단계가 다음 단계에 칸마다의 색 확률을 넘긴다. 학습된 모델은 격자에 보이지 않는 그 부분으로 정보를 넘긴다. 잠을 넣은 모델에서 같은 code는 깨끗한 격자를 받으면 위아래로 뒤집고, 자기가 낸 확률을 받으면 다른 일을 한다.
+- 격자만 넘기는 방식으로 재면 긴 학습 다섯의 transfer가 37%에서 43%다. 잠을 넣은 학습의 61%는 37%가 된다. code의 수, 잠, code를 켜는 규칙 가운데 이 값을 움직인 것은 없다.
+- transfer는 앞으로 두 방식 모두로 잰다. `scripts/babytheorist/observe_rollout.py`와 `program_table.py`가 도구다.
+- 지금 도는 것. GPU 4번은 새 부품 `neo_visible_state`의 code 8개 seed 42이고 22일 02:30쯤 끝나며 seed 43이 이어진다. GPU 5번은 상한을 둔 잠 seed 43이고 01:00쯤 끝나며, 랩의 `reencode_hard` 학습 seed 42가 이어진다. 진행은 `runs/queue/runner_gpu4d.log`와 `runner_gpu5e.log`에 적힌다.
+- 다음에 할 일. 통로를 막고 학습한 두 모델이 여러 단계짜리 program을 배우는지, transfer가 40%를 넘는지 본다. 넘지 못하면 남는 문제는 5.10절의 것이다. 뒤집기와 회전이 어떤 입력에서도 통하는 code 하나를 얻지 못한다.
+
 ## 2026-11-21 저녁, 긴 학습 다섯을 나란히 본 뒤의 상태
 
 Claude Code가 썼다. 브랜치는 `code/baseline-observation`이다. 보고서의 5.10절이 이 상태의 근거다.

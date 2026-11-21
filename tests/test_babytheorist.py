@@ -88,6 +88,40 @@ def test_growable_codebook_is_the_lab_codebook_when_every_row_is_active_and_neve
     assert set(partial(actions, training=False).indices.tolist()) <= {0, 1, 2, 6}
 
 
+def test_visible_state_model_computes_what_reencode_hard_computes_and_lets_the_gradient_through() -> None:
+    """Same weights: the same decoded grids as the lab NEO with reencode_hard at every length. The second step's output
+    has a gradient with respect to the first step's output state, which reencode_hard cuts."""
+
+    from core.registry import MODELS
+
+    import_all()
+    config = load_config(next(p for p in CONFIGS if p.stem == "neo_transformer_36k_codes8_visible_single_a_lv1_s42"))
+    spec = {**config["model"], "max_length": 2}
+    torch.manual_seed(0)
+    visible = build(MODELS, spec)
+    lab = build(MODELS, {**spec, "type": "neo", "state_update": "reencode_hard"})
+    lab.load_state_dict(visible.state_dict())
+    batch = {"x": torch.randint(0, 10, (2, 15, 15)), "y": torch.randint(0, 10, (2, 15, 15))}
+    reached = []
+    for model in (visible, lab):
+        model.eval()
+        outputs = []
+
+        def keep(module, args, output, outputs=outputs) -> None:
+            output.retain_grad()
+            outputs.append(output)
+
+        handle = model.executor.register_forward_hook(keep)
+        out = model(batch)
+        handle.remove()
+        out.logits_by_length[1].sum().backward()
+        reached.append(outputs[0].grad is not None and bool(outputs[0].grad.abs().sum() > 0))
+        model.logits = [logits.detach() for logits in out.logits_by_length]
+    for mine, theirs in zip(visible.logits, lab.logits):
+        assert torch.allclose(mine, theirs, atol=1e-5)
+    assert reached == [True, False]
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

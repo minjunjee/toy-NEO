@@ -115,6 +115,16 @@ def main() -> None:
         grow["model"]["code"] = {**grow["model"]["code"], "type": "vq_growable", "initial": 8}
         configs[f"neo_transformer_36k_grow8to16_single_a_lv1_s{seed}"] = grow
         configs[f"neo_transformer_36k_grow8to9_single_a_lv1_s{seed}"] = grow  # the same model; the offline phase is told --max-active 9
+    # what a program step may hand to the next one. The lab config hands over the decoded cell probabilities (reencode_soft),
+    # and trained models pass information there that is not visible on the grid. Two ways to close that path with eight
+    # codes: the lab's reencode_hard (no gradient between steps) and the straight-through model neo_visible_state
+    for seed in (42, 43):
+        hard = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
+        hard["model"]["state_update"] = "reencode_hard"
+        configs[f"neo_transformer_36k_codes8_hard_single_a_lv1_s{seed}"] = hard
+        visible = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
+        visible["model"] = {**{k: v for k, v in visible["model"].items() if k != "state_update"}, "type": "neo_visible_state"}
+        configs[f"neo_transformer_36k_codes8_visible_single_a_lv1_s{seed}"] = visible
     for seed in (43, 44):
         configs[f"neo_transformer_36k_codes8_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
         configs[f"neo_transformer_36k_codes8_sleeps_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
