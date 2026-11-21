@@ -1,5 +1,17 @@
 # 인수인계
 
+## 2026-11-22 아침, 부품을 빠르게 찾은 뒤의 상태
+
+Claude Code가 썼다. 근거는 `docs/reports/2026-11-22-fast-search.md`다.
+
+- 사용자가 22일 새벽에 더 정한 것. 부수적인 부품과 설정은 도움 없이 직접 범위를 잡아 찾는다. 주제는 NEO의 아키텍처다. 실험은 먼저 최대한 가속하고 싼 판을 만들어 여러 조건을 한꺼번에 돌린다. 디스크를 계속 확인한다. `/home`이 있는 SSD가 58GB, `/data`가 437GB 남아 있다.
+- 속도. 학습 한 스텝이 152ms에서 44ms가 됐다. `train.compile: parts`와 새 programmer `token_pair_transformer`다. 재는 도구는 `scripts/bench_step.py`다.
+- 빠른 판. primitive 하나짜리 학습 쌍과 program 한 단계로 줄인 학습이고 하나에 5분이다. config는 `make_configs.py`의 `one_step`과 묶음 함수들, 띄우기는 `scripts/run_queue.py`, 표는 `scripts/babytheorist/onestep_table.py`다. `run_queue.py`는 GPU 메모리와 디스크의 남은 양을 보고 시작하고, 묶음 실험은 체크포인트를 하나만 남긴다. 지울 때는 `scripts/prune_checkpoints.py`를 쓴다.
+- 빠른 판에서 나온 것. 재현은 99%, transfer는 92%까지 간다. 느렸던 이유는 code를 못 찾아서였다. 안 쓰는 code를 다시 뿌리는 `vq_restart`는 재현을 올리지만 primitive를 여러 code로 쪼개서 transfer를 깎는다. 작은 batch로 자주 갱신하는 쪽이 낫다. 쪼개지는 것은 뒤집기와 회전이다.
+- 본 모델에서 나온 것. 같은 부품을 다섯 단계짜리 모델에 쓰면 6,000스텝에 재현 76%, transfer 12%이고, 격자만 넘기면 재현이 2%다. 모델이 code 두 개를 변환 하나의 주소로 쓰고 그 주소를 단계 사이의 확률로 넘긴다. NEO의 학습 목표에는 단계마다 격자 위의 연산 하나를 하라는 요구가 없다.
+- 지금 도는 것. 격자만 넘기며 학습하는 본 모델 둘, 빠른 판 두 묶음 33개다. primitive를 8개에서 32개까지 늘린 데이터는 `data/babytheorist/many_p{8,16,24,32}`에 있고 `scripts/babytheorist/generate_many_primitives.py`로 만든다. 진행은 `runs/queue/runner_fastneo1.log`와 `runner_onestep5.log`에 적힌다.
+- 다음에 할 일. 격자만 넘기며 학습한 본 모델의 재현과 transfer를 읽는다. primitive 수를 늘린 빠른 판에서 code 하나로 옮겨 가는 primitive의 수가 어떻게 변하는지 읽는다. 긴 program 쪽은 레벨 5와 7의 데이터가 `data/babytheorist/single_a/`에 준비되어 있다.
+
 ## 2026-11-22 새벽, 사용자가 방향을 정한 뒤의 상태
 
 Claude Code가 썼다. 사용자가 2026-11-22 00:20에 정한 것이 지금의 방향이다.

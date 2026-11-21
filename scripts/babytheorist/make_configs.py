@@ -361,6 +361,17 @@ def main() -> None:
         configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, changes=changes)
     for name, (data, codes, steps, changes) in one_step_scale_screen().items():
         configs[f"onestep_{name}_s42"] = one_step(42, steps=steps, codes=codes, changes=changes, data=suite(data))
+    # the fast parts reach 76% self-explanation in 6,000 steps, but through two-code programs that only work when a step
+    # hands the next one the cell probabilities (2% with grid-only handover). The same model trained with grid-only
+    # handover: the lab's reencode_hard (no gradient between steps) and the straight-through model neo_visible_state
+    for name, changes in {"hard_c16": {"model.state_update": "reencode_hard"},
+                          "hard_c16_norestart": {"model.state_update": "reencode_hard", "model.code.restart_every": 0},
+                          "visible_c16": {"model.type": "neo_visible_state", "model.state_update": None},
+                          "visible_c16_norestart": {"model.type": "neo_visible_state", "model.state_update": None, "model.code.restart_every": 0}}.items():
+        config = fast_neo(*SINGLE_A_LV1, 42, steps=12000, changes=changes)
+        if config["model"].get("state_update", "") is None:
+            del config["model"]["state_update"]
+        configs[f"fastneo_12k_{name}_single_a_lv1_s42"] = config
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
