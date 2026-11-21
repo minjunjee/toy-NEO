@@ -35,6 +35,11 @@ def curve(run: Path, split: str, flops: dict) -> dict:
             once = offline["flops"] if offline and row["step"] >= offline["at_step"] else 0.0
             points.append({"step": row["step"], "flops": row["step"] * per_step + extra + once, "explain": row[f"observe/{split}/explain"],
                            "transfer": row[f"observe/{split}/transfer_strict"], "transfer_depth1": row[f"observe/{split}/transfer_strict_depth1"]})
+    edit = run / "sleep_edit.json"
+    if edit.exists() and offline:  # the run continues another run's checkpoint: its curve up to that step is the other run's
+        source = Path(json.loads(edit.read_text())["source"]).parents[1]
+        earlier = [p for p in curve(REPO / source if not source.is_absolute() else source, split, flops)["points"] if p["step"] <= offline["at_step"]]
+        points = earlier + points
     return {"run": run.name, "points": points}
 
 

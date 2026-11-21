@@ -1,0 +1,170 @@
+[
+ {
+  "run": "neo_transformer_36k_codes8_sleep14400_single_a_lv1_s42",
+  "step": 36000,
+  "by_primitive": {
+   "next_color": {
+    "same code": [
+     357,
+     357
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     0
+    ],
+    "not one code": [
+     0,
+     0
+    ]
+   },
+   "all": {
+    "same code": [
+     1551,
+     1551
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     57,
+     207
+    ],
+    "not one code": [
+     626,
+     1016
+    ]
+   },
+   "translate_left": {
+    "same code": [
+     8,
+     8
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     53,
+     57
+    ],
+    "not one code": [
+     232,
+     268
+    ]
+   },
+   "rot90": {
+    "same code": [
+     18,
+     18
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     71
+    ],
+    "not one code": [
+     49,
+     283
+    ]
+   },
+   "translate_down": {
+    "same code": [
+     245,
+     245
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     1,
+     31
+    ],
+    "not one code": [
+     24,
+     45
+    ]
+   },
+   "translate_right": {
+    "same code": [
+     310,
+     310
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     2
+    ],
+    "not one code": [
+     0,
+     1
+    ]
+   },
+   "translate_up": {
+    "same code": [
+     251,
+     251
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     2,
+     41
+    ],
+    "not one code": [
+     23,
+     46
+    ]
+   },
+   "flip_h": {
+    "same code": [
+     362,
+     362
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     1
+    ],
+    "not one code": [
+     1,
+     1
+    ]
+   },
+   "flip_v": {
+    "same code": [
+     0,
+     0
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     1,
+     4
+    ],
+    "not one code": [
+     297,
+     372
+    ]
+   }
+  }
+ }
+]
