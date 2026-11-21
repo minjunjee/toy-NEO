@@ -41,6 +41,12 @@ def curve(run: Path, split: str, flops: dict) -> dict:
         source = Path(json.loads(edit.read_text())["source"]).parents[1]
         earlier = [p for p in curve(REPO / source if not source.is_absolute() else source, split, flops)["points"] if p["step"] <= offline["at_step"]]
         points = earlier + points
+    widened = run / "widened_from.txt"
+    if widened.exists():  # the run was resumed from another run's checkpoint with a wider codebook: same rule
+        checkpoint = Path(widened.read_text().strip())
+        branch = int(checkpoint.stem.split("-")[1])
+        source = checkpoint.parents[1]
+        points = [p for p in curve(source if source.is_absolute() else REPO / source, split, flops)["points"] if p["step"] <= branch] + points
     return {"run": run.name, "points": points}
 
 

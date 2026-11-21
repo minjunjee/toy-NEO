@@ -1,0 +1,170 @@
+[
+ {
+  "run": "neo_transformer_36k_grow8to16_single_a_lv1_s42",
+  "step": 36000,
+  "by_primitive": {
+   "next_color": {
+    "same code": [
+     357,
+     357
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     0
+    ],
+    "not one code": [
+     0,
+     0
+    ]
+   },
+   "all": {
+    "same code": [
+     1420,
+     1420
+    ],
+    "different codes": [
+     59,
+     138
+    ],
+    "not covered": [
+     12,
+     393
+    ],
+    "not one code": [
+     199,
+     823
+    ]
+   },
+   "translate_left": {
+    "same code": [
+     290,
+     290
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     23
+    ],
+    "not one code": [
+     7,
+     20
+    ]
+   },
+   "rot90": {
+    "same code": [
+     42,
+     42
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     1,
+     81
+    ],
+    "not one code": [
+     60,
+     249
+    ]
+   },
+   "translate_down": {
+    "same code": [
+     231,
+     231
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     34
+    ],
+    "not one code": [
+     23,
+     56
+    ]
+   },
+   "translate_right": {
+    "same code": [
+     106,
+     106
+    ],
+    "different codes": [
+     2,
+     38
+    ],
+    "not covered": [
+     0,
+     63
+    ],
+    "not one code": [
+     15,
+     106
+    ]
+   },
+   "translate_up": {
+    "same code": [
+     306,
+     306
+    ],
+    "different codes": [
+     0,
+     0
+    ],
+    "not covered": [
+     0,
+     18
+    ],
+    "not one code": [
+     3,
+     14
+    ]
+   },
+   "flip_h": {
+    "same code": [
+     57,
+     57
+    ],
+    "different codes": [
+     57,
+     83
+    ],
+    "not covered": [
+     11,
+     83
+    ],
+    "not one code": [
+     38,
+     141
+    ]
+   },
+   "flip_v": {
+    "same code": [
+     31,
+     31
+    ],
+    "different codes": [
+     0,
+     17
+    ],
+    "not covered": [
+     0,
+     91
+    ],
+    "not one code": [
+     53,
+     237
+    ]
+   }
+  }
+ }
+]

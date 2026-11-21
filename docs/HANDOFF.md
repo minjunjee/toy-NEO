@@ -1,5 +1,17 @@
 # 인수인계
 
+## 2026-11-21 저녁, 긴 학습 다섯을 나란히 본 뒤의 상태
+
+Claude Code가 썼다. 브랜치는 `code/baseline-observation`이다. 보고서의 5.10절이 이 상태의 근거다.
+
+- 36,000스텝을 돈 학습 다섯 가운데 넷이 transfer 40%에서 44%로 끝났다. code 16개, code 8개의 seed 둘, code 8개로 시작해 잠마다 하나씩 켠 것이다. 14,400스텝에 잠을 한 번 넣은 seed 42만 61%다. 그 61%는 아직 하나뿐인 값이다.
+- 오전에 돌린 대조 둘은 끝났다. 합치기만 한 것은 44.5%, 비운 code를 아무 방향에나 둔 것은 47.6%로, 효과는 비운 code를 설명하지 못하는 쌍에 배정한 데서 났다.
+- 설명하지 못하는 쌍이 남았다는 것만으로 잠마다 code를 켜면 재현은 68%에서 80%로 오르고 transfer는 그대로다. 새 code가 이미 code를 가진 primitive를 입력에 따라 나누는 데 쓰인다.
+- seed 43은 겹친 code 없이도 같은 자리에서 멈춘다. 뒤집기 둘과 회전이 code 하나를 얻지 못하고 여러 code를 이은 program으로 설명되며, 그 program은 옮겨 가지 않는다.
+- primitive 둘짜리 과제의 transfer는 하나짜리 과제의 transfer를 제곱한 값과 거의 같다. 전체 transfer를 정하는 것은 어떤 입력에서도 통하는 code 하나를 가진 primitive의 수로 보인다.
+- 지금 도는 것. GPU 4번은 seed 44의 code 8개 학습이고 그 뒤에 seed 42의 학습이 이어진다. 켤 수 있는 code를 9개로 막고 3,600스텝마다 잠을 넣는 조건이다. GPU 5번은 같은 조건의 seed 43이고 seed 44가 이어진다. 22일 06:30쯤 모두 끝난다. 진행은 `runs/queue/runner_gpu4c.log`와 `runner_gpu5e.log`에 적힌다.
+- 다음에 할 일. 두 조건의 seed 셋 평균을 비교한다. 잠이 seed 43 같은 경우에 도움이 되지 않으면, 여러 code를 이은 program으로 설명된 primitive에 code 하나를 주는 방법을 따로 찾아야 한다. 회전은 어떤 설정에서도 못 배웠다.
+
 ## 2026-11-21 오전, 잠을 한 번 넣어 본 뒤의 상태
 
 Claude Code가 썼다. 브랜치는 `code/baseline-observation`이다. `docs/reports/2026-11-20-first-numbers.md`의 5.5절부터 5.9절이 밤사이에 더해진 것이다.
