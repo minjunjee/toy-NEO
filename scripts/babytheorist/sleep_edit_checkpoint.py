@@ -42,7 +42,8 @@ EMBEDDING = "code.embedding.weight"
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--ckpt", type=Path, required=True)
-    parser.add_argument("--new-run", required=True)
+    parser.add_argument("--new-run", help="write the edited checkpoint under runs/<new run>/ckpt/ (a run that branches off)")
+    parser.add_argument("--in-place", action="store_true", help="edit the checkpoint where it is (a run that sleeps as it trains); the checkpoint before the phase is kept beside it")
     parser.add_argument("--split", required=True)
     parser.add_argument("--memory", type=int, default=20000)
     parser.add_argument("--holdout", type=float, default=0.25)
@@ -134,13 +135,25 @@ def main() -> None:
             weights = payload[key][EMBEDDING]
             for drop in gone:
                 weights[drop] = weights[merged_into[drop]].clone() if args.freed == "alias" else new_vectors[drop].to(weights.dtype)
-    output = REPO / "runs" / args.new_run
-    (output / "ckpt").mkdir(parents=True, exist_ok=True)
-    torch.save(payload, output / "ckpt" / args.ckpt.name)
     report["flops"] = flops
-    (output / "extra_flops.json").write_text(json.dumps({"at_step": int(payload["step"]), "flops": flops}) + "\n")
-    (output / "sleep_edit.json").write_text(json.dumps(report, indent=1) + "\n")
-    print("freed", report["freed"], "flops", f"{flops:.3e}", "->", output / "ckpt" / args.ckpt.name)
+    if args.in_place:
+        output = args.ckpt.parents[1]
+        if gone:
+            args.ckpt.rename(args.ckpt.with_name(args.ckpt.stem + ".before_sleep.pt"))
+            torch.save(payload, args.ckpt)
+        phases = json.loads((output / "extra_flops.json").read_text()) if (output / "extra_flops.json").exists() else []
+        (output / "extra_flops.json").write_text(json.dumps([*phases, {"at_step": int(payload["step"]), "flops": flops}]) + "\n")
+        with open(output / "sleep_log.jsonl", "a") as log:
+            log.write(json.dumps(report) + "\n")
+    else:
+        if not args.new_run:
+            raise SystemExit("give --new-run or --in-place")
+        output = REPO / "runs" / args.new_run
+        (output / "ckpt").mkdir(parents=True, exist_ok=True)
+        torch.save(payload, output / "ckpt" / args.ckpt.name)
+        (output / "extra_flops.json").write_text(json.dumps({"at_step": int(payload["step"]), "flops": flops}) + "\n")
+        (output / "sleep_edit.json").write_text(json.dumps(report, indent=1) + "\n")
+    print("freed", report["freed"], "flops", f"{flops:.3e}", "->", output)
 
 
 if __name__ == "__main__":

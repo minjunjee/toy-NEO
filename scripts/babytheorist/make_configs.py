@@ -106,6 +106,11 @@ def main() -> None:
     # the long run split primitives across its 16 codes; the same run with as many codes as there are primitives, and with ten
     configs["neo_transformer_36k_codes8_single_a_lv1_s42"] = neo_transformer(*SINGLE_A_LV1, 42, steps=36000, codes=8)
     configs["neo_transformer_36k_codes10_single_a_lv1_s42"] = neo_transformer(*SINGLE_A_LV1, 42, steps=36000, codes=10)
+    # other seeds of the eight-code run, each once as it is and once trained in segments with an offline phase between them
+    # (same config under another name; the phases come from scripts/babytheorist/train_with_sleep.py)
+    for seed in (43, 44):
+        configs[f"neo_transformer_36k_codes8_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
+        configs[f"neo_transformer_36k_codes8_sleeps_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=36000, codes=8)
     # more seeds of the same run: the first two differed threefold, so the spread over seeds comes before any comparison
     for seed in (45, 46, 47, 48):
         configs[f"neo_transformer_12k_single_a_lv1_s{seed}"] = neo_transformer(*SINGLE_A_LV1, seed, steps=12000)

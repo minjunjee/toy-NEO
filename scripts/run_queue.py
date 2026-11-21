@@ -2,8 +2,9 @@
 """Train a list of configs on the given GPUs, a fixed number at a time per GPU.
 
 The jobs file has one job per line: a config path, optionally followed by `after=<run name>[,<run name>...]` and
-`resume=<checkpoint>`. A job starts only when every run it names has finished without error; with resume= it continues
-from that checkpoint. The file is read again on every pass, so lines can
+`resume=<checkpoint>` or `sleep_every=<steps>`. A job starts only when every run it names has finished without error; with
+resume= it continues from that checkpoint; with sleep_every= it trains in segments with an offline phase between them
+(scripts/babytheorist/train_with_sleep.py). The file is read again on every pass, so lines can
 be appended while the runner is alive. The runner ends when every line has run and nothing is running. A run whose
 directory already holds a DONE file is not started again.
 
@@ -36,7 +37,8 @@ def read_jobs(path: Path) -> list[tuple[str, list[str], str | None]]:
             continue
         after = [name for p in parts[1:] if p.startswith("after=") for name in p[6:].split(",") if name]
         resume = next((p[7:] for p in parts[1:] if p.startswith("resume=")), None)
-        jobs.append((parts[0], after, resume))
+        sleep = next((p[12:] for p in parts[1:] if p.startswith("sleep_every=")), None)
+        jobs.append((parts[0], after, (resume, sleep)))
     return jobs
 
 
@@ -60,7 +62,7 @@ def main() -> None:
                     (args.output_root / name / "DONE").write_text("0\n")
                 say(f"{'done' if code == 0 else f'FAILED ({code})'} {name}")
         waiting = 0
-        for config, after, resume in read_jobs(args.jobs):
+        for config, after, (resume, sleep) in read_jobs(args.jobs):
             name = Path(config).stem
             if name in running or name in finished:
                 continue
@@ -87,6 +89,9 @@ def main() -> None:
             command = [sys.executable, str(REPO / "scripts" / "train.py"), "--config", config, "--output-root", str(args.output_root), "--wandb-mode", "disabled"]
             if resume:
                 command += ["--resume", resume]
+            if sleep:  # wake and sleep in turns: first phase after two periods, eval split named lv1
+                command = [sys.executable, str(REPO / "scripts" / "babytheorist" / "train_with_sleep.py"), "--config", config, "--output-root", str(args.output_root),
+                           "--split", "lv1", "--sleep-every", sleep, "--first-sleep", str(2 * int(sleep)), "--candidates", "3"]
             running[name] = (subprocess.Popen(command, stdout=log, stderr=subprocess.STDOUT, env=env, cwd=REPO), gpu)
             say(f"start {name} on {gpu}")
         if not running and not waiting:
