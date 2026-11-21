@@ -1,5 +1,14 @@
 # 인수인계
 
+## 2026-11-22 새벽, 사용자가 방향을 정한 뒤의 상태
+
+Claude Code가 썼다. 사용자가 2026-11-22 00:20에 정한 것이 지금의 방향이다.
+
+- 지금은 고치지 않는다. primitive의 수와 program의 길이를 크게 늘려서 NEO가 못하는 것을 보이고, 왜 못하는지를 분석한다. 고치는 것은 그 뒤에 그 분석을 써서 한다. 잠, code를 켜는 규칙, `neo_visible_state` 같은 고치는 쪽 실험은 더 늘리지 않는다.
+- 한 번에 하나씩 늘린다. primitive 쪽은 4, 8, 11개와 그 이상이고 길이는 레벨 1 그대로다. 길이 쪽은 primitive 8개에 레벨 3, 5, 7이다. 모델은 지금의 transformer NEO 그대로다.
+- 랩이 BabyTheorist에 쓴 모델과 설정은 아직 없다. `autoresearch-neo`의 README가 가리키는 BabyTheorist commit `e51a7d1`이 든 레포의 링크를 사용자에게 요청했다. 받으면 그 설정으로 논문 숫자가 나오는지부터 본다.
+- 정리 문서는 `docs/reports/2026-11-21-summary.html`이다. 만드는 스크립트는 `scripts/babytheorist/build_summary_page.py`다.
+
 ## 2026-11-21 밤, 단계 사이로 넘어가는 정보를 찾은 뒤의 상태
 
 Claude Code가 썼다. 보고서의 5.11절이 근거다. 아래 저녁 상태의 내용 가운데 "잠 한 번만 61%"는 이것으로 고쳐 읽는다.
