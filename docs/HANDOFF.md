@@ -1,5 +1,13 @@
 # 인수인계
 
+## 2026-11-23 05:35, soft EM과 200,000스텝 학습 뒤의 상태
+
+Claude Code가 썼다. 사람이 볼 정리는 minjunjee.com/autoresearch_report의 덱이고, 생성기는 사이트 저장소의 `tools/slides-autoresearch-report`, 숫자 스냅샷은 `docs/reports/2026-11-22-scaling/deck_data.json`이다. 도는 실험은 없다.
+
+- 같은 24개 환경을 원래의 8배인 200,000스텝 학습하면 랩 executor의 회전 계열 평균이 17%에서 36%로 오른다. 두 뒤집기는 78%와 65%로 풀리고, 가로세로를 바꾸는 넷은 17%에서 24%로 남는다. executor 폭을 두 배로 하면 22%다. 학습률 일정도 같이 늘렸으므로 원인을 가르려면 일정을 고정한 run이 하나 더 필요하다.
+- code를 숨은 변수로 두고 code 48개를 모두 실행해 재현 오차로 책임 비율을 정하는 soft EM을 랩 run의 끝에서 12,000스텝 이어 하면 회전 계열 평균이 20%와 21%로 대조 16%보다 조금 높다. programmer와 executor를 번갈아 얼리면 16%로 대조와 같다. 정답 없이 섞인 code를 푸는 방법은 아직 없다.
+- 사용자가 정할 것. 넷이 묶인 덩어리를 풀 다음 방법. 같은 code가 다른 입력에도 같은 변환을 하는지를 보는 기준, 또는 일정을 고정한 긴 run으로 오래 학습한 효과부터 확인하는 것.
+
 ## 2026-11-23 04:00, 확장성과 양, 그리고 회전 계열을 따라간 밤 뒤의 상태
 
 Claude Code가 썼다. 그림과 읽는 법은 `docs/reports/2026-11-22-scaling.html`에 있고, 같은 페이지가 claude.ai에 비공개 artifact로 올라가 있다. 양을 code에 담는 실험의 글은 `docs/reports/2026-11-22-kind-and-amount.md`다. 숫자의 원본은 각 run의 `train.jsonl`과 `docs/reports/2026-11-22-scaling/*.json`이다. 도는 실험은 없다.
