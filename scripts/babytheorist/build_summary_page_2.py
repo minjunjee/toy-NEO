@@ -76,7 +76,7 @@ def headline_figure() -> str:
     return bars([("lab config", "several steps, 36,000 steps", 40),
                  ("searched parts", "several steps, grid handed over", 38),
                  ("searched parts", "several steps, probabilities handed over", 12),
-                 ("trained on one step only", "searched parts, saw no composition", 83)],
+                 ("trained on one step only", "best of three seeds; the mean is 63%", 83)],
                 "transferred to a new input, all of level 1", "Transfer on level 1 for models trained on several steps and a model trained on one step")
 
 
@@ -88,19 +88,19 @@ def codes_figure() -> str:
 BODY = r"""<main>
 <header>
 <div class="eyebrow">toy-NEO · 2026-11-22 새벽 작업 · @@NOW@@ 기준</div>
-<h1>NEO가 못하는 이유는 부품이 아니라 여러 단계를 한꺼번에 배우는 방식이었다</h1>
+<h1>NEO가 막히는 곳은 부품보다 여러 단계를 한꺼번에 배우는 방식 쪽이다</h1>
 <p class="lead">어제 정리한 내용에서 많이 바뀌었다. 부품을 직접 찾아 학습을 빠르게 만들었고, 그 과정에서 원인이 한 곳으로 좁혀졌다. 어제의 정리는 <code>docs/reports/2026-11-21-summary.html</code>에 그대로 있다.</p>
 </header>
 
 <ol class="first">
-<li>primitive 하나짜리 학습 쌍으로 program 한 단계만 학습한 모델이, 한 번도 본 적 없는 여러 단계 과제를 transfer 83%로 푼다.</li>
-<li>여러 단계로 학습한 모델은 랩 설정이든, 부품을 고치든, 단계 사이의 통로를 막든 40%에서 멈춘다.</li>
+<li>primitive 하나짜리 학습 쌍으로 program 한 단계만 학습한 모델이, 한 번도 본 적 없는 여러 단계 과제를 푼다. transfer가 seed 셋에서 83%, 64%, 43%이고 평균 63%다.</li>
+<li>여러 단계로 학습한 모델은 랩 설정이든, 부품을 고치든, 단계 사이의 통로를 막든 39%에서 46%다.</li>
 <li>그러니 NEO의 부품은 primitive를 배우고 이어 쓸 수 있다. 여러 단계를 한꺼번에 학습하는 동안 code가 primitive가 아닌 다른 것이 된다.</li>
 </ol>
 
 <figure>
 <div class="scroll">@@FIG_HEADLINE@@</div>
-<figcaption>레벨 1의 평가 과제 10,000개. 예시 쌍 하나에서 뽑은 program을 새 입력에 실행하고, 정답은 보여 주지 않는다. 위 둘과 맨 아래는 단계 사이로 격자만 넘겨서 쟀다.</figcaption>
+<figcaption>레벨 1의 평가 과제 10,000개. 예시 쌍 하나에서 뽑은 program을 새 입력에 실행하고, 정답은 보여 주지 않는다. 위 둘과 맨 아래는 단계 사이로 격자만 넘겨서 쟀다. 맨 아래 막대는 seed 셋 가운데 가장 좋은 값이고 나머지 둘은 64%와 43%다. 위의 셋은 seed 하나씩이다.</figcaption>
 </figure>
 
 <h2><span class="n">1</span>무엇을 재고 있나</h2>
@@ -147,6 +147,7 @@ BODY = r"""<main>
 <tr class="hl"><td>한 단계로만 학습, code 16개</td><td class="num">87%</td><td class="num">83%</td><td>97%, 87%, 69%, 62%</td></tr>
 <tr><td>한 단계로만 학습, code 10개</td><td class="num">81%</td><td class="num">77%</td><td>97%, 81%, 56%, 43%</td></tr>
 </table></div>
+<p>seed에 따라 크게 갈린다. 같은 설정으로 seed 셋을 돌리면 transfer가 83%, 64%, 43%다. 한 단계 학습에서 primitive를 깨끗하게 배운 seed는 잘 이어 쓰고, 이동이 code 둘로 쪼개진 seed 43은 못 이어 쓴다. 위 표의 값은 가장 좋은 seed이고 평균은 63%다.</p>
 <p>programmer가 목표를 보고 첫 primitive의 code를 고른다. executor가 깨끗한 격자를 낸다. 그 격자를 본 programmer가 다음 code를 고른다. 따로 가르치지 않았는데 이렇게 이어 간다. 더 긴 program에서도 같다.</p>
 <figure>
 <div class="scroll">@@FIG_DEPTH@@</div>
