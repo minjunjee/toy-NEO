@@ -409,6 +409,13 @@ def main() -> None:
         for key in ("restart_every", "restart_below", "usage_decay"):
             config["model"]["code"].pop(key, None)
         configs[f"fastneo_6k_{name}_single_a_lv1_s42"] = config
+    # the same warm start with a tenth of the learning rate: is the damage only a learning rate that is too high for a
+    # model that already works?
+    for name, changes in {"warm_all_lr3e5": {**same_parts, "method.lr": 3.0e-5}, "warm_programmer_only_lr3e5": {**same_parts, "method.lr": 3.0e-5, "method.freeze": ["encoder", "decoder", "code", "executor"]}}.items():
+        config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, changes=changes)
+        for key in ("restart_every", "restart_below", "usage_decay"):
+            config["model"]["code"].pop(key, None)
+        configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
