@@ -98,8 +98,8 @@
  },
  {
   "run": "onestep_s_a8_tight_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.967408214016,
   "light": {
    "2400": [
@@ -129,8 +129,69 @@
    "16800": [
     0.9981949458483754,
     0.9783393501805054
+   ],
+   "19200": [
+    0.9981949458483754,
+    0.9747292418772563
+   ],
+   "21600": [
+    0.9981949458483754,
+    0.9783393501805054
+   ],
+   "24000": [
+    0.9981949458483754,
+    0.9783393501805054
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.9974765681326604,
+   "transfer_depth1": 0.9729632299927902
+  },
+  "primitives": {
+   "flip_h": {
+    "transfer": 0.9093406593406593,
+    "explained": 0.9972527472527473,
+    "codes": 2
+   },
+   "flip_v": {
+    "transfer": 0.8882978723404256,
+    "explained": 0.9867021276595744,
+    "codes": 2
+   },
+   "next_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "rot90": {
+    "transfer": 1.0,
+    "explained": 0.9973118279569892,
+    "codes": 1
+   },
+   "translate_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   }
+  },
+  "solved": 7,
+  "codes_used": 9
  },
  {
   "run": "onestep_s_a8_wide_s42",
@@ -338,8 +399,8 @@
  },
  {
   "run": "onestep_s_b11_tight_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.96740825088,
   "light": {
    "2400": [
@@ -373,8 +434,75 @@
    "19200": [
     0.8837209302325582,
     0.8568872987477638
+   ],
+   "21600": [
+    0.8837209302325582,
+    0.851520572450805
+   ],
+   "24000": [
+    0.8819320214669052,
+    0.8604651162790697
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.8702623906705539,
+   "transfer_depth1": 0.8469387755102041
+  },
+  "primitives": {
+   "add_border": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "flip_h": {
+    "transfer": 0.6964285714285714,
+    "explained": 0.9821428571428571,
+    "codes": 3
+   },
+   "flip_v": {
+    "transfer": 0.9691358024691358,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "hollow": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "next_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "rot90": {
+    "transfer": 0.95,
+    "explained": 0.9533333333333334,
+    "codes": 1
+   },
+   "translate_down": {
+    "transfer": 1.0,
+    "explained": 0.9962406015037594,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 0.391304347826087,
+    "explained": 0.3557312252964427,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.36585365853658536,
+    "explained": 0.2967479674796748,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   }
+  },
+  "solved": 7,
+  "codes_used": 11
  },
  {
   "run": "onestep_s_b11_wide_s42",
@@ -619,6 +747,18 @@
   },
   "solved": 8,
   "codes_used": 32
+ },
+ {
+  "run": "onestep_s_m16_tight_s42",
+  "done": false,
+  "state": "running",
+  "tflops_per_step": 0.967408336896,
+  "light": {
+   "2400": [
+    0.21807747489239598,
+    0.17073170731707318
+   ]
+  }
  },
  {
   "run": "onestep_s_m16_wide_s42",
@@ -935,9 +1075,16 @@
   "codes_used": 48
  },
  {
-  "run": "onestep_s_m24_wide_s42",
+  "run": "onestep_s_m24_tight_s42",
   "done": false,
   "state": "running",
+  "tflops_per_step": 0.967408459776,
+  "light": {}
+ },
+ {
+  "run": "onestep_s_m24_wide_s42",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.96740868096,
   "light": {
    "2400": [
@@ -975,8 +1122,141 @@
    "21600": [
     0.7439544807965861,
     0.620199146514936
+   ],
+   "24000": [
+    0.7297297297297297,
+    0.6145092460881935
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.7412255466052935,
+   "transfer_depth1": 0.628452243958573
+  },
+  "primitives": {
+   "add_border": {
+    "transfer": 0.9966216216216216,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "anti_transpose": {
+    "transfer": 0.145985401459854,
+    "explained": 0.16423357664233576,
+    "codes": 1
+   },
+   "color_plus3": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "flip_h": {
+    "transfer": 0.18815331010452963,
+    "explained": 0.578397212543554,
+    "codes": 6
+   },
+   "flip_v": {
+    "transfer": 0.17229729729729729,
+    "explained": 0.5844594594594594,
+    "codes": 5
+   },
+   "hollow": {
+    "transfer": 0.9965034965034965,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "next_color": {
+    "transfer": 0.6435331230283912,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "prev_color": {
+    "transfer": 0.5754385964912281,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "rot180": {
+    "transfer": 0.12738853503184713,
+    "explained": 0.32802547770700635,
+    "codes": 3
+   },
+   "rot270": {
+    "transfer": 0.19718309859154928,
+    "explained": 0.16549295774647887,
+    "codes": 1
+   },
+   "rot90": {
+    "transfer": 0.1407942238267148,
+    "explained": 0.1407942238267148,
+    "codes": 1
+   },
+   "shift_down": {
+    "transfer": 0.9963636363636363,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_right": {
+    "transfer": 0.9897610921501706,
+    "explained": 0.9965870307167235,
+    "codes": 1
+   },
+   "shift_up": {
+    "transfer": 0.9964285714285714,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "to_bottom": {
+    "transfer": 0.6858974358974359,
+    "explained": 0.9967948717948718,
+    "codes": 2
+   },
+   "to_left": {
+    "transfer": 0.6549520766773163,
+    "explained": 0.9968051118210862,
+    "codes": 2
+   },
+   "to_right": {
+    "transfer": 0.3044982698961938,
+    "explained": 0.25259515570934254,
+    "codes": 1
+   },
+   "to_top": {
+    "transfer": 0.9866666666666667,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 0.8807017543859649,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.2932330827067669,
+    "explained": 0.22556390977443608,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 0.8897058823529411,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "transpose": {
+    "transfer": 0.16236162361623616,
+    "explained": 0.2066420664206642,
+    "codes": 2
+   }
+  },
+  "solved": 9,
+  "codes_used": 26
  },
  {
   "run": "onestep_s_m32_restart_s42",
@@ -1216,13 +1496,21 @@
    "19200": [
     0.7263610315186246,
     0.6131805157593123
+   ],
+   "24000": [
+    0.8194842406876791,
+    0.6805157593123209
+   ],
+   "28800": [
+    0.8567335243553008,
+    0.7034383954154728
    ]
   }
  },
  {
   "run": "onestep_s_m32_wide_c32_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.967408484352,
   "light": {
    "2400": [
@@ -1252,13 +1540,194 @@
    "16800": [
     0.670487106017192,
     0.6747851002865329
+   ],
+   "19200": [
+    0.6891117478510028,
+    0.6833810888252149
+   ],
+   "21600": [
+    0.6962750716332379,
+    0.6833810888252149
+   ],
+   "24000": [
+    0.7335243553008596,
+    0.7177650429799427
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.7379679144385026,
+   "transfer_depth1": 0.7373737373737373
+  },
+  "primitives": {
+   "add_border": {
+    "transfer": 1.0,
+    "explained": 0.9953271028037384,
+    "codes": 1
+   },
+   "anti_transpose": {
+    "transfer": 0.1651376146788991,
+    "explained": 0.10550458715596331,
+    "codes": 1
+   },
+   "color_plus3": {
+    "transfer": 0.21393034825870647,
+    "explained": 0.24378109452736318,
+    "codes": 1
+   },
+   "fill_bbox": {
+    "transfer": 0.9502262443438914,
+    "explained": 0.9321266968325792,
+    "codes": 1
+   },
+   "flip_h": {
+    "transfer": 0.1282051282051282,
+    "explained": 0.18803418803418803,
+    "codes": 1
+   },
+   "flip_v": {
+    "transfer": 0.11165048543689321,
+    "explained": 0.22815533980582525,
+    "codes": 2
+   },
+   "hollow": {
+    "transfer": 0.7616580310880829,
+    "explained": 0.7409326424870466,
+    "codes": 1
+   },
+   "invert_in_bbox": {
+    "transfer": 0.9665071770334929,
+    "explained": 0.9282296650717703,
+    "codes": 1
+   },
+   "mirror_down": {
+    "transfer": 0.9911111111111112,
+    "explained": 0.9911111111111112,
+    "codes": 1
+   },
+   "mirror_left": {
+    "transfer": 0.9901960784313726,
+    "explained": 0.9950980392156863,
+    "codes": 1
+   },
+   "mirror_right": {
+    "transfer": 0.9951219512195122,
+    "explained": 0.9902439024390244,
+    "codes": 1
+   },
+   "mirror_up": {
+    "transfer": 0.9955156950672646,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "next_color": {
+    "transfer": 0.2626728110599078,
+    "explained": 0.29493087557603687,
+    "codes": 1
+   },
+   "prev_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "rot180": {
+    "transfer": 0.10480349344978165,
+    "explained": 0.11353711790393013,
+    "codes": 1
+   },
+   "rot270": {
+    "transfer": 0.19806763285024154,
+    "explained": 0.13526570048309178,
+    "codes": 2
+   },
+   "rot90": {
+    "transfer": 0.19767441860465115,
+    "explained": 0.09302325581395349,
+    "codes": 1
+   },
+   "scale2": {
+    "transfer": 0.9748743718592965,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_down": {
+    "transfer": 0.9951219512195122,
+    "explained": 0.9951219512195122,
+    "codes": 1
+   },
+   "shift_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_right": {
+    "transfer": 0.9107981220657277,
+    "explained": 0.9295774647887324,
+    "codes": 1
+   },
+   "shift_up": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "stretch_w": {
+    "transfer": 0.9852941176470589,
+    "explained": 0.9950980392156863,
+    "codes": 1
+   },
+   "to_bottom": {
+    "transfer": 0.9252336448598131,
+    "explained": 0.897196261682243,
+    "codes": 1
+   },
+   "to_left": {
+    "transfer": 0.9389671361502347,
+    "explained": 0.971830985915493,
+    "codes": 1
+   },
+   "to_right": {
+    "transfer": 0.8836206896551724,
+    "explained": 0.8793103448275862,
+    "codes": 1
+   },
+   "to_top": {
+    "transfer": 0.9432989690721649,
+    "explained": 0.9484536082474226,
+    "codes": 1
+   },
+   "translate_down": {
+    "transfer": 0.9820627802690582,
+    "explained": 0.9955156950672646,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 0.9894736842105263,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.8974358974358975,
+    "explained": 0.8871794871794871,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 0.9831223628691983,
+    "explained": 0.9957805907172996,
+    "codes": 1
+   },
+   "transpose": {
+    "transfer": 0.17289719626168223,
+    "explained": 0.14018691588785046,
+    "codes": 2
+   }
+  },
+  "solved": 20,
+  "codes_used": 27
  },
  {
   "run": "onestep_s_m32_wide_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.967408877568,
   "light": {
    "2400": [
@@ -1288,13 +1757,194 @@
    "16800": [
     0.833810888252149,
     0.7349570200573066
+   ],
+   "19200": [
+    0.8438395415472779,
+    0.7363896848137536
+   ],
+   "21600": [
+    0.8424068767908309,
+    0.7277936962750716
+   ],
+   "24000": [
+    0.8467048710601719,
+    0.7378223495702005
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.8532382650029708,
+   "transfer_depth1": 0.7318775995246584
+  },
+  "primitives": {
+   "add_border": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "anti_transpose": {
+    "transfer": 0.16972477064220184,
+    "explained": 0.20642201834862386,
+    "codes": 1
+   },
+   "color_plus3": {
+    "transfer": 0.7611940298507462,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "fill_bbox": {
+    "transfer": 0.9230769230769231,
+    "explained": 0.9004524886877828,
+    "codes": 1
+   },
+   "flip_h": {
+    "transfer": 0.21794871794871795,
+    "explained": 0.6196581196581197,
+    "codes": 3
+   },
+   "flip_v": {
+    "transfer": 0.3058252427184466,
+    "explained": 0.7475728155339806,
+    "codes": 2
+   },
+   "hollow": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "invert_in_bbox": {
+    "transfer": 0.9712918660287081,
+    "explained": 0.9760765550239234,
+    "codes": 1
+   },
+   "mirror_down": {
+    "transfer": 1.0,
+    "explained": 0.9955555555555555,
+    "codes": 1
+   },
+   "mirror_left": {
+    "transfer": 0.9950980392156863,
+    "explained": 0.9852941176470589,
+    "codes": 2
+   },
+   "mirror_right": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "mirror_up": {
+    "transfer": 0.9910313901345291,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "next_color": {
+    "transfer": 0.9124423963133641,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "prev_color": {
+    "transfer": 0.7990654205607477,
+    "explained": 0.9953271028037384,
+    "codes": 2
+   },
+   "rot180": {
+    "transfer": 0.1615720524017467,
+    "explained": 0.3799126637554585,
+    "codes": 2
+   },
+   "rot270": {
+    "transfer": 0.16908212560386474,
+    "explained": 0.2318840579710145,
+    "codes": 2
+   },
+   "rot90": {
+    "transfer": 0.12209302325581395,
+    "explained": 0.1686046511627907,
+    "codes": 1
+   },
+   "scale2": {
+    "transfer": 0.964824120603015,
+    "explained": 0.9849246231155779,
+    "codes": 2
+   },
+   "shift_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_right": {
+    "transfer": 0.9953051643192489,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_up": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "stretch_w": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "to_bottom": {
+    "transfer": 0.6542056074766355,
+    "explained": 0.9719626168224299,
+    "codes": 3
+   },
+   "to_left": {
+    "transfer": 0.676056338028169,
+    "explained": 0.9765258215962441,
+    "codes": 2
+   },
+   "to_right": {
+    "transfer": 0.6853448275862069,
+    "explained": 0.9827586206896551,
+    "codes": 2
+   },
+   "to_top": {
+    "transfer": 0.5412371134020618,
+    "explained": 0.8917525773195877,
+    "codes": 3
+   },
+   "translate_down": {
+    "transfer": 0.5246636771300448,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "translate_left": {
+    "transfer": 0.9947368421052631,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.9846153846153847,
+    "explained": 0.9948717948717949,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 0.8143459915611815,
+    "explained": 0.9957805907172996,
+    "codes": 2
+   },
+   "transpose": {
+    "transfer": 0.1588785046728972,
+    "explained": 0.26635514018691586,
+    "codes": 2
+   }
+  },
+  "solved": 17,
+  "codes_used": 43
  },
  {
   "run": "onestep_s_m32_wide_x_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 1.387327389696,
   "light": {
    "2400": [
@@ -1324,8 +1974,189 @@
    "16800": [
     0.8065902578796562,
     0.8151862464183381
+   ],
+   "19200": [
+    0.8567335243553008,
+    0.8524355300859598
+   ],
+   "21600": [
+    0.8553008595988538,
+    0.8495702005730659
+   ],
+   "24000": [
+    0.8624641833810889,
+    0.8553008595988538
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.8679441473559121,
+   "transfer_depth1": 0.8533868092691622
+  },
+  "primitives": {
+   "add_border": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "anti_transpose": {
+    "transfer": 0.44954128440366975,
+    "explained": 0.12844036697247707,
+    "codes": 1
+   },
+   "color_plus3": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "fill_bbox": {
+    "transfer": 0.9457013574660633,
+    "explained": 0.9230769230769231,
+    "codes": 1
+   },
+   "flip_h": {
+    "transfer": 0.8974358974358975,
+    "explained": 0.9658119658119658,
+    "codes": 2
+   },
+   "flip_v": {
+    "transfer": 0.6796116504854369,
+    "explained": 0.8203883495145631,
+    "codes": 2
+   },
+   "hollow": {
+    "transfer": 0.9948186528497409,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "invert_in_bbox": {
+    "transfer": 0.9760765550239234,
+    "explained": 0.9712918660287081,
+    "codes": 1
+   },
+   "mirror_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "mirror_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "mirror_right": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "mirror_up": {
+    "transfer": 0.9865470852017937,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "next_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "prev_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "rot180": {
+    "transfer": 0.2838427947598253,
+    "explained": 0.4759825327510917,
+    "codes": 2
+   },
+   "rot270": {
+    "transfer": 0.357487922705314,
+    "explained": 0.13043478260869565,
+    "codes": 1
+   },
+   "rot90": {
+    "transfer": 0.313953488372093,
+    "explained": 0.11627906976744186,
+    "codes": 1
+   },
+   "scale2": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_right": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "shift_up": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "stretch_w": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "to_bottom": {
+    "transfer": 0.6588785046728972,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "to_left": {
+    "transfer": 0.863849765258216,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "to_right": {
+    "transfer": 0.6939655172413793,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "to_top": {
+    "transfer": 0.7319587628865979,
+    "explained": 1.0,
+    "codes": 2
+   },
+   "translate_down": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.9897435897435898,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 0.9957805907172996,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "transpose": {
+    "transfer": 0.4719626168224299,
+    "explained": 0.16355140186915887,
+    "codes": 1
+   }
+  },
+  "solved": 21,
+  "codes_used": 31
  },
  {
   "run": "onestep_s_m8_restart_s42",
@@ -1426,8 +2257,8 @@
  },
  {
   "run": "onestep_s_m8_tight_s42",
-  "done": false,
-  "state": "running",
+  "done": true,
+  "state": "done",
   "tflops_per_step": 0.967408214016,
   "light": {
    "2400": [
@@ -1465,8 +2296,61 @@
    "21600": [
     0.5890625,
     0.5484375
+   ],
+   "24000": [
+    0.7078125,
+    0.575
    ]
-  }
+  },
+  "full": {
+   "step": 24000,
+   "explain_depth1": 0.6982800192895033,
+   "transfer_depth1": 0.560681562449767
+  },
+  "primitives": {
+   "flip_h": {
+    "transfer": 0.22956326987681971,
+    "explained": 0.541993281075028,
+    "codes": 3
+   },
+   "flip_v": {
+    "transfer": 0.33462033462033464,
+    "explained": 0.5804375804375804,
+    "codes": 2
+   },
+   "next_color": {
+    "transfer": 1.0,
+    "explained": 1.0,
+    "codes": 1
+   },
+   "rot90": {
+    "transfer": 0.34720570749108204,
+    "explained": 0.6587395957193817,
+    "codes": 2
+   },
+   "translate_down": {
+    "transfer": 0.48548812664907653,
+    "explained": 0.4947229551451187,
+    "codes": 1
+   },
+   "translate_left": {
+    "transfer": 0.995774647887324,
+    "explained": 0.9985915492957746,
+    "codes": 1
+   },
+   "translate_right": {
+    "transfer": 0.9973509933774835,
+    "explained": 0.9986754966887417,
+    "codes": 1
+   },
+   "translate_up": {
+    "transfer": 0.2,
+    "explained": 0.3561643835616438,
+    "codes": 2
+   }
+  },
+  "solved": 3,
+  "codes_used": 8
  },
  {
   "run": "onestep_s_m8_wide_s42",

@@ -394,6 +394,21 @@ def main() -> None:
         config = one_step(42, steps=steps, codes=codes, changes=changes)
         del config["data"]["train_max_depth"]
         configs[f"onestep_{name}_s42"] = config
+    # more seeds of the one-step run whose model composes at inference (83% transfer on level 1)
+    wide_512 = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0}
+    for seed in (43, 44):
+        configs[f"onestep_t_w_12k_s{seed}"] = one_step(seed, steps=12000, codes=16, changes=wide_512)
+    # does training on several steps damage codes that start out clean? The multi-step model with grid-only handover,
+    # started from that one-step model (all parts), with everything trained and with only the programmer trained
+    start = "runs/onestep_t_w_12k_s42/ckpt/step-012000.pt"
+    same_parts = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "model.executor.d_model": 128, "model.executor.d_ff": 512,
+                  "model.code.type": "vq", "model.state_update": "reencode_hard", "method.type": "neo_warm", "train.init_from": start, "train.ema": 0.0}
+    for name, changes in {"warm_all": same_parts, "warm_programmer_only": {**same_parts, "method.freeze": ["encoder", "decoder", "code", "executor"]},
+                          "cold_same_parts": {**same_parts, "method.type": "neo", "train.init_from": "runs/codec_token/ckpt/step-003000.pt"}}.items():
+        config = fast_neo(*SINGLE_A_LV1, 42, steps=6000, codes=16, changes=changes)
+        for key in ("restart_every", "restart_below", "usage_decay"):
+            config["model"]["code"].pop(key, None)
+        configs[f"fastneo_6k_{name}_single_a_lv1_s42"] = config
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
