@@ -52,6 +52,7 @@ def import_all() -> None:
     import components.cnn_any_size  # noqa: F401
     import components.executors  # noqa: F401
     import components.executors_expert  # noqa: F401
+    import components.executors_lora  # noqa: F401
     import components.programmers  # noqa: F401
     import components.programmer_pair  # noqa: F401
     import models.neo  # noqa: F401

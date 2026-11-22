@@ -385,6 +385,10 @@ def growing_chain(model: str, seed: int = 42, steps: int = 6000, stages: tuple =
         elif model == "expert":   # one network per code, 128 codes as the lab chain
             config = one_step(seed, steps=steps, codes=128, changes={**wide, "train.compile": "none", "model.type": "neo_expert", "model.executor": {
                 "type": "per_code", "state_dim": 128, "cond_dim": 16, "size": 128, "d_model": 64, "num_layers": 2, "num_heads": 4, "d_ff": 256, "dropout": 0.0, "grid_dim": GRID}}, data=suite(data))
+        elif model == "lora":   # the lab executor plus a per-code low-rank change, shared up-projection moving ten times slower
+            config = one_step(seed, steps=steps, codes=128, changes={**wide, "train.compile": "none", "model.type": "neo_expert", "model.executor": {
+                "type": "lora_code", "state_dim": 128, "cond_dim": 16, "size": 128, "d_model": 128, "num_layers": 4, "num_heads": 8, "d_ff": 512, "dropout": 0.0, "grid_dim": GRID,
+                "rank": 8, "shared_speed": 0.1, "slow_base": True}}, data=suite(data))
         elif model == "counted":   # the fixed-angle kind-and-count codebook: 64 kinds x counts 1..6
             config = repeat_program(seed, steps=steps, codes=384, repeats=6, data=suite(data), changes={
                 "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "circle", "model.code.kinds": 64, "model.code.amounts": list(range(1, 7))})
@@ -529,7 +533,7 @@ def main() -> None:
         configs[f"ladder_repeatcut_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data), changes={"model.gradient_between": False})
         configs[f"ladder_counted_{tag}_s42"] = repeat_program(42, codes=6 * primitives, repeats=6, data=suite(data), changes={
             "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
-    for model in ("lab", "repeat", "repeatcut", "counted", "expert"):
+    for model in ("lab", "repeat", "repeatcut", "counted", "expert", "lora"):
         configs.update(growing_chain(model))
     # control: the same stages, the same restart of the learning-rate schedule at every stage, but the environment stays
     # at 8 primitives; the dips right after each growth are read against the dips of this chain
@@ -548,6 +552,24 @@ def main() -> None:
         return {"model.executor": {"type": "per_code", "state_dim": 128, "cond_dim": 16, "size": codes, "d_model": d_model, "num_layers": layers, "num_heads": 4,
                                    "d_ff": d_ff, "dropout": 0.0, "grid_dim": GRID, "shared_layers": shared}}
     for name, changes in (("expert_m24_d64", per_code(48)), ("expert_m24_d128", per_code(48, 128, 2, 512)), ("expert_m24_shared", per_code(48, 64, 1, 256, shared=2))):
+        configs[f"onestep_{name}_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, **changes}, data=suite("many_p24"))
+
+    # where to split shared and per-code layers (asked by the user on 2026-11-22): four layers in all, the first k shared
+    # (128 wide, as the lab executor), the other 4 - k one per code (64 wide); k = 4 is the lab executor
+    # (onestep_s_m24_wide_s42). `sandwich`: one shared, two per code, one shared.
+    def split(codes: int, shared: int, after: int = 0) -> dict:
+        own = 4 - shared - after
+        return {"model.executor": {"type": "per_code", "state_dim": 128, "cond_dim": 16, "size": codes, "d_model": 64, "num_layers": own, "num_heads": 4, "d_ff": 256,
+                                   "dropout": 0.0, "grid_dim": GRID, "shared_layers": shared, "shared_d_model": 128, "shared_d_ff": 512, "shared_after_layers": after}}
+    for name, changes in (("split0_m24", split(48, 0)), ("split1_m24", split(48, 1)), ("split2_m24", split(48, 2)), ("split3_m24", split(48, 3)),
+                          ("sandwich_m24", split(48, 1, 1))):
+        configs[f"onestep_{name}_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, **changes}, data=suite("many_p24"))
+    # the lab executor plus a low-rank change per code with a shared up-projection (components/executors_lora.py), asked
+    # by the user on 2026-11-22: B shared, A per code. `slow`: B and the base weights move ten times slower.
+    def lora(codes: int, rank: int = 8, speed: float = 1.0) -> dict:
+        return {"model.executor": {"type": "lora_code", "state_dim": 128, "cond_dim": 16, "size": codes, "d_model": 128, "num_layers": 4, "num_heads": 8, "d_ff": 512,
+                                   "dropout": 0.0, "grid_dim": GRID, "rank": rank, "shared_speed": speed, "slow_base": speed != 1.0}}
+    for name, changes in (("lora_m24", lora(48)), ("lora_m24_slow", lora(48, speed=0.1))):
         configs[f"onestep_{name}_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, **changes}, data=suite("many_p24"))
     # only the generators of the orientation group as atoms: rot180, rot270, transpose and anti_transpose are left out of
     # the train file of the 24-primitive set; every one of them is an exact composition of rot90 and a flip. Asked: with

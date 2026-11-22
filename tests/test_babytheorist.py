@@ -275,6 +275,32 @@ def test_per_code_executor_runs_only_the_network_of_the_code_it_is_given() -> No
     assert touched == [False, False, True, False]
 
 
+def test_lora_code_executor_shares_the_up_projection_and_keeps_each_codes_own_down_projection() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 4, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "lora_code", "state_dim": 32, "cond_dim": 8, "size": 4, "d_model": 16, "num_layers": 1, "num_heads": 4, "d_ff": 32, "grid_dim": 6, "rank": 2,
+                     "shared_speed": 0.1, "slow_base": True},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_expert"](**spec)
+    layer = model.executor.stack.blocks[0].ffn[0]
+    torch.nn.init.normal_(model.executor.stack.blocks[0].adaLN_modulation[-1].weight, std=0.3)   # open the block (AdaLN-Zero starts closed)
+    torch.nn.init.normal_(layer.up, std=0.3)   # the shared up-projection starts at zero, as in LoRA; give it a value so the down-projections get a gradient
+    state = model.encoder(torch.randint(0, 10, (3, 6, 6)))
+    table = model.code.codebook(torch.arange(4))
+    out = model.executor(state, table[torch.tensor([1, 1, 3])][:, None])
+    out[0].sum().backward()   # row 0 ran code 1: the shared up-projection and code 1's down-projection learn, no other code's does
+    assert layer.up.grad is not None and bool(layer.up.grad.abs().sum() > 0)
+    moved = [bool(layer.down.grad[k].abs().sum() > 0) for k in range(4)]
+    assert moved == [False, True, False, False]
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

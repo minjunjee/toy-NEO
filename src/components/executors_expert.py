@@ -9,7 +9,7 @@ Here every code has its own AdaLN-Zero transformer (the lab executor's blocks, s
 own. A training pair moves the weights of the code it was explained with and of nothing else, so codes cannot interfere
 through the executor, and a code that is not used is untouched (its weights are memory that is not active). With
 `shared_layers` > 0, a transformer shared by all codes runs first (perception common to all codes) and the code's own
-network after it.
+network after it; with `shared_after_layers` > 0 a shared transformer also runs after the code's own network.
 
 Which network runs is the index of the code. The executor receives the code vector, as the lab executor does, and finds
 the index as the codebook row it equals (the model hands it the codebook; models/neo_expert.py). The code vector still
@@ -27,11 +27,12 @@ from core.registry import EXECUTORS
 
 class PerCodeExecutor(nn.Module):
     def __init__(self, state_dim: int, cond_dim: int, size: int, d_model: int, num_layers: int, num_heads: int, d_ff: int, dropout: float = 0.0,
-                 grid_dim: int | None = None, shared_layers: int = 0, shared_d_model: int = 128, shared_d_ff: int = 512) -> None:
+                 grid_dim: int | None = None, shared_layers: int = 0, shared_d_model: int = 128, shared_d_ff: int = 512, shared_after_layers: int = 0) -> None:
         super().__init__()
         self.size = size
         self.experts = nn.ModuleList(AdaLNZeroStack(state_dim, cond_dim, d_model, num_layers, num_heads, d_ff, dropout, grid_dim) for _ in range(size))
         self.shared = AdaLNZeroStack(state_dim, cond_dim, shared_d_model, shared_layers, num_heads, shared_d_ff, dropout, grid_dim) if shared_layers else None
+        self.shared_after = AdaLNZeroStack(state_dim, cond_dim, shared_d_model, shared_after_layers, num_heads, shared_d_ff, dropout, grid_dim) if shared_after_layers else None
         self.table = None  # a function returning the (size, cond_dim) code vectors, set by the model; not a submodule
 
     def indices(self, action: Tensor) -> Tensor:
@@ -51,7 +52,8 @@ class PerCodeExecutor(nn.Module):
             outputs.append(self.experts[code](state[rows], action[rows]))
             positions.append(rows)
         order = torch.cat(positions).argsort()
-        return torch.cat(outputs)[order]
+        out = torch.cat(outputs)[order]
+        return self.shared_after(out, action) if self.shared_after is not None else out
 
 
 EXECUTORS["per_code"] = PerCodeExecutor

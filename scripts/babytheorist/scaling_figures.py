@@ -324,6 +324,8 @@ def old_primitives(out: Path) -> None:
 GROW_MODELS = {"lab NEO, one code": (SERIES[0], "lab"), "one code x count": (SERIES[1], "repeat"),
                "one code x count, no gradient between applications": (SERIES[3], "repeatcut"),
                "(kind, count), fixed-angle rotation (Lie algebra)": (SERIES[2], "counted"),
+               "one network per code": (SERIES[4], "expert"),
+               "shared executor + per-code low-rank change, shared part slow": (SERIES[6], "lora"),
                "lab NEO, control: the environment stays at 8": (MUTED, "labsame")}
 STAGE_STEPS = 6000
 
@@ -458,6 +460,44 @@ def heldout_curve(out: Path) -> None:
     save(fig, out, "heldout_curve.png")
 
 
+LENGTH_RUNS = [  # (label, [(run, step offset)], color, dashes)
+    ("one step, then programs of up to 2 on depth <= 2, then up to 4 on depth <= 4", [("fastneo_3k_len2_single_a_lv1_s42", 0), ("fastneo_3k_len4_single_a_lv1_s42", 3000)], SERIES[2], "-"),
+    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_len2_lr3e5_g0_single_a_lv1_s42", 0), ("fastneo_3k_len4_lr3e5_g0_single_a_lv1_s42", 3000)], SERIES[2], "--"),
+    ("one step, then programs of up to 2 on pairs of every depth", [("fastneo_3k_len2_alldata_single_a_lv1_s42", 0)], SERIES[3], "-"),
+    ("one step, then programs of up to 5 on depth <= 2", [("fastneo_3k_len5_depth2_single_a_lv1_s42", 0)], SERIES[4], "-"),
+    ("one step, then straight to programs of up to 5 on every depth", [("fastneo_6k_warm_all_single_a_lv1_s42", 0)], SERIES[7], "-"),
+    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_warm_all_g0_lr3e5_single_a_lv1_s42", 0)], SERIES[7], "--"),
+]
+
+
+def program_length(out: Path) -> None:
+    fig, ax = plt.subplots(figsize=(11, 4.6))
+    drawn = False
+    for label, parts, color, dashes in LENGTH_RUNS:
+        xs, ys = [0], [0.832]
+        for run, offset in parts:
+            path = REPO / "runs" / run / "train.jsonl"
+            if not path.exists():
+                continue
+            for row in (json.loads(line) for line in path.read_text().splitlines()):
+                if "observe/lv1/transfer_strict" in row:
+                    xs.append(offset + row["step"])
+                    ys.append(row["observe/lv1/transfer_strict"])
+        if len(xs) > 1:
+            ax.plot(xs, ys, color=color, linestyle=dashes, linewidth=1.8, marker="o", markersize=3, label=label)
+            drawn = True
+    ax.axhline(0.832, color=MUTED, linewidth=0.8, linestyle=":")
+    ax.text(150, 0.845, "the one-step model it starts from: 83%", color=MUTED, fontsize=8)
+    ax.axvline(3000, color=GRID, linewidth=1.0)
+    style(ax, "training steps after the one-step model", "transfer, level 1, all depths (5-step rollout, grid only)", "")
+    percent(ax)
+    ax.legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2)
+    fig.suptitle("Longer programs, gradually or at once (8 primitives, seed 42)", color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
+    if drawn:
+        save(fig, out, "program_length.png")
+    plt.close(fig)
+
+
 def shift_family(out: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.4), sharey=True)
     groups = (("Codebook changes, the executor applied once", ("lab NEO", "rotation-tied codebook", "rotation-tied + addition loss", "free vectors + addition loss")),
@@ -488,7 +528,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     plt.rcParams["font.family"] = "DejaVu Sans"
-    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, shift_family):
+    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, program_length, shift_family):
         draw(args.out)
     _ = math
 

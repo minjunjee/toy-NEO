@@ -1,0 +1,82 @@
+[
+ {
+  "run": "onestep_s_m24gen_wide_s42",
+  "step": 24000,
+  "model": "neo",
+  "codes": 40,
+  "groups": {
+   "depth 1": {
+    "tasks": 1727,
+    "own_explain": 0.95830920671685,
+    "own_transfer": 0.821656050955414,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.9594672843080486,
+    "stepwise_transfer": 0.8210770121598147,
+    "stepwise_steps": 1.043427909669948
+   },
+   "depth 1, uses a primitive left out of training": {
+    "tasks": 360,
+    "own_explain": 0.09444444444444444,
+    "own_transfer": 0.16944444444444445,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.6,
+    "stepwise_transfer": 0.3611111111111111,
+    "stepwise_steps": 3.3
+   },
+   "depth 2": {
+    "tasks": 2223,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.7953216374269005,
+    "stepwise_transfer": 0.5425101214574899,
+    "stepwise_steps": 2.984705353126406
+   },
+   "depth 2, uses a primitive left out of training": {
+    "tasks": 911,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.4445664105378705,
+    "stepwise_transfer": 0.18660812294182216,
+    "stepwise_steps": 5.448957189901208
+   },
+   "depth 3": {
+    "tasks": 346,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.6184971098265896,
+    "stepwise_transfer": 0.2745664739884393,
+    "stepwise_steps": 5.199421965317919
+   },
+   "depth 3, uses a primitive left out of training": {
+    "tasks": 211,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.36018957345971564,
+    "stepwise_transfer": 0.06635071090047394,
+    "stepwise_steps": 7.270142180094787
+   },
+   "depth 4": {
+    "tasks": 134,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.3805970149253731,
+    "stepwise_transfer": 0.12686567164179105,
+    "stepwise_steps": 7.544776119402985
+   },
+   "depth 4, uses a primitive left out of training": {
+    "tasks": 88,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.20454545454545456,
+    "stepwise_transfer": 0.022727272727272728,
+    "stepwise_steps": 8.784090909090908
+   }
+  }
+ }
+]
