@@ -259,6 +259,82 @@ def one_step_scale_screen() -> dict:
     return screen
 
 
+def one_step_amount_screen() -> dict:
+    """Does a codebook indexed by kind and integer amount give an amount that was never trained?
+
+    Data: 24 primitives, a move by one to six cells in each of four directions (generate_many_primitives.py --primitives
+    shifts). `shifts24_without4` has no four-cell move in its train file; its eval file has all 24. One program step,
+    48 codes everywhere, the recipe of the scale screen (wide programmer, batch 128, 24,000 steps, no weight average).
+
+      flat          the lab VQ (control)
+      flat_alldata  the lab VQ trained with the four-cell moves (what is reachable when nothing is left out)
+      rot           codes c(g, t) = exp(t A_g) b_g, 6 kinds x amounts 1..8, nothing asked of the executor
+      free_add      a free vector per (g, t), and the executor is asked that amounts add (methods/neo_compose.py)
+      rot_add       both
+      line_add      codes on a straight line per kind instead of a rotation, amounts add
+      rot_signed_add  3 kinds x amounts -8..8 without 0, amounts add: can one kind hold a direction and its opposite
+
+    name -> (data, changes)"""
+
+    wide = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}
+    base = {"model.programmer": wide, "train.ema": 0.0, "train.batch_size": 128}
+    positive = {"kinds": 6, "amounts": list(range(1, 9))}
+    signed = {"kinds": 3, "amounts": [a for a in range(-8, 9) if a]}
+
+    def code(family: str, layout: dict) -> dict:
+        return {"model.code.type": "vq_orbit", "model.code.family": family, **{f"model.code.{k}": v for k, v in layout.items()}}
+
+    add = {"method.type": "neo_compose", "method.compose_weight": 1.0}
+    held_out = "shifts24_without4"
+    return {
+        "k_flat": (held_out, base),
+        "k_flat_alldata": ("shifts24", base),
+        "k_rot": (held_out, {**base, **code("rotation", positive)}),
+        "k_free_add": (held_out, {**base, **code("free", positive), **add}),
+        "k_rot_add": (held_out, {**base, **code("rotation", positive), **add}),
+        "k_line_add": (held_out, {**base, **code("line", positive), **add}),
+        "k_rot_signed_add": (held_out, {**base, **code("rotation", signed), **add}),
+        # added while the first runs trained: with every pair of codes composed from step 0 the executor agreed with itself
+        # at once (96% at step 2,000) while explaining nothing, which is what an executor that ignores the code does.
+        # `known`: targets only from codes that training pairs pick. `late`: the term starts after the codes are found.
+        "k_rot_add_known": (held_out, {**base, **code("rotation", positive), **add, "method.compose_known": 0.5}),
+        "k_free_add_known": (held_out, {**base, **code("free", positive), **add, "method.compose_known": 0.5}),
+        "k_rot_add_late": (held_out, {**base, **code("rotation", positive), **add, "method.compose_from": 3000}),
+    }
+
+
+def repeat_program(seed: int, steps: int = 24000, codes: int = 8, repeats: int = 6, changes: dict | None = None, data: tuple | None = None) -> dict:
+    """A program that is one code and a count (models/neo_repeat.py), on single-primitive tasks, with the recipe of the
+    one-step screens (wide programmer, batch 128, no weight average, compiled parts). The count goes up to `repeats`."""
+
+    config = neo_transformer(*(data or suite("shifts24_without4")), seed, steps=steps, codes=codes, max_length=repeats)
+    config["data"]["train_max_depth"] = 1
+    config["model"]["type"] = "neo_repeat"
+    config["model"].pop("state_update", None)
+    config["model"]["programmer"] = {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}
+    for block in config["evals"]:
+        block["infer"] = {"max_steps": repeats, "rollout": "hard"}
+    config["train"].update({"compile": "parts", "ckpt_every": steps, "ema": 0.0, "batch_size": 128})
+    for path, value in (changes or {}).items():
+        set_path(config, path, copy.deepcopy(value))
+    return config
+
+
+def repeat_screen() -> dict:
+    """One code applied a counted number of times, on the shifts with the four-cell ones left out of training. The number
+    of codes is what is varied: with 4 codes for 20 trained primitives a code has to be a unit that is repeated, with 24
+    every trained primitive can keep a code of its own. `rot` uses the codebook tied by rotations (it found the codes
+    faster in the one-step runs). name -> (codes, changes)"""
+
+    def rot(kinds: int, amounts: int) -> dict:
+        return {"model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": kinds, "model.code.amounts": list(range(1, amounts + 1))}
+
+    return {
+        "c4": (4, {}), "c6": (6, {}), "c8": (8, {}), "c12": (12, {}), "c24": (24, {}),
+        "c4_rot": (4, rot(1, 4)), "c8_rot": (8, rot(2, 4)), "c24_rot": (24, rot(3, 8)),
+    }
+
+
 def fast_neo(train: list[str], evals: dict[str, str], seed: int, steps: int = 12000, codes: int = 16, max_length: int = 5, changes: dict | None = None) -> dict:
     """The full multi-step transformer NEO with the standard parts that the one-step search settled on.
 
@@ -363,6 +439,12 @@ def main() -> None:
         configs[f"fastneo_{steps // 1000}k_{name}_single_a_lv1_s42"] = fast_neo(*SINGLE_A_LV1, 42, steps=steps, changes=changes)
     for name, (data, codes, steps, changes) in one_step_scale_screen().items():
         configs[f"onestep_{name}_s42"] = one_step(42, steps=steps, codes=codes, changes=changes, data=suite(data))
+    for name, (codes, changes) in repeat_screen().items():
+        for seed in (42, 43, 44) if name in ("c4", "c8", "c8_rot") else (42,):
+            configs[f"repeat_{name}_s{seed}"] = repeat_program(seed, codes=codes, changes=changes)
+    for name, (data, changes) in one_step_amount_screen().items():
+        for seed in (42, 43, 44) if name in ("k_flat", "k_rot", "k_free_add", "k_rot_add") else (42,):
+            configs[f"onestep_{name}_s{seed}"] = one_step(seed, steps=24000, codes=48, changes=changes, data=suite(data))
     # the fast parts reach 76% self-explanation in 6,000 steps, but through two-code programs that only work when a step
     # hands the next one the cell probabilities (2% with grid-only handover). The same model trained with grid-only
     # handover: the lab's reencode_hard (no gradient between steps) and the straight-through model neo_visible_state

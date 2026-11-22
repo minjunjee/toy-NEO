@@ -122,6 +122,90 @@ def test_visible_state_model_computes_what_reencode_hard_computes_and_lets_the_g
     assert reached == [True, False]
 
 
+def test_kind_and_amount_codebook_is_the_lab_codebook_when_free_and_ties_the_codes_of_one_kind_by_one_rotation() -> None:
+    from components.codes import VQ
+    from components.codes_orbit import OrbitVQ
+
+    torch.manual_seed(0)
+    lab = VQ(8, 16, stochastic=False, commitment_grad=True)
+    free = OrbitVQ(2, [1, 2, 3, 4], 16, family="free", stochastic=False, commitment_grad=True)
+    free.embedding.load_state_dict(lab.embedding.state_dict())
+    actions = torch.randn(64, 1, 16)
+    a, b = lab(actions, training=True), free(actions, training=True)
+    assert torch.equal(a.indices, b.indices) and torch.allclose(a.values, b.values) and torch.allclose(a.loss_per_sample, b.loss_per_sample)
+
+    amounts = [-2, -1, 1, 2, 3]
+    for family in ("rotation", "line"):
+        codes = OrbitVQ(3, amounts, 16, family=family, stochastic=False, commitment_grad=True)
+        table = codes.table()
+        assert table.shape == (15, 16) and torch.allclose(table.norm(dim=-1), torch.ones(15), atol=1e-5)
+        out = codes(actions, training=True)
+        out.loss_per_sample.mean().backward()
+        assert all(p.grad is not None and bool(p.grad.abs().sum() > 0) for p in codes.parameters())
+        assert torch.allclose(out.values, table[out.indices].view(actions.shape), atol=1e-5)
+    # the index table: code (g, a) then code (g, b) is code (g, a + b); nothing across kinds or outside the list
+    for i in range(15):
+        for j in range(15):
+            (gi, ai), (gj, aj) = codes.kind_and_amount(torch.tensor(i)), codes.kind_and_amount(torch.tensor(j))
+            k = int(codes.sums[i, j])
+            if gi == gj and int(ai + aj) in amounts:
+                gk, ak = codes.kind_and_amount(torch.tensor(k))
+                assert gk == gi and ak == ai + aj
+            else:
+                assert k == -1
+    # rotation: the code of amount a + b is the code of amount b turned by exp(a * A) of its kind
+    codes = OrbitVQ(3, amounts, 16, family="rotation")
+    table = codes.table().view(3, 5, 16)
+    skew = (codes.generator - codes.generator.transpose(1, 2)).detach()
+    for g in range(3):
+        turned = torch.linalg.matrix_exp(2.0 * skew[g]) @ table[g, amounts.index(1)]
+        assert torch.allclose(turned, table[g, amounts.index(3)], atol=1e-5)
+        assert torch.allclose(torch.linalg.matrix_exp(1.0 * skew[g]) @ table[g, amounts.index(-1)], torch.nn.functional.normalize(codes.base[g], dim=-1), atol=1e-5)
+
+
+def test_repeat_model_applies_one_code_a_counted_number_of_times() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 4, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 3, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_repeat"](**spec)
+    x, y = torch.randint(0, 10, (5, 6, 6)), torch.randint(0, 10, (5, 6, 6))
+    outputs = []
+
+    def keep(module, inputs, output) -> None:
+        output.retain_grad()
+        outputs.append(output)
+
+    handle = model.executor.register_forward_hook(keep)
+    out = model({"x": x, "y": y})
+    handle.remove()
+    assert len(out.logits_by_length) == 3 and all(torch.equal(i, out.code_indices_by_length[0]) for i in out.code_indices_by_length)
+    out.logits_by_length[2].sum().backward()
+    # the loss after the third application reaches the first application through the grids handed over
+    assert len(outputs) == 3 and outputs[0].grad is not None and bool(outputs[0].grad.abs().sum() > 0)
+    model.eval()
+    explained = model.self_explain(x, y, max_steps=3, rollout="hard")
+    # the explanation is the picked code applied n_steps times by hand, the grid handed between the applications
+    code = model.code.codebook(explained["indices"][0].view(5, -1)[:, 0])[:, None]
+    grid, by_count = x, []
+    with torch.no_grad():
+        for _ in range(3):
+            grid = model.decoder(model.executor(model.encoder(grid), code)).argmax(dim=-1)
+            by_count.append(grid)
+    assert torch.equal(explained["pred"], torch.stack(by_count, dim=1)[torch.arange(5), explained["n_steps"] - 1])
+    answered = model.infer(x, y, x, max_steps=3, rollout="hard")
+    assert torch.equal(answered["pred"], explained["pred"])
+    with pytest.raises(ValueError):
+        model.self_explain(x, y, max_steps=3, rollout="official")
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

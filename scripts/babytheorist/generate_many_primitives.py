@@ -19,6 +19,7 @@ Sets (each contains the smaller ones):
   16  + shift_up/down/left/right (by one cell), rot180, rot270, transpose, prev_color
   24  + to_top/bottom/left/right (to the edge of the grid), anti_transpose, color_plus3, hollow, add_border
   32  + fill_bbox, invert_in_bbox, scale2, stretch_w, mirror_right, mirror_left, mirror_down, mirror_up
+  shifts  a separate family for asking about amounts: shift_<up|down|left|right>_<1..6>, a move by that many cells
 
     python scripts/babytheorist/generate_many_primitives.py --primitives 32 --out data/babytheorist/many_p32 [--n-train 250000] [--n-eval 10000] [--workers 64]
 """
@@ -94,11 +95,16 @@ EXTRA = {
     "mirror_down": lambda s: Shape(np.concatenate([s.grid, np.flipud(s.grid)], axis=0), s.position),
     "mirror_up": lambda s: Shape(np.concatenate([np.flipud(s.grid), s.grid], axis=0), (s.position[0] - s.n_rows, s.position[1])),
 }
+SHIFT_DIRECTIONS = {"up": (-1, 0), "down": (1, 0), "left": (0, -1), "right": (0, 1)}
+for _name, (_dr, _dc) in SHIFT_DIRECTIONS.items():
+    for _k in range(1, 7):
+        EXTRA[f"shift_{_name}_{_k}"] = shift(_k * _dr, _k * _dc)
+SET_SHIFTS = tuple(f"shift_{name}_{k}" for name in SHIFT_DIRECTIONS for k in range(1, 7))
 SET_8 = ("rot90", "flip_h", "flip_v", "next_color", "translate_up", "translate_down", "translate_left", "translate_right")
 SET_16 = SET_8 + ("shift_up", "shift_down", "shift_left", "shift_right", "rot180", "rot270", "transpose", "prev_color")
 SET_24 = SET_16 + ("to_top", "to_bottom", "to_left", "to_right", "anti_transpose", "color_plus3", "hollow", "add_border")
 SET_32 = SET_24 + ("fill_bbox", "invert_in_bbox", "scale2", "stretch_w", "mirror_right", "mirror_left", "mirror_down", "mirror_up")
-SETS = {8: SET_8, 16: SET_16, 24: SET_24, 32: SET_32}
+SETS = {"8": SET_8, "16": SET_16, "24": SET_24, "32": SET_32, "shifts": SET_SHIFTS}
 
 
 def function_of(name: str):
@@ -161,8 +167,10 @@ def reachable_sooner(start: Shape, start_world: np.ndarray, target: bytes, funct
 
 
 class Generator:
-    def __init__(self, names: tuple[str, ...], seed) -> None:
+    def __init__(self, names: tuple[str, ...], seed, depths: dict[int, float] | None = None, without: tuple[str, ...] = ()) -> None:
         self.names, self.functions = names, [function_of(n) for n in names]
+        self.depths = depths or DEPTH_PROBS
+        self.allowed = [i for i, n in enumerate(names) if n not in without]  # programs are drawn from these; the search for shorter programs uses all
         self.rng = np.random.default_rng(seed)
         self.factory = ShapeFactory(generators=(solid, bordered, patterned), size_range=(4, 16), compactness=8.0, bordered_hollow_min_size=9,
                                     bordered_hollow_random_inner_size=True, max_bbox_span=5)
@@ -208,8 +216,8 @@ class Generator:
         other. Programs that are never the shortest explanation (two quarter turns, a move and its opposite) find no object
         and are dropped."""
 
-        depth = int(self.rng.choice(list(DEPTH_PROBS), p=list(DEPTH_PROBS.values())))
-        program = [int(i) for i in self.rng.integers(len(self.functions), size=depth)]
+        depth = int(self.rng.choice(list(self.depths), p=list(self.depths.values())))
+        program = [int(self.allowed[i]) for i in self.rng.integers(len(self.allowed), size=depth)]
         for _ in range(8 if pairs > 1 else 1):
             made = []
             for _ in range(pairs):
@@ -223,8 +231,8 @@ class Generator:
 
 
 def work(job: tuple) -> dict:
-    names, seed, count, pairs = job
-    generator = Generator(names, seed)
+    names, seed, count, pairs, depths, without = job
+    generator = Generator(names, seed, depths, without)
     inputs, outputs, programs, attempts = [], [], [], 0
     while len(programs) < count:
         attempts += 1
@@ -242,13 +250,14 @@ def pair_hash(x: np.ndarray, y: np.ndarray) -> bytes:
     return hashlib.blake2b(x.tobytes() + y.tobytes(), digest_size=12).digest()
 
 
-def generate(names: tuple[str, ...], count: int, pairs: int, seed: int, workers: int, exclude: set[bytes]) -> dict:
+def generate(names: tuple[str, ...], count: int, pairs: int, seed: int, workers: int, exclude: set[bytes], depths: dict[int, float] | None = None,
+             without: tuple[str, ...] = ()) -> dict:
     chunk = max(50, min(2000, count // (workers * 4) or 50))
     inputs, outputs, programs, attempts, seen, next_seed = [], [], [], 0, set(exclude), 0
     with Pool(workers) as pool:
         while len(programs) < count:
             need = count - len(programs)
-            jobs = [(names, [seed, next_seed + i], chunk, pairs) for i in range(max(workers, -(-need // chunk)))]
+            jobs = [(names, [seed, next_seed + i], chunk, pairs, depths, without) for i in range(max(workers, -(-need // chunk)))]
             next_seed += len(jobs)
             for result in pool.imap_unordered(work, jobs):
                 attempts += result["attempts"]
@@ -282,7 +291,9 @@ def write(path: Path, names: tuple[str, ...], data: dict, pairs: int) -> None:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--primitives", type=int, choices=sorted(SETS), required=True)
+    parser.add_argument("--primitives", choices=sorted(SETS), required=True)
+    parser.add_argument("--depths", default="", help='depth distribution, e.g. "1" for single-primitive tasks only or "1:0.5,2:0.5"; default is the level-1 mix')
+    parser.add_argument("--train-without", default="", help="comma-separated primitives left out of the train file (the eval file has all)")
     parser.add_argument("--out", type=Path, required=True)
     parser.add_argument("--n-train", type=int, default=250000)
     parser.add_argument("--n-eval", type=int, default=10000)
@@ -290,10 +301,19 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=42)
     args = parser.parse_args()
     names = SETS[args.primitives]
+    depths = None
+    if args.depths:
+        parts = [part.split(":") for part in args.depths.split(",")]
+        weights = {int(p[0]): float(p[1]) if len(p) > 1 else 1.0 for p in parts}
+        depths = {d: w / sum(weights.values()) for d, w in weights.items()}
+    without = tuple(n for n in args.train_without.split(",") if n)
+    unknown = [n for n in without if n not in names]
+    if unknown:
+        raise SystemExit(f"--train-without names primitives that are not in the set: {unknown}")
     args.out.mkdir(parents=True, exist_ok=True)
-    train = generate(names, args.n_train, 1, args.seed, args.workers, set())
+    train = generate(names, args.n_train, 1, args.seed, args.workers, set(), depths, without)
     write(args.out / "lv1_train.h5", names, train, 1)
-    evaluation = generate(names, args.n_eval, 3, args.seed + 1, args.workers, train["hashes"])
+    evaluation = generate(names, args.n_eval, 3, args.seed + 1, args.workers, train["hashes"], depths)
     write(args.out / "lv1_eval.h5", names, evaluation, 3)
 
 
