@@ -51,12 +51,14 @@ def import_all() -> None:
     import components.encoders  # noqa: F401
     import components.cnn_any_size  # noqa: F401
     import components.executors  # noqa: F401
+    import components.executors_expert  # noqa: F401
     import components.programmers  # noqa: F401
     import components.programmer_pair  # noqa: F401
     import models.neo  # noqa: F401
     import models.neo_visible_state  # noqa: F401
     import models.neo_repeat  # noqa: F401
     import models.neo_counted  # noqa: F401
+    import models.neo_expert  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401

@@ -246,6 +246,35 @@ def test_counted_model_applies_the_unit_of_the_picked_kind_as_often_as_the_picke
         MODELS["neo_counted"](**{**spec, "max_length": 4})
 
 
+def test_per_code_executor_runs_only_the_network_of_the_code_it_is_given() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 4, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "per_code", "state_dim": 32, "cond_dim": 8, "size": 4, "d_model": 16, "num_layers": 1, "num_heads": 4, "d_ff": 32, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_expert"](**spec)
+    for expert in model.executor.experts:   # AdaLN-Zero starts as the identity: make each network do something different
+        for p in expert.parameters():
+            torch.nn.init.normal_(p, std=0.2)
+    x = torch.randint(0, 10, (6, 6, 6))
+    state = model.encoder(x)
+    table = model.code.codebook(torch.arange(4))
+    picks = torch.tensor([0, 2, 2, 3, 1, 0])
+    out = model.executor(state, table[picks][:, None])
+    for row, code in enumerate(picks.tolist()):
+        alone = model.executor.experts[code](state[row:row + 1], table[code][None, None])
+        assert torch.allclose(out[row], alone[0], atol=1e-5)
+    out[1].sum().backward()   # row 1 ran code 2: only network 2 gets a gradient
+    touched = [any(p.grad is not None and bool(p.grad.abs().sum() > 0) for p in e.parameters()) for e in model.executor.experts]
+    assert touched == [False, False, True, False]
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

@@ -382,6 +382,9 @@ def growing_chain(model: str, seed: int = 42, steps: int = 6000, stages: tuple =
             config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data))
         elif model == "repeatcut":
             config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data), changes={"model.gradient_between": False})
+        elif model == "expert":   # one network per code, 128 codes as the lab chain
+            config = one_step(seed, steps=steps, codes=128, changes={**wide, "train.compile": "none", "model.type": "neo_expert", "model.executor": {
+                "type": "per_code", "state_dim": 128, "cond_dim": 16, "size": 128, "d_model": 64, "num_layers": 2, "num_heads": 4, "d_ff": 256, "dropout": 0.0, "grid_dim": GRID}}, data=suite(data))
         elif model == "counted":   # the fixed-angle kind-and-count codebook: 64 kinds x counts 1..6
             config = repeat_program(seed, steps=steps, codes=384, repeats=6, data=suite(data), changes={
                 "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "circle", "model.code.kinds": 64, "model.code.amounts": list(range(1, 7))})
@@ -526,7 +529,7 @@ def main() -> None:
         configs[f"ladder_repeatcut_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data), changes={"model.gradient_between": False})
         configs[f"ladder_counted_{tag}_s42"] = repeat_program(42, codes=6 * primitives, repeats=6, data=suite(data), changes={
             "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
-    for model in ("lab", "repeat", "repeatcut", "counted"):
+    for model in ("lab", "repeat", "repeatcut", "counted", "expert"):
         configs.update(growing_chain(model))
     # control: the same stages, the same restart of the learning-rate schedule at every stage, but the environment stays
     # at 8 primitives; the dips right after each growth are read against the dips of this chain
@@ -535,6 +538,23 @@ def main() -> None:
     # a move by the object's own size or to the border has a count that differs from input to input
     for tag, data, primitives in (("m16", "many_p16", 16), ("m24", "many_p24", 24)):
         configs[f"repeat_{tag}_c{primitives}_s42"] = repeat_program(42, codes=primitives, repeats=4, data=suite(data))
+    # one network per code (components/executors_expert.py), asked by the user on 2026-11-22: does an executor whose codes
+    # cannot touch each other's weights keep the seven orientation primitives apart, and keep old primitives as the
+    # environment grows? The one-step recipe of the scale screen on 24 primitives, 48 codes; compiled parts are off
+    # because the executor picks a network per pair.
+    wide = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128, "train.compile": "none", "model.type": "neo_expert"}
+
+    def per_code(codes: int, d_model: int = 64, layers: int = 2, d_ff: int = 256, shared: int = 0) -> dict:
+        return {"model.executor": {"type": "per_code", "state_dim": 128, "cond_dim": 16, "size": codes, "d_model": d_model, "num_layers": layers, "num_heads": 4,
+                                   "d_ff": d_ff, "dropout": 0.0, "grid_dim": GRID, "shared_layers": shared}}
+    for name, changes in (("expert_m24_d64", per_code(48)), ("expert_m24_d128", per_code(48, 128, 2, 512)), ("expert_m24_shared", per_code(48, 64, 1, 256, shared=2))):
+        configs[f"onestep_{name}_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, **changes}, data=suite("many_p24"))
+    # only the generators of the orientation group as atoms: rot180, rot270, transpose and anti_transpose are left out of
+    # the train file of the 24-primitive set; every one of them is an exact composition of rot90 and a flip. Asked: with
+    # 7 members of the group in training every orientation primitive fell to 12-24% transfer; are 3 members learnable,
+    # and do the left-out ones come out of the stepwise rollout?
+    wide = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128}
+    configs["onestep_s_m24gen_wide_s42"] = one_step(42, steps=24000, codes=40, changes=wide, data=suite("many_p24_generators"))
     for name, (data, changes) in one_step_amount_screen().items():
         for seed in (42, 43, 44) if name in ("k_flat", "k_rot", "k_free_add", "k_rot_add") else (42,):
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, steps=24000, codes=48, changes=changes, data=suite(data))
@@ -599,6 +619,35 @@ def main() -> None:
         config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, changes=changes)
         for key in ("restart_every", "restart_below", "usage_decay"):
             config["model"]["code"].pop(key, None)
+        configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
+    # programs that grow longer step by step (asked by the user on 2026-11-22): from the one-step model, first programs of up
+    # to two steps on tasks of depth at most two, then up to four steps on depth at most four. The jump from one step to
+    # five destroyed the model within a few hundred steps; is a gradual schedule different? Two learning rates; the
+    # evaluation always rolls out five steps with only the grid handed over, so the stages are comparable.
+    for tag, lr_changes in (("", {}), ("_lr3e5_g0", {"method.lr": 3.0e-5, "method.grounding_weight": 0.0})):
+        previous = start
+        for length in (2, 4):
+            name = f"fastneo_3k_len{length}{tag}_single_a_lv1_s42"
+            config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, max_length=length, changes={**same_parts, **lr_changes, "train.init_from": previous, "train.ckpt_every": 3000})
+            for key in ("restart_every", "restart_below", "usage_decay"):
+                config["model"]["code"].pop(key, None)
+            config["data"]["train_max_depth"] = length
+            for block in config["evals"]:
+                block["infer"] = {"max_steps": 5, "rollout": "hard"}
+                block["every"] = 300 if block.get("max_samples") else block["every"]
+            configs[name] = config
+            previous = f"runs/{name}/ckpt/step-003000.pt"
+    # what made the length-2 stage keep the model (84% at 3,000 steps, where the jump to five steps fell to 16%): the
+    # shorter rollout or the pairs of depth at most two? One changed at a time.
+    for name, length, depth in (("len2_alldata", 2, None), ("len5_depth2", 5, 2)):
+        config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, max_length=length, changes={**same_parts, "train.ckpt_every": 3000})
+        for key in ("restart_every", "restart_below", "usage_decay"):
+            config["model"]["code"].pop(key, None)
+        if depth:
+            config["data"]["train_max_depth"] = depth
+        for block in config["evals"]:
+            block["infer"] = {"max_steps": 5, "rollout": "hard"}
+            block["every"] = 300 if block.get("max_samples") else block["every"]
         configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
     # seeds: the one-step result moved from 83% to 43% over three seeds, and the multi-step runs with the searched parts
     # have one seed each. Two more seeds of the multi-step model with grid-only handover (12 and 16 codes), and three more
