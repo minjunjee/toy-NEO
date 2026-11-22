@@ -60,6 +60,7 @@ def import_all() -> None:
     import models.neo_repeat  # noqa: F401
     import models.neo_counted  # noqa: F401
     import models.neo_expert  # noqa: F401
+    import models.neo_compete  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401

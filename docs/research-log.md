@@ -137,4 +137,7 @@
 - 23:15 사용자가 층별로 공유와 code별을 나누는 구성을 물음. 네 층 가운데 앞 k층을 공유하고 나머지를 code별로 두는 쓸어 보기와, 앞뒤 한 층씩 공유하고 가운데 두 층을 code별로 두는 형태를 큐 앞에 넣음. 공유 up-projection과 code별 down-projection을 쓰는 low-rank executor `lora_code`도 만듦.
 - 23:51 층 분리 쓸어 보기의 중간 결과. code별 층이 많을수록 늦게 배운다. 네 층을 모두 code별로 둔 run은 13,000스텝에 학습 batch 3%다. 두 층 공유는 7,200스텝에 transfer 24%이고 랩 executor는 같은 시점 57%다. code별 low-rank에 up-projection을 공유한 run은 랩 executor와 비슷한 속도다. 길이 4 단계는 학습률 3e-5에 grounding을 끈 쪽이 3,000스텝 내내 79%에서 84%를 유지했고 기본 학습률은 75%로 끝났다.
 - 23:53 code별 network로 처음부터 학습하는 커지는 환경 사슬을 멈춤. 첫 단계 3,000스텝에 transfer 1%다. 다 배운 랩 executor를 code 48개에 복사한 뒤 이어서 학습하는 run과 공유를 유지한 대조를 큐 맨 앞에 넣음.
+- 00:59 2026-11-23. 다 배운 랩 executor를 code 48개에 복사해 나눈 뒤 12,000스텝 더 학습한 run이 끝남. 회전 계열 일곱 개의 transfer가 14%에서 21%로, 나누지 않고 이어서 학습한 대조와 같다. code별 low-rank 두 run도 랩 executor와 같거나 낮다. 앞에서 executor가 회전을 담지 못한다고 한 해석은 틀렸다.
+- 01:05 programmer 출력에 선형 분류기를 붙여 회전 계열 일곱 개를 가르는지 잼. 24개 환경 모델에서 38%, 우연 수준은 14%다. 8개 환경 모델은 셋을 97%로 가른다. 24개 환경에서는 90도와 270도 회전, 전치, 반대 전치가 모두 code 39와 8로 보내진다. 넷은 모두 bbox의 가로세로를 바꾸는 변환이다. 실패는 executor가 아니라 programmer가 이 변환들을 구별하지 못하는 데서 나온다.
+- 01:10 학습 pair의 code를 programmer가 아니라 후보 code를 실제로 실행해 보고 정하는 모델 `neo_compete`를 만듦. programmer가 가까운 code 몇 개를 후보로 내고, executor로 모두 실행해 next state를 가장 잘 재현한 code만 학습한다. programmer는 그 code를 따라 하도록 당겨진다. 랩 run의 끝에서 이어 가는 것 둘과 처음부터 하는 것 하나를 큐 앞에 넣음.
 

@@ -575,6 +575,15 @@ def main() -> None:
     configs["onestep_m24_more_split_s42"] = one_step(42, steps=12000, codes=48, changes={**more, "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_split48.pt",
         "model.executor": {"type": "per_code", "state_dim": 128, "cond_dim": 16, "size": 48, "d_model": 128, "num_layers": 4, "num_heads": 8, "d_ff": 512, "dropout": 0.0,
                            "grid_dim": GRID}}, data=suite("many_p24"))
+    # the code of a training pair chosen by executing candidates (models/neo_compete.py): the probe showed the programmer
+    # sending four orientation primitives to the same codes. From the lab run's end (control: onestep_m24_more_shared_s42)
+    # with 4 and 8 candidates, and from the start (control: onestep_s_m24_wide_s42). The executor is the lab's, shared.
+    compete = {**wide, "model.type": "neo_compete", "train.compile": "parts"}
+    configs["onestep_m24_more_compete4_s42"] = one_step(42, steps=12000, codes=48, changes={**more, **compete, "train.init_from": lab_end, "model.candidates": 4},
+                                                         data=suite("many_p24"))
+    configs["onestep_m24_more_compete8_s42"] = one_step(42, steps=12000, codes=48, changes={**more, **compete, "train.init_from": lab_end, "model.candidates": 8},
+                                                         data=suite("many_p24"))
+    configs["onestep_compete4_m24_s42"] = one_step(42, steps=24000, codes=48, changes={**compete, "model.candidates": 4}, data=suite("many_p24"))
     # the lab executor plus a low-rank change per code with a shared up-projection (components/executors_lora.py), asked
     # by the user on 2026-11-22: B shared, A per code. `slow`: B and the base weights move ten times slower.
     def lora(codes: int, rank: int = 8, speed: float = 1.0) -> dict:

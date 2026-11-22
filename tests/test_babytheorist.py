@@ -301,6 +301,37 @@ def test_lora_code_executor_shares_the_up_projection_and_keeps_each_codes_own_do
     assert moved == [False, True, False, False]
 
 
+def test_competing_codes_train_only_the_winner_and_pull_the_programmer_to_it() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "per_code", "state_dim": 32, "cond_dim": 8, "size": 5, "d_model": 16, "num_layers": 1, "num_heads": 4, "d_ff": 32, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95, "candidates": 3,
+    }
+    model = MODELS["neo_compete"](**spec)
+    for expert in model.executor.experts:
+        for p in expert.parameters():
+            torch.nn.init.normal_(p, std=0.2)
+    x, y = torch.randint(0, 10, (4, 6, 6)), torch.randint(0, 10, (4, 6, 6))
+    out = model({"x": x, "y": y})
+    winners = out.code_indices_by_length[0]
+    # the winner is, among the 3 nearest codes, the one whose executed grid is closest to y
+    state, target = model.encoder(x), model.encoder(y)
+    table = model.code.codebook(torch.arange(5))
+    near = (torch.nn.functional.normalize(model.programmer(state, target).flatten(1), dim=-1) @ table.T).topk(3, dim=1).indices
+    for b in range(4):
+        losses = [torch.nn.functional.cross_entropy(model.decoder(model.executor(state[b:b + 1], table[c][None, None])).reshape(-1, 10), y[b].reshape(-1)) for c in near[b].tolist()]
+        assert int(winners[b]) == near[b][int(torch.stack(losses).argmin())]
+    torch.nn.functional.cross_entropy(out.logits_by_length[0].reshape(-1, 10), y.reshape(-1)).backward()
+    touched = {k for k, e in enumerate(model.executor.experts) if any(p.grad is not None and bool(p.grad.abs().sum() > 0) for p in e.parameters())}
+    assert touched == set(winners.tolist())
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()
