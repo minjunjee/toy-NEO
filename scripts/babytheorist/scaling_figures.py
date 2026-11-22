@@ -460,21 +460,23 @@ def heldout_curve(out: Path) -> None:
     save(fig, out, "heldout_curve.png")
 
 
-LENGTH_RUNS = [  # (label, [(run, step offset)], color, dashes)
-    ("one step, then programs of up to 2 on depth <= 2, then up to 4 on depth <= 4", [("fastneo_3k_len2_single_a_lv1_s42", 0), ("fastneo_3k_len4_single_a_lv1_s42", 3000)], SERIES[2], "-"),
-    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_len2_lr3e5_g0_single_a_lv1_s42", 0), ("fastneo_3k_len4_lr3e5_g0_single_a_lv1_s42", 3000)], SERIES[2], "--"),
-    ("one step, then programs of up to 2 on pairs of every depth", [("fastneo_3k_len2_alldata_single_a_lv1_s42", 0)], SERIES[3], "-"),
-    ("one step, then programs of up to 5 on depth <= 2", [("fastneo_3k_len5_depth2_single_a_lv1_s42", 0)], SERIES[4], "-"),
-    ("one step, then straight to programs of up to 5 on every depth", [("fastneo_6k_warm_all_single_a_lv1_s42", 0)], SERIES[7], "-"),
-    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_warm_all_g0_lr3e5_single_a_lv1_s42", 0)], SERIES[7], "--"),
+LENGTH_RUNS = [  # (label, [(run, step offset)], color, dashes, transfer of the one-step model it starts from)
+    ("one step, then programs of up to 2 on depth <= 2, then up to 4 on depth <= 4", [("fastneo_3k_len2_single_a_lv1_s42", 0), ("fastneo_3k_len4_single_a_lv1_s42", 3000)], SERIES[2], "-", 0.832),
+    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_len2_lr3e5_g0_single_a_lv1_s42", 0), ("fastneo_3k_len4_lr3e5_g0_single_a_lv1_s42", 3000)], SERIES[2], "--", 0.832),
+    ("the same, seed 43 (its one-step model: 43%)", [("fastneo_3k_len2_lr3e5_g0_single_a_lv1_s43", 0), ("fastneo_3k_len4_lr3e5_g0_single_a_lv1_s43", 3000)], SERIES[5], "--", 0.428),
+    ("the same, seed 44 (its one-step model: 64%)", [("fastneo_3k_len2_lr3e5_g0_single_a_lv1_s44", 0), ("fastneo_3k_len4_lr3e5_g0_single_a_lv1_s44", 3000)], SERIES[6], "--", 0.643),
+    ("one step, then programs of up to 2 on pairs of every depth", [("fastneo_3k_len2_alldata_single_a_lv1_s42", 0)], SERIES[3], "-", 0.832),
+    ("one step, then programs of up to 5 on depth <= 2", [("fastneo_3k_len5_depth2_single_a_lv1_s42", 0)], SERIES[4], "-", 0.832),
+    ("one step, then straight to programs of up to 5 on every depth", [("fastneo_6k_warm_all_single_a_lv1_s42", 0)], SERIES[7], "-", 0.832),
+    ("the same with learning rate 3e-5 and no grounding term", [("fastneo_3k_warm_all_g0_lr3e5_single_a_lv1_s42", 0)], SERIES[7], "--", 0.832),
 ]
 
 
 def program_length(out: Path) -> None:
     fig, ax = plt.subplots(figsize=(11, 4.6))
     drawn = False
-    for label, parts, color, dashes in LENGTH_RUNS:
-        xs, ys = [0], [0.832]
+    for label, parts, color, dashes, start in LENGTH_RUNS:
+        xs, ys = [0], [start]
         for run, offset in parts:
             path = REPO / "runs" / run / "train.jsonl"
             if not path.exists():
@@ -487,12 +489,12 @@ def program_length(out: Path) -> None:
             ax.plot(xs, ys, color=color, linestyle=dashes, linewidth=1.8, marker="o", markersize=3, label=label)
             drawn = True
     ax.axhline(0.832, color=MUTED, linewidth=0.8, linestyle=":")
-    ax.text(150, 0.845, "the one-step model it starts from: 83%", color=MUTED, fontsize=8)
+    ax.text(150, 0.845, "seed 42's one-step model: 83%", color=MUTED, fontsize=8)
     ax.axvline(3000, color=GRID, linewidth=1.0)
     style(ax, "training steps after the one-step model", "transfer, level 1, all depths (5-step rollout, grid only)", "")
     percent(ax)
     ax.legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(0.5, -0.14), ncol=2)
-    fig.suptitle("Longer programs, gradually or at once (8 primitives, seed 42)", color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
+    fig.suptitle("Longer programs, gradually or at once (8 primitives; seed 42 unless the label says otherwise)", color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
     if drawn:
         save(fig, out, "program_length.png")
     plt.close(fig)
