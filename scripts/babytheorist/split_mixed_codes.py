@@ -17,6 +17,11 @@ The second half is training from that checkpoint with the code chosen by executi
 (models/neo_compete.py) while the code vectors stay fixed, so the children cannot be pulled back onto their parent; the
 executor learns what each child does from the pairs it wins, and the programmer learns to name the winner.
 
+Children placed next to the parent (the default) inherited the parent's mixture: the executor could not make two nearly
+equal code vectors do different things. With `--random` the children are fresh random vectors far from everything, and
+the competition is told the family (the report's `children`, passed to neo_compete as `families`) so that a pair whose
+nearest code is a parent also tries that parent's children.
+
     python scripts/babytheorist/split_mixed_codes.py runs/<run> <out.pt> [--children 3]
 """
 
@@ -47,6 +52,7 @@ def main() -> None:
     parser.add_argument("--unused", type=float, default=0.001)
     parser.add_argument("--children", type=int, default=3)
     parser.add_argument("--noise", type=float, default=0.3)
+    parser.add_argument("--random", action="store_true", help="children are random unit vectors (times the parent's norm) instead of turned copies of the parent")
     parser.add_argument("--seed", type=int, default=0)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -83,7 +89,7 @@ def main() -> None:
                 break
             child = free.pop(0)
             direction = torch.randn(weights.shape[1], generator=generator)
-            vector = F.normalize(weights[parent], dim=0) + args.noise * F.normalize(direction, dim=0)
+            vector = F.normalize(direction, dim=0) if args.random else F.normalize(weights[parent], dim=0) + args.noise * F.normalize(direction, dim=0)
             weights[child] = F.normalize(vector, dim=0) * weights[parent].norm()
             children.append(child)
         plan[parent] = children

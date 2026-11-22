@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import copy
+import json
 
 from pathlib import Path
 
@@ -597,6 +598,13 @@ def main() -> None:
     configs["onestep_m24_split_children_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_children3.pt"},
                                                           data=suite("many_p24"))
     configs["onestep_m24_compete6_frozen_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "train.init_from": lab_end}, data=suite("many_p24"))
+    # the children next to the parent inherited its mixture. Fresh random children, tried whenever their parent is the
+    # nearest code (the family comes from the split report, written by split_mixed_codes.py --random)
+    report = Path("runs/split_init/onestep_s_m24_wide_s42_children3_random.json")
+    if report.exists():
+        families = {int(k): v for k, v in json.loads(report.read_text())["children"].items()}
+        configs["onestep_m24_split_random_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "model.candidates": 4, "model.families": families,
+            "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_children3_random.pt"}, data=suite("many_p24"))
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.

@@ -31,11 +31,19 @@ from models.neo import NEO, NEOOutput
 
 
 class NEOCompete(NEO):
-    def __init__(self, *args, candidates: int = 4, **kwargs) -> None:
+    def __init__(self, *args, candidates: int = 4, families: dict | None = None, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.max_length != 1:
             raise ValueError("neo_compete is the one-step model: max_length must be 1")
         self.candidates = candidates
+        # families: parent code -> its children (scripts/babytheorist/split_mixed_codes.py). A pair whose nearest code is a
+        # parent also tries all of that parent's children, wherever they lie in the code space.
+        width = max((len(v) for v in (families or {}).values()), default=0)
+        children = torch.full((self.code.size, max(width, 1)), -1, dtype=torch.long)
+        for parent, kids in (families or {}).items():
+            children[int(parent), :len(kids)] = torch.tensor([int(k) for k in kids], dtype=torch.long)
+        self.register_buffer("family_children", children, persistent=False)
+        self.with_children = width > 0
         if hasattr(self.executor, "table") and getattr(self.executor, "size", None) == self.code.size:   # a per-code executor
             code = self.code
             object.__setattr__(self.executor, "table", lambda: code.codebook(torch.arange(code.size, device=next(code.parameters()).device)))
@@ -52,6 +60,11 @@ class NEOCompete(NEO):
             table = self.code.codebook(torch.arange(self.code.size, device=x.device)).float()
             normalized = F.normalize(action.float(), dim=-1)                                       # (B, 1, dim)
             candidates = (normalized.flatten(1) @ table.T).topk(m, dim=1).indices                 # (B, m), nearest first
+            if self.with_children:
+                kids = self.family_children[candidates[:, 0]]                                              # (B, width)
+                kids = torch.where(kids >= 0, kids, candidates[:, :1].expand_as(kids))               # no child: try the nearest again
+                candidates = torch.cat([candidates, kids], dim=1)
+                m = candidates.shape[1]
         # run every candidate; no gradient here, the choice is made by checking
         with torch.no_grad():
             tried = self.executor(state.repeat_interleave(m, dim=0), table[candidates.flatten()][:, None].to(state.dtype))
