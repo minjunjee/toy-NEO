@@ -1,0 +1,264 @@
+{
+ "counted_circle_s42": [
+  {
+   "step": 2400,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.0012499999720603228,
+   "trained transfer": 0.0
+  },
+  {
+   "step": 4800,
+   "held out explain": 0.16624999046325684,
+   "held out transfer": 0.16749998927116394,
+   "trained explain": 0.17999999225139618,
+   "trained transfer": 0.1837499886751175
+  },
+  {
+   "step": 7200,
+   "held out explain": 0.05999999865889549,
+   "held out transfer": 0.05374999716877937,
+   "trained explain": 0.14249999821186066,
+   "trained transfer": 0.1224999949336052
+  },
+  {
+   "step": 9600,
+   "held out explain": 0.00624999962747097,
+   "held out transfer": 0.0037499999161809683,
+   "trained explain": 0.09749999642372131,
+   "trained transfer": 0.08999999612569809
+  },
+  {
+   "step": 12000,
+   "held out explain": 0.6837499737739563,
+   "held out transfer": 0.6875,
+   "trained explain": 0.9487499594688416,
+   "trained transfer": 0.92249995470047
+  },
+  {
+   "step": 14400,
+   "held out explain": 0.7162500023841858,
+   "held out transfer": 0.7162500023841858,
+   "trained explain": 0.8887499570846558,
+   "trained transfer": 0.8862499594688416
+  },
+  {
+   "step": 16800,
+   "held out explain": 0.668749988079071,
+   "held out transfer": 0.668749988079071,
+   "trained explain": 0.9975000023841858,
+   "trained transfer": 0.9975000023841858
+  },
+  {
+   "step": 19200,
+   "held out explain": 0.9262499809265137,
+   "held out transfer": 0.9262499809265137,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  }
+ ],
+ "counted_free_s42": [
+  {
+   "step": 2400,
+   "held out explain": 0.007499999832361937,
+   "held out transfer": 0.0037499999161809683,
+   "trained explain": 0.011249999515712261,
+   "trained transfer": 0.011249999515712261
+  },
+  {
+   "step": 4800,
+   "held out explain": 0.0037499999161809683,
+   "held out transfer": 0.0024999999441206455,
+   "trained explain": 0.05374999716877937,
+   "trained transfer": 0.04999999701976776
+  },
+  {
+   "step": 7200,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.2787500023841858,
+   "trained transfer": 0.2787500023841858
+  },
+  {
+   "step": 9600,
+   "held out explain": 0.0037499999161809683,
+   "held out transfer": 0.0024999999441206455,
+   "trained explain": 0.7774999737739563,
+   "trained transfer": 0.7774999737739563
+  },
+  {
+   "step": 12000,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.0,
+   "trained transfer": 0.0
+  },
+  {
+   "step": 14400,
+   "held out explain": 0.0037499999161809683,
+   "held out transfer": 0.0037499999161809683,
+   "trained explain": 0.17749999463558197,
+   "trained transfer": 0.14249999821186066
+  },
+  {
+   "step": 16800,
+   "held out explain": 0.0012499999720603228,
+   "held out transfer": 0.0024999999441206455,
+   "trained explain": 0.5912500023841858,
+   "trained transfer": 0.574999988079071
+  },
+  {
+   "step": 19200,
+   "held out explain": 0.004999999888241291,
+   "held out transfer": 0.008750000037252903,
+   "trained explain": 0.6274999976158142,
+   "trained transfer": 0.5887500047683716
+  },
+  {
+   "step": 21600,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.5987499952316284,
+   "trained transfer": 0.5674999952316284
+  },
+  {
+   "step": 24000,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.5674999952316284,
+   "trained transfer": 0.550000011920929
+  }
+ ],
+ "counted_rot_s42": [
+  {
+   "step": 2400,
+   "held out explain": 0.0,
+   "held out transfer": 0.0,
+   "trained explain": 0.0024999999441206455,
+   "trained transfer": 0.0
+  },
+  {
+   "step": 4800,
+   "held out explain": 0.3199999928474426,
+   "held out transfer": 0.3137499988079071,
+   "trained explain": 0.3787499964237213,
+   "trained transfer": 0.3687500059604645
+  },
+  {
+   "step": 7200,
+   "held out explain": 0.023749999701976776,
+   "held out transfer": 0.019999999552965164,
+   "trained explain": 0.044999998062849045,
+   "trained transfer": 0.04625000059604645
+  }
+ ],
+ "repeat_c12_cut_s42": [
+  {
+   "step": 2400,
+   "held out explain": 0.2775000035762787,
+   "held out transfer": 0.25874999165534973,
+   "trained explain": 0.2524999976158142,
+   "trained transfer": 0.2524999976158142
+  },
+  {
+   "step": 4800,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 7200,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 9600,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 12000,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 14400,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 16800,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 19200,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 21600,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 24000,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  }
+ ],
+ "repeat_c12_g0_s42": [
+  {
+   "step": 2400,
+   "held out explain": 0.38624998927116394,
+   "held out transfer": 0.41499999165534973,
+   "trained explain": 0.3974999785423279,
+   "trained transfer": 0.38749998807907104
+  },
+  {
+   "step": 4800,
+   "held out explain": 0.6699999570846558,
+   "held out transfer": 0.668749988079071,
+   "trained explain": 0.8162499666213989,
+   "trained transfer": 0.7774999737739563
+  },
+  {
+   "step": 7200,
+   "held out explain": 0.22999998927116394,
+   "held out transfer": 0.23124998807907104,
+   "trained explain": 0.2887499928474426,
+   "trained transfer": 0.2762500047683716
+  },
+  {
+   "step": 9600,
+   "held out explain": 1.0,
+   "held out transfer": 1.0,
+   "trained explain": 1.0,
+   "trained transfer": 1.0
+  },
+  {
+   "step": 12000,
+   "held out explain": 1.0,
+   "held out transfer": 0.9987499713897705,
+   "trained explain": 1.0,
+   "trained transfer": 0.9987499713897705
+  }
+ ]
+}

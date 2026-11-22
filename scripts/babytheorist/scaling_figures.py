@@ -355,7 +355,8 @@ def growing(out: Path) -> None:
         ax.set_xlim(0, len(SIZES) * STAGE_STEPS)
         ax.legend(frameon=False, fontsize=7.5, labelcolor=INK, loc="lower right", ncol=2)
     fig.suptitle("An environment that grows (dashed lines: the number of primitives grows to the number shown) while one model keeps learning",
-                 color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
+                 color=INK, fontsize=11, x=0.01, y=0.995, ha="left")
+    fig.subplots_adjust(top=0.92, hspace=0.35)
     save(fig, out, "growing.png")
 
     levels = (0.5, 0.8)
@@ -401,6 +402,35 @@ def growing(out: Path) -> None:
     save(fig, out, "growing_speed.png")
 
 
+HELDOUT_RUNS = {  # run -> (label, color, dashes)
+    "counted_circle_s42": ("(kind, count), fixed-angle rotation (Lie algebra)", SERIES[2], "-"),
+    "counted_rot_s42": ("(kind, count), learned rotation (stopped at 7,200)", SERIES[2], ":"),
+    "counted_free_s42": ("(kind, count), free vectors", SERIES[5], "--"),
+    "repeat_c12_cut_s42": ("one code x count, no gradient between", SERIES[1], "-"),
+    "repeat_c12_g0_s42": ("one code x count, grounding off", SERIES[1], "--"),
+}
+
+
+def heldout_curve(out: Path) -> None:
+    path = out / "heldout_curve.json"
+    if not path.exists():
+        return
+    report = json.loads(path.read_text())
+    fig, axes = plt.subplots(1, 2, figsize=(13, 4.2), sharey=True)
+    for ax, group, title in ((axes[0], "held out", "Four-cell moves, never in training"), (axes[1], "trained", "The 20 shifts that were in training")):
+        for run, (label, color, dashes) in HELDOUT_RUNS.items():
+            points = report.get(run)
+            if points:
+                ax.plot([p["step"] for p in points], [p[f"{group} transfer"] for p in points], color=color, linestyle=dashes, linewidth=1.8, marker="o", markersize=4, label=label)
+        style(ax, "training steps", "transfer" if ax is axes[0] else "", title)
+        percent(ax)
+        ax.set_xlim(0, 25000)
+    axes[1].legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(-0.08, -0.16), ncol=2)
+    fig.suptitle("Shift family: can a model name an amount it never saw? (the programmer's own program, measured at each saved checkpoint)",
+                 color=INK, fontsize=11, x=0.01, y=1.03, ha="left")
+    save(fig, out, "heldout_curve.png")
+
+
 def shift_family(out: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.4), sharey=True)
     groups = (("Codebook changes, the executor applied once", ("lab NEO", "rotation-tied codebook", "rotation-tied + addition loss", "free vectors + addition loss")),
@@ -431,7 +461,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     plt.rcParams["font.family"] = "DejaVu Sans"
-    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, shift_family):
+    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, shift_family):
         draw(args.out)
     _ = math
 

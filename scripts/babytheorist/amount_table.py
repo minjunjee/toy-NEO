@@ -43,7 +43,7 @@ from training.evaluate import load_run  # noqa: E402
 @torch.no_grad()
 def table_for(run: Path, device: torch.device, per_primitive: int, split: str, repeats: int) -> dict:
     model, data, config, step = load_run(run, None, device)
-    counted = config["model"]["type"] == "neo_repeat"   # its program is one code and a count: explain and transfer use that
+    counted = config["model"]["type"] in ("neo_repeat", "neo_counted")   # its program is one code and a count: explain and transfer use that
     own = {"max_steps": model.max_length, "rollout": "hard"} if counted else {"max_steps": 1, "rollout": "carry"}
     tasks = collections.defaultdict(lambda: collections.defaultdict(list))
     for batch in data.eval_loader(split, 1000):
