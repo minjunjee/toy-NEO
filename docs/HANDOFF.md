@@ -1,5 +1,17 @@
 # 인수인계
 
+## 2026-11-23 04:00, 확장성과 양, 그리고 회전 계열을 따라간 밤 뒤의 상태
+
+Claude Code가 썼다. 그림과 읽는 법은 `docs/reports/2026-11-22-scaling.html`에 있고, 같은 페이지가 claude.ai에 비공개 artifact로 올라가 있다. 양을 code에 담는 실험의 글은 `docs/reports/2026-11-22-kind-and-amount.md`다. 숫자의 원본은 각 run의 `train.jsonl`과 `docs/reports/2026-11-22-scaling/*.json`이다. 도는 실험은 없다.
+
+- 사용자가 정한 방향. 확장성을 가장 먼저 본다. 연산량은 보지 않고, 환경이 커질 때 적응이 로그처럼 쉬운지를 모든 크기에서 그래프로 본다.
+- Lie algebra codebook. 종류마다 회전 평면을 배우고 회전 각을 고정한 codebook에서 programmer가 종류와 양을 고르고 executor가 단위 code를 양만큼 실행하면, 학습에서 뺀 4칸 이동을 seed 셋에서 92%, 99%, 94%로 말한다. 항목을 관계없는 벡터로 두면 0%다. 작은 이동 묶음에서만 본 결과다.
+- 커지는 환경. 랩 NEO가 새 primitive 하나를 반쯤 배우는 데 드는 예시는 16개에서 64개 환경까지 8천에서 1만 6천 쌍으로 평평하다. 처음 8개는 32개 환경까지 버티다가 52개와 64개에서 내려간다. 반복으로 이어 쓰는 모델은 큰 환경에서 새 것이 싸지지만 그 묶음이 반복에 유리하게 생겼다.
+- program 길이를 점진적으로 늘리는 것. seed 42에서는 83%를 지켰지만 43과 44에서는 12%와 25%로 무너졌다. 효과는 rollout 길이가 아니라 지금 길이로 설명할 수 없는 pair를 빼는 데서 나온다.
+- 회전 계열. 24개 환경에서 일곱 개가 15%에서 20%이고, programmer, executor, code 고르는 방식, 잠에서 code 나누기 열한 가지를 바꿔도 그대로다. code를 정답으로 정해 주면 같은 부품으로 83%에서 98%다. 정답 없는 code 배정이 비슷한 변환끼리 섞여 굳는 것이 원인이다.
+- 새로 만든 부품. `vq_orbit`, `neo_compose`, `neo_repeat`, `neo_counted`, `per_code` executor, `lora_code` executor, `neo_expert`, `neo_compete`, `neo_oracle`, 데이터 `babytheorist_pairs_labeled`. 도구는 `scaling_figures.py`, `build_scaling_page.py`, `scale_table.py`, `amount_table.py`, `heldout_curve.py`, `split_executor_checkpoint.py`, `split_mixed_codes.py`, `sleep_cycles.py`.
+- 사용자가 정할 것. 섞인 code를 푸는 다음 방법. 지금 잠의 기준은 pair 하나를 재현하는지만 보는데, 같은 code가 다른 입력에도 같은 일을 하는지를 봐야 한다. 그리고 게임 같은 play 환경으로 목표를 옮길지.
+
 ## 2026-11-22 14:05, 관찰 한 바퀴를 마친 뒤의 상태
 
 Claude Code가 썼다. 근거는 `docs/reports/2026-11-22-fast-search.md`의 6절부터 14절이고, 사람이 읽을 정리는 `docs/reports/2026-11-22-summary.html`이다. 도는 실험은 없다.
