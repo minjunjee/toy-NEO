@@ -416,6 +416,15 @@ def main() -> None:
         for key in ("restart_every", "restart_below", "usage_decay"):
             config["model"]["code"].pop(key, None)
         configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
+    # the one-step model was never trained with the grounding term (it is skipped when a program has one step), and at
+    # the warm start that term is as large as the reconstruction loss. The warm start without it:
+    for name, changes in {"warm_all_g0": {**same_parts, "method.grounding_weight": 0.0},
+                          "warm_programmer_only_g0": {**same_parts, "method.grounding_weight": 0.0, "method.freeze": ["encoder", "decoder", "code", "executor"]},
+                          "warm_all_g0_lr3e5": {**same_parts, "method.grounding_weight": 0.0, "method.lr": 3.0e-5}}.items():
+        config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, changes=changes)
+        for key in ("restart_every", "restart_below", "usage_decay"):
+            config["model"]["code"].pop(key, None)
+        configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
