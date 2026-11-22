@@ -365,7 +365,7 @@ def counted_screen() -> dict:
 GROW_STAGES = (("p8", "many_p8"), ("p16", "many_p16"), ("p24", "many_p24"), ("p32", "many_p32"), ("p52", "many_p52_without4"), ("p64", "many_p64_without4"))
 
 
-def growing_chain(model: str, seed: int = 42, steps: int = 6000) -> dict:
+def growing_chain(model: str, seed: int = 42, steps: int = 6000, stages: tuple = GROW_STAGES) -> dict:
     """An environment that grows while one model keeps learning: 8 primitives, then 16, 24, 32, 52, 64, each set
     containing the one before it. Every stage trains `steps` steps on its whole set (old and new primitives mixed, single-
     primitive pairs only) and starts from every part of the model at the end of the stage before. The codebook has its
@@ -375,8 +375,8 @@ def growing_chain(model: str, seed: int = 42, steps: int = 6000) -> dict:
 
     wide = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128}
     configs, previous = {}, None
-    for tag, data in GROW_STAGES:
-        if model == "lab":
+    for tag, data in stages:
+        if model in ("lab", "labsame"):
             config = one_step(seed, steps=steps, codes=128, changes=wide, data=suite(data))
         elif model == "repeat":
             config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data))
@@ -525,6 +525,9 @@ def main() -> None:
             "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
     for model in ("lab", "repeat", "repeatcut"):
         configs.update(growing_chain(model))
+    # control: the same stages, the same restart of the learning-rate schedule at every stage, but the environment stays
+    # at 8 primitives; the dips right after each growth are read against the dips of this chain
+    configs.update(growing_chain("labsame", stages=tuple((tag, "many_p8") for tag, _ in GROW_STAGES)))
     # the counted program on the mixed primitive sets of the scale screen (as many codes as primitives, count up to 4): there
     # a move by the object's own size or to the border has a count that differs from input to input
     for tag, data, primitives in (("m16", "many_p16", 16), ("m24", "many_p24", 24)):

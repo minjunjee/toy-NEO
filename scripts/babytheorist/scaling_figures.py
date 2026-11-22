@@ -312,7 +312,8 @@ def old_primitives(out: Path) -> None:
 
 
 GROW_MODELS = {"lab NEO, one code": (SERIES[0], "lab"), "one code x count": (SERIES[1], "repeat"),
-               "one code x count, no gradient between applications": (SERIES[3], "repeatcut")}
+               "one code x count, no gradient between applications": (SERIES[3], "repeatcut"),
+               "lab NEO, control: the environment stays at 8": (MUTED, "labsame")}
 STAGE_STEPS = 6000
 
 
@@ -369,8 +370,10 @@ def growing(out: Path) -> None:
                 if not stage:
                     continue
                 reached = next((t for t, v in stage if v >= level), None)
-                if reached is None:
+                if reached is None and stage[-1][0] >= STAGE_STEPS:   # "not reached" only once the stage has ended
                     never.append(n)
+                elif reached is None:
+                    continue
                 else:
                     xs.append(n)
                     ys.append(reached)
@@ -381,7 +384,7 @@ def growing(out: Path) -> None:
         kept = []
         for index, n in enumerate(SIZES):
             stage = [(t, table) for size, t, table in points if size == n]
-            if stage:
+            if stage and stage[-1][0] >= (index + 1) * STAGE_STEPS:   # completed stages only
                 members = groups[0][1]
                 kept.append((n, sum(stage[-1][1][m] for m in members) / len(members)))
         if kept:
@@ -397,7 +400,10 @@ def growing(out: Path) -> None:
         ax.set_xticks(list(SIZES))
         ax.set_xticklabels([str(n) for n in SIZES])
         ax.set_xlim(7, 72)
-    axes[0].legend(frameon=False, fontsize=7.5, labelcolor=INK, loc="upper left")
+    handles, labels = axes[0].get_legend_handles_labels()
+    if not handles:
+        handles, labels = axes[-1].get_legend_handles_labels()
+    fig.legend(handles, labels, frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(0.5, -0.02), ncol=3)
     fig.suptitle("How fast the newly added primitives are learned, and whether the first ones are kept", color=INK, fontsize=11, x=0.01, y=1.03, ha="left")
     save(fig, out, "growing_speed.png")
 
