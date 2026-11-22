@@ -135,7 +135,11 @@ def test_kind_and_amount_codebook_is_the_lab_codebook_when_free_and_ties_the_cod
     assert torch.equal(a.indices, b.indices) and torch.allclose(a.values, b.values) and torch.allclose(a.loss_per_sample, b.loss_per_sample)
 
     amounts = [-2, -1, 1, 2, 3]
-    for family in ("rotation", "line"):
+    circle = OrbitVQ(3, amounts, 16, family="circle", angle=0.4).table().view(3, 5, 16)
+    # a fixed angle per unit of amount: neighbouring amounts are 0.4 rad apart, whatever the learned plane
+    assert torch.allclose((circle[:, 2] * circle[:, 3]).sum(dim=-1), torch.cos(torch.tensor(0.4)).expand(3), atol=1e-5)
+    assert torch.allclose((circle[:, 0] * circle[:, 4]).sum(dim=-1), torch.cos(torch.tensor(2.0)).expand(3), atol=1e-5)
+    for family in ("rotation", "circle", "line"):
         codes = OrbitVQ(3, amounts, 16, family=family, stochastic=False, commitment_grad=True)
         table = codes.table()
         assert table.shape == (15, 16) and torch.allclose(table.norm(dim=-1), torch.ones(15), atol=1e-5)

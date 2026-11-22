@@ -6,6 +6,11 @@ kind g and an integer amount t, and the code vectors of one kind are tied togeth
 
   rotation   c(g, t) = exp(t * A_g) b_g     A_g = M_g - M_g^T is skew-symmetric, so exp(t * A_g) is a rotation; the codes
                                             of one kind are the same rotation applied t times to one start vector
+  circle     c(g, t) = cos(t * angle) b_g + sin(t * angle) d_g     b_g and d_g orthonormal and learned, `angle` fixed: a
+                                            rotation in one learned plane by a fixed angle per unit of amount. This is
+                                            exp(t A_g) b_g with A_g = angle * (d_g b_g^T - b_g d_g^T); what is learned is
+                                            the plane, not the speed, so the entries of one kind cannot drift together
+                                            (with `rotation` the learned A_g shrank until six amounts sat within 20 degrees)
   line       c(g, t) = normalize(b_g + t * d_g)     the same indices on a straight line, to tell "rotation" from "ordered"
   free       c(g, t) = E[g, t]              a free vector per code, as in the lab VQ; only the indices carry the structure
 
@@ -29,7 +34,7 @@ from torch.nn import functional as F
 from components.codes import VQ, CodeOutput
 from core.registry import CODES
 
-FAMILIES = ("rotation", "line", "free")
+FAMILIES = ("rotation", "circle", "line", "free")
 
 
 class OrbitVQ(VQ):
@@ -58,9 +63,12 @@ class OrbitVQ(VQ):
         if family != "free":
             del self.embedding
             self.base = nn.Parameter(F.normalize(torch.randn(1 if shared_base else kinds, dim), dim=-1))
+            self.angle = angle
             if family == "rotation":
                 # a unit vector is turned by about `angle` radians per unit of amount at the start
                 self.generator = nn.Parameter(torch.randn(kinds, dim, dim) * angle / math.sqrt(2.0 * max(1, dim - 1)))
+            elif family == "circle":
+                self.direction = nn.Parameter(F.normalize(torch.randn(kinds, dim), dim=-1))
             else:
                 self.direction = nn.Parameter(F.normalize(torch.randn(kinds, dim), dim=-1) * math.tan(angle))
 
@@ -79,6 +87,12 @@ class OrbitVQ(VQ):
                 skew = self.generator.float() - self.generator.float().transpose(1, 2)
                 rotations = torch.linalg.matrix_exp(amounts.view(1, -1, 1, 1) * skew[:, None])    # (kinds, amounts, dim, dim)
                 vectors = torch.einsum("gtij,gj->gti", rotations, F.normalize(base, dim=-1))
+            elif self.family == "circle":
+                first = F.normalize(base, dim=-1)
+                second = self.direction.float()
+                second = F.normalize(second - (second * first).sum(dim=-1, keepdim=True) * first, dim=-1)
+                turn = amounts.view(1, -1, 1) * self.angle
+                vectors = torch.cos(turn) * first[:, None] + torch.sin(turn) * second[:, None]
             else:
                 vectors = base[:, None] + amounts.view(1, -1, 1) * self.direction.float()[:, None]
             return F.normalize(vectors.reshape(self.size, self.dim), dim=-1)

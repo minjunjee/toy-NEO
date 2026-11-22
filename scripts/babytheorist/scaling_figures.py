@@ -24,6 +24,8 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import re
+import sys
 from pathlib import Path
 
 import matplotlib
@@ -39,14 +41,17 @@ MODELS = {  # label -> (color, {size: run})
     "lab NEO, one code": (SERIES[0], {8: "onestep_s_m8_wide_s42", 16: "onestep_s_m16_wide_s42", 24: "onestep_s_m24_wide_s42", 32: "onestep_s_m32_wide_s42",
                                       52: "ladder_lab_p52_s42", 64: "ladder_lab_p64_s42"}),
     "one code x count": (SERIES[1], {n: f"ladder_repeat_p{n}_s42" for n in SIZES}),
-    "rotation-tied (kind, count)": (SERIES[2], {n: f"ladder_counted_p{n}_s42" for n in SIZES}),
+    "one code x count, no gradient between applications": (SERIES[3], {n: f"ladder_repeatcut_p{n}_s42" for n in SIZES}),
+    "(kind, count), fixed-angle rotation": (SERIES[2], {n: f"ladder_counted_p{n}_s42" for n in SIZES}),
 }
 SHIFT_RUNS = {  # the small shift family: label -> (run, color, dashes)
     "lab NEO": ("onestep_k_flat_s42", SERIES[0], "-"), "rotation-tied codebook": ("onestep_k_rot_s42", SERIES[6], "-"),
     "rotation-tied + addition loss": ("onestep_k_rot_add_s42", SERIES[7], "-"), "free vectors + addition loss": ("onestep_k_free_add_s42", SERIES[4], "-"),
     "one code x count, 4 codes": ("repeat_c4_s42", SERIES[3], ":"), "one code x count, 6 codes": ("repeat_c6_s42", SERIES[3], "--"),
     "one code x count, 8 codes": ("repeat_c8_s42", SERIES[1], "--"), "one code x count, 12 codes": ("repeat_c12_s42", SERIES[1], "-"),
-    "rotation-tied (kind, count)": ("counted_rot_s42", SERIES[2], "-"), "free (kind, count)": ("counted_free_s42", SERIES[5], "--"),
+    "one code x count, 12 codes, no gradient between": ("repeat_c12_cut_s42", SERIES[1], ":"),
+    "(kind, count), learned rotation (stopped)": ("counted_rot_s42", SERIES[2], ":"), "(kind, count), fixed-angle rotation": ("counted_circle_s42", SERIES[2], "-"),
+    "(kind, count), free vectors": ("counted_free_s42", SERIES[5], "--"),
 }
 
 
@@ -122,7 +127,7 @@ def curves_by_size(out: Path) -> None:
             percent(ax)
         axes[1].legend(frameon=False, fontsize=8, labelcolor=INK, loc="lower right")
         fig.suptitle(f"{label}: one line per environment size", color=INK, fontsize=11, x=0.01, ha="left")
-        save(fig, out, f"curves_by_size_{label.split(',')[0].replace(' ', '_').replace('(', '').replace(')', '')}.png")
+        save(fig, out, f"curves_by_size_{re.sub('[^a-z0-9]+', '_', label.lower()).strip('_')}.png")
 
 
 def curves_by_model(out: Path) -> None:
@@ -249,11 +254,160 @@ def by_depth(out: Path) -> None:
     save(fig, out, "by_depth.png")
 
 
+def per_primitive(run: str) -> dict | None:
+    """primitive -> transfer on its single-primitive eval tasks, from the run's last full evaluation."""
+
+    path = REPO / "runs" / run / "train.jsonl"
+    if not path.exists():
+        return None
+    rows = [json.loads(line) for line in path.read_text().splitlines() if "one_step_tasks" in line]
+    rows = [r for r in rows if "observe_full/lv1/one_step_tasks" in r]
+    if not rows:
+        return None
+    return {name: v["transfer_strict"] / v["tasks"] for name, v in rows[-1]["observe_full/lv1/one_step_tasks"].items() if v["tasks"]}
+
+
+def blocks() -> list[tuple[str, tuple]]:
+    """The primitives that each size adds to the one before it, in order."""
+
+    sys.path.insert(0, str(REPO / "scripts" / "babytheorist"))
+    import generate_many_primitives as generator
+
+    out, before = [], ()
+    for n in SIZES:
+        names = generator.SETS[str(n)]
+        out.append((f"added at {n}" if before else f"first {n}", tuple(x for x in names if x not in before)))
+        before = names
+    return out
+
+
+def old_primitives(out: Path) -> None:
+    """Does adding primitives to the environment hurt the ones that were there? Transfer on each block of primitives,
+    measured in every environment that contains it."""
+
+    groups = blocks()
+    models = [(label, color, runs) for label, (color, runs) in MODELS.items() if any(per_primitive(runs.get(n, "")) for n in SIZES)]
+    if not models:
+        return
+    fig, axes = plt.subplots(1, len(models), figsize=(5.2 * len(models), 3.9), sharey=True, squeeze=False)
+    for ax, (label, color, runs) in zip(axes[0], models):
+        shades = ramp(color, len(groups))
+        for (name, members), shade in zip(groups, shades):
+            points = []
+            for n in SIZES:
+                table = per_primitive(runs.get(n, ""))
+                if table and all(m in table for m in members):
+                    points.append((n, sum(table[m] for m in members) / len(members)))
+            if points:
+                ax.plot([p[0] for p in points], [p[1] for p in points], color=shade, linewidth=1.8, marker="o", markersize=5, label=f"primitives {name}")
+        style(ax, "primitives in the environment", "transfer on that block's single-primitive tasks" if ax is axes[0][0] else "", label)
+        ax.set_xscale("log", base=2)
+        ax.set_xticks(list(SIZES))
+        ax.set_xticklabels([str(n) for n in SIZES])
+        ax.set_xlim(7, 72)
+        percent(ax)
+        ax.legend(frameon=False, fontsize=7.5, labelcolor=INK, loc="lower left")
+    fig.suptitle("What happens to the primitives already there when more are added (a flat line: adding did not hurt them)", color=INK, fontsize=11, x=0.01, y=1.04, ha="left")
+    save(fig, out, "old_primitives.png")
+
+
+GROW_MODELS = {"lab NEO, one code": (SERIES[0], "lab"), "one code x count": (SERIES[1], "repeat"),
+               "one code x count, no gradient between applications": (SERIES[3], "repeatcut")}
+STAGE_STEPS = 6000
+
+
+def growing_points(model: str) -> list[tuple[int, int, dict]]:
+    """(environment size, steps since the growing run began, primitive -> transfer) for every light evaluation of a
+    growing-environment chain, in order."""
+
+    points = []
+    for index, n in enumerate(SIZES):
+        folder = REPO / "runs" / f"grow_{model}_p{n}_s42" / "eval"
+        for file in sorted(folder.glob("observe_lv1_step*.json")) if folder.exists() else []:
+            d = json.loads(file.read_text())
+            table = d.get("one_step_tasks")
+            if table:
+                points.append((n, index * STAGE_STEPS + int(file.stem.split("step")[1]), {k: v["transfer_strict"] / v["tasks"] for k, v in table.items() if v["tasks"]}))
+    return points
+
+
+def growing(out: Path) -> None:
+    """One model learning while the environment grows: transfer on each block of primitives against the steps since the
+    start, the environment growing at the dashed lines; and how fast each newly added block is learned."""
+
+    groups = blocks()
+    have = [(label, color, model, growing_points(model)) for label, (color, model) in GROW_MODELS.items()]
+    have = [h for h in have if h[3]]
+    if not have:
+        return
+    fig, axes = plt.subplots(len(have), 1, figsize=(12, 3.3 * len(have)), sharex=True, squeeze=False)
+    for ax, (label, color, model, points) in zip(axes[:, 0], have):
+        shades = ramp(color, len(groups))
+        for (name, members), shade in zip(groups, shades):
+            line = [(t, sum(table[m] for m in members) / len(members)) for n, t, table in points if all(m in table for m in members)]
+            if line:
+                ax.plot([p[0] for p in line], [p[1] for p in line], color=shade, linewidth=1.8, marker="o", markersize=3, label=f"primitives {name}")
+        for index, n in enumerate(SIZES):
+            ax.axvline(index * STAGE_STEPS, color=MUTED, linewidth=0.8, linestyle="--")
+            ax.text(index * STAGE_STEPS + 120, 1.0, f"{n}", color=MUTED, fontsize=8, va="top")
+        style(ax, "training steps since the environment had 8 primitives" if ax is axes[-1, 0] else "", "transfer, one primitive", label)
+        percent(ax)
+        ax.set_xlim(0, len(SIZES) * STAGE_STEPS)
+        ax.legend(frameon=False, fontsize=7.5, labelcolor=INK, loc="lower right", ncol=2)
+    fig.suptitle("An environment that grows (dashed lines: the number of primitives grows to the number shown) while one model keeps learning",
+                 color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
+    save(fig, out, "growing.png")
+
+    levels = (0.5, 0.8)
+    fig, axes = plt.subplots(1, len(levels) + 1, figsize=(15, 3.8))
+    for label, color, model, points in have:
+        for ax, level in zip(axes, levels):
+            xs, ys, never = [], [], []
+            for index, (n, (name, members)) in enumerate(zip(SIZES, groups)):
+                stage = [(t - index * STAGE_STEPS, sum(table[m] for m in members) / len(members)) for size, t, table in points if size == n and all(m in table for m in members)]
+                if not stage:
+                    continue
+                reached = next((t for t, v in stage if v >= level), None)
+                if reached is None:
+                    never.append(n)
+                else:
+                    xs.append(n)
+                    ys.append(reached)
+            if xs:
+                ax.plot(xs, ys, color=color, linewidth=1.8, marker="o", markersize=5, label=label)
+            if never:
+                ax.scatter(never, [STAGE_STEPS + 300] * len(never), color=color, marker="x", s=36, linewidths=1.6)
+        kept = []
+        for index, n in enumerate(SIZES):
+            stage = [(t, table) for size, t, table in points if size == n]
+            if stage:
+                members = groups[0][1]
+                kept.append((n, sum(stage[-1][1][m] for m in members) / len(members)))
+        if kept:
+            axes[-1].plot([k[0] for k in kept], [k[1] for k in kept], color=color, linewidth=1.8, marker="o", markersize=5, label=label)
+    for ax, level in zip(axes, levels):
+        style(ax, "primitives in the environment after it grew", "steps after the growth" if ax is axes[0] else "", f"until the new primitives reach {int(level * 100)}% transfer")
+        ax.set_ylim(0, STAGE_STEPS + 800)
+        ax.text(SIZES[0], STAGE_STEPS + 450, "x = not reached in this stage", color=MUTED, fontsize=7.5)
+    style(axes[-1], "primitives in the environment", "transfer", "the first 8 primitives at the end of each stage")
+    percent(axes[-1])
+    for ax in axes:
+        ax.set_xscale("log", base=2)
+        ax.set_xticks(list(SIZES))
+        ax.set_xticklabels([str(n) for n in SIZES])
+        ax.set_xlim(7, 72)
+    axes[0].legend(frameon=False, fontsize=7.5, labelcolor=INK, loc="upper left")
+    fig.suptitle("How fast the newly added primitives are learned, and whether the first ones are kept", color=INK, fontsize=11, x=0.01, y=1.03, ha="left")
+    save(fig, out, "growing_speed.png")
+
+
 def shift_family(out: Path) -> None:
-    fig, axes = plt.subplots(1, 2, figsize=(12, 4.2), sharey=True)
+    fig, axes = plt.subplots(1, 3, figsize=(17, 4.4), sharey=True)
     groups = (("Codebook changes, the executor applied once", ("lab NEO", "rotation-tied codebook", "rotation-tied + addition loss", "free vectors + addition loss")),
-              ("The amount as a number of applications", ("one code x count, 4 codes", "one code x count, 6 codes", "one code x count, 8 codes", "one code x count, 12 codes",
-                                                           "rotation-tied (kind, count)", "free (kind, count)")))
+              ("One code applied a counted number of times", ("one code x count, 4 codes", "one code x count, 6 codes", "one code x count, 8 codes", "one code x count, 12 codes",
+                                                              "one code x count, 12 codes, no gradient between")),
+              ("The programmer names (kind, count); the count is the number of applications",
+               ("(kind, count), learned rotation (stopped)", "(kind, count), fixed-angle rotation", "(kind, count), free vectors")))
     for ax, (title, labels) in zip(axes, groups):
         for label in labels:
             run, color, dashes = SHIFT_RUNS[label]
@@ -264,7 +418,8 @@ def shift_family(out: Path) -> None:
         style(ax, "training steps", "eval pairs explained (all 24 primitives)" if ax is axes[0] else "", title)
         percent(ax)
         ax.set_xlim(0, 25000)
-        ax.legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=2)
+        ax.legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(0.5, -0.16), ncol=1)
+        ax.title.set_fontsize(9.5)
     axes[0].text(24800, 20 / 24 + 0.02, "dashed: all 20 trained primitives explained, none of the 4 left out", color=MUTED, fontsize=7.5, ha="right")
     fig.suptitle("Shift family, four-cell moves left out of training: above the dashed line means the left-out amount is being solved", color=INK, fontsize=11, x=0.01, ha="left")
     save(fig, out, "shift_family.png")
@@ -276,7 +431,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     plt.rcParams["font.family"] = "DejaVu Sans"
-    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, shift_family):
+    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, shift_family):
         draw(args.out)
     _ = math
 

@@ -355,7 +355,45 @@ def counted_screen() -> dict:
         return {"model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": family, "model.code.kinds": kinds, "model.code.amounts": list(range(1, 7)),
                 "model.code.size": kinds * 6, "train.ckpt_every": 2400}
 
-    return {"rot": entries("rotation"), "free": entries("free"), "line": entries("line"), "rot_k6": entries("rotation", 6)}
+    # `circle`: a rotation in one learned plane by a fixed angle per unit of amount. Added after `rot` put the six amounts
+    # of a kind within 20 degrees of each other by step 7,200 (the learned rotation shrank), so the programmer could not
+    # name a count by pointing at an entry.
+    return {"rot": entries("rotation"), "free": entries("free"), "line": entries("line"), "rot_k6": entries("rotation", 6),
+            "circle": entries("circle"), "circle_wide": {**entries("circle"), "model.code.angle": 0.6}}
+
+
+GROW_STAGES = (("p8", "many_p8"), ("p16", "many_p16"), ("p24", "many_p24"), ("p32", "many_p32"), ("p52", "many_p52_without4"), ("p64", "many_p64_without4"))
+
+
+def growing_chain(model: str, seed: int = 42, steps: int = 6000) -> dict:
+    """An environment that grows while one model keeps learning: 8 primitives, then 16, 24, 32, 52, 64, each set
+    containing the one before it. Every stage trains `steps` steps on its whole set (old and new primitives mixed, single-
+    primitive pairs only) and starts from every part of the model at the end of the stage before. The codebook has its
+    final size from the first stage on, so nothing about the model changes between stages; only the data grows. The
+    evaluation every 1,000 steps keeps the per-primitive tables, so it shows how fast the new primitives are learned and
+    whether the old ones are kept. name -> config"""
+
+    wide = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128}
+    configs, previous = {}, None
+    for tag, data in GROW_STAGES:
+        if model == "lab":
+            config = one_step(seed, steps=steps, codes=128, changes=wide, data=suite(data))
+        elif model == "repeat":
+            config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data))
+        elif model == "repeatcut":
+            config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data), changes={"model.gradient_between": False})
+        else:
+            raise ValueError(model)
+        light = {**config["evals"][0], "every": 1000, "max_samples": 3000, "tables": True}
+        config["evals"] = [light, {**config["evals"][-1], "every": steps}]
+        config["train"]["ckpt_every"] = steps
+        if previous:
+            config["method"]["type"] = "neo_warm"
+            config["train"]["init_from"] = f"runs/{previous}/ckpt/step-{steps:06d}.pt"
+        name = f"grow_{model}_{tag}_s{seed}"
+        configs[name] = config
+        previous = name
+    return configs
 
 
 def fast_neo(train: list[str], evals: dict[str, str], seed: int, steps: int = 12000, codes: int = 16, max_length: int = 5, changes: dict | None = None) -> dict:
@@ -466,7 +504,7 @@ def main() -> None:
         for seed in (42, 43, 44) if name in ("c4", "c8", "c8_rot") else (42,):
             configs[f"repeat_{name}_s{seed}"] = repeat_program(seed, codes=codes, changes=changes)
     for name, changes in counted_screen().items():
-        for seed in (42, 43, 44) if name in ("rot", "free") else (42,):
+        for seed in (42, 43, 44) if name in ("rot", "free", "circle") else (42,):
             configs[f"counted_{name}_s{seed}"] = repeat_program(seed, codes=72, changes=changes)
     # the size ladder: nested primitive sets of 8, 16, 24, 32, 52 and 64 (the last two without the four-cell moves in the
     # train file), single-primitive training pairs only, the same budget at every size. What is read is how each model's
@@ -481,8 +519,12 @@ def main() -> None:
         if primitives > 32:
             configs[f"ladder_lab_{tag}_s42"] = one_step(42, steps=24000, codes=2 * primitives, changes=wide, data=suite(data))
         configs[f"ladder_repeat_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data))
+        # the same with no gradient between applications: on the small shift family it reached the answer sooner and kept it
+        configs[f"ladder_repeatcut_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data), changes={"model.gradient_between": False})
         configs[f"ladder_counted_{tag}_s42"] = repeat_program(42, codes=6 * primitives, repeats=6, data=suite(data), changes={
             "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
+    for model in ("lab", "repeat", "repeatcut"):
+        configs.update(growing_chain(model))
     # the counted program on the mixed primitive sets of the scale screen (as many codes as primitives, count up to 4): there
     # a move by the object's own size or to the border has a count that differs from input to input
     for tag, data, primitives in (("m16", "many_p16", 16), ("m24", "many_p24", 24)):
