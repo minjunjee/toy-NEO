@@ -338,7 +338,9 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     torch.manual_seed(0)
     config = load_config(path)
     train, evaluation = write_files(tmp_path)
-    data = BabyTheoristPairs(str(train), {split: str(evaluation) for split in config["data"]["evals"]})
+    from core.registry import DATASETS
+
+    data = DATASETS[config["data"]["type"]](str(train), {split: str(evaluation) for split in config["data"]["evals"]})
     method = build(METHODS, config["method"])
     model = method.build_model(config["model"], init_from=None)
     method.attach(model, torch.device("cpu"), "fp32")

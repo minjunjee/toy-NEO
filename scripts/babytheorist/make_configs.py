@@ -584,6 +584,17 @@ def main() -> None:
     configs["onestep_m24_more_compete8_s42"] = one_step(42, steps=12000, codes=48, changes={**more, **compete, "train.init_from": lab_end, "model.candidates": 8},
                                                          data=suite("many_p24"))
     configs["onestep_compete4_m24_s42"] = one_step(42, steps=24000, codes=48, changes={**compete, "model.candidates": 4}, data=suite("many_p24"))
+    # diagnostic with the hidden primitive as the code (models/neo_oracle.py): can the shared executor do the seven
+    # orientation primitives at all when each has a code of its own? Codebook of 24, one per primitive.
+    oracle = one_step(42, steps=24000, codes=24, changes={**wide, "train.compile": "parts", "model.type": "neo_oracle"}, data=suite("many_p24"))
+    oracle["data"]["type"] = "babytheorist_pairs_labeled"
+    configs["onestep_s_m24_oracle_s42"] = oracle
+    # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
+    # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
+    # searched programmer twice as deep.
+    configs["onestep_s_m24_labprog_s42"] = one_step(42, steps=24000, codes=48, changes={"train.ema": 0.0, "train.batch_size": 128}, data=suite("many_p24"))
+    configs["onestep_s_m24_deepprog_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, "train.compile": "parts", "model.type": "neo",
+        "model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024, "num_layers": 12}}, data=suite("many_p24"))
     # the lab executor plus a low-rank change per code with a shared up-projection (components/executors_lora.py), asked
     # by the user on 2026-11-22: B shared, A per code. `slow`: B and the base weights move ten times slower.
     def lora(codes: int, rank: int = 8, speed: float = 1.0) -> dict:
@@ -671,6 +682,21 @@ def main() -> None:
         for length in (2, 4):
             name = f"fastneo_3k_len{length}{tag}_single_a_lv1_s42"
             config = fast_neo(*SINGLE_A_LV1, 42, steps=3000, codes=16, max_length=length, changes={**same_parts, **lr_changes, "train.init_from": previous, "train.ckpt_every": 3000})
+            for key in ("restart_every", "restart_below", "usage_decay"):
+                config["model"]["code"].pop(key, None)
+            config["data"]["train_max_depth"] = length
+            for block in config["evals"]:
+                block["infer"] = {"max_steps": 5, "rollout": "hard"}
+                block["every"] = 300 if block.get("max_samples") else block["every"]
+            configs[name] = config
+            previous = f"runs/{name}/ckpt/step-003000.pt"
+    # the gradual program length on the two other seeds of the one-step model (learning rate 3e-5, no grounding term)
+    for seed in (43, 44):
+        previous = f"runs/onestep_t_w_12k_s{seed}/ckpt/step-012000.pt"
+        for length in (2, 4):
+            name = f"fastneo_3k_len{length}_lr3e5_g0_single_a_lv1_s{seed}"
+            config = fast_neo(*SINGLE_A_LV1, seed, steps=3000, codes=16, max_length=length, changes={**same_parts, "method.lr": 3.0e-5, "method.grounding_weight": 0.0,
+                                                                                                  "train.init_from": previous, "train.ckpt_every": 3000})
             for key in ("restart_every", "restart_below", "usage_decay"):
                 config["model"]["code"].pop(key, None)
             config["data"]["train_max_depth"] = length

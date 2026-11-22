@@ -43,6 +43,7 @@ def import_all() -> None:
 
     import data.datasets  # noqa: F401
     import data.babytheorist  # noqa: F401
+    import data.babytheorist_labeled  # noqa: F401
     import components.codes  # noqa: F401
     import components.codes_growable  # noqa: F401
     import components.codes_restart  # noqa: F401
@@ -61,6 +62,7 @@ def import_all() -> None:
     import models.neo_counted  # noqa: F401
     import models.neo_expert  # noqa: F401
     import models.neo_compete  # noqa: F401
+    import models.neo_oracle  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401
