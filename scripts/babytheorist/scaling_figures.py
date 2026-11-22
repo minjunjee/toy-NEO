@@ -276,9 +276,19 @@ def blocks() -> list[tuple[str, tuple]]:
     out, before = [], ()
     for n in SIZES:
         names = generator.SETS[str(n)]
-        out.append((f"added at {n}" if before else f"first {n}", tuple(x for x in names if x not in before)))
+        out.append((f"added at {n}" if before else f"first {n}", tuple(x for x in names if x not in before and x not in HELD_OUT)))
         before = names
     return out
+
+
+HELD_OUT = ("shift_up_4", "shift_down_4", "shift_left_4", "shift_right_4")   # left out of the train files of 52 and 64: not in any block
+BATCH = 128
+
+
+def trained_count(n: int) -> int:
+    """How many primitives the train file of the environment of size n has (the four-cell moves are left out from 52 on)."""
+
+    return n - len(HELD_OUT) if n >= 52 else n
 
 
 def old_primitives(out: Path) -> None:
@@ -313,6 +323,7 @@ def old_primitives(out: Path) -> None:
 
 GROW_MODELS = {"lab NEO, one code": (SERIES[0], "lab"), "one code x count": (SERIES[1], "repeat"),
                "one code x count, no gradient between applications": (SERIES[3], "repeatcut"),
+               "(kind, count), fixed-angle rotation (Lie algebra)": (SERIES[2], "counted"),
                "lab NEO, control: the environment stays at 8": (MUTED, "labsame")}
 STAGE_STEPS = 6000
 
@@ -361,8 +372,16 @@ def growing(out: Path) -> None:
     save(fig, out, "growing.png")
 
     levels = (0.5, 0.8)
-    fig, axes = plt.subplots(1, len(levels) + 1, figsize=(15, 3.8))
+    fig, axes = plt.subplots(1, len(levels) + 2, figsize=(20, 3.8))
     for label, color, model, points in have:
+        examples = []
+        for index, (n, (name, members)) in enumerate(zip(SIZES, groups)):
+            stage = [(t - index * STAGE_STEPS, sum(table[m] for m in members) / len(members)) for size, t, table in points if size == n and all(m in table for m in members)]
+            reached = next((t for t, v in stage if v >= 0.5), None)
+            if reached is not None and index > 0:
+                examples.append((n, reached * BATCH / trained_count(n)))   # training pairs of each new primitive seen until then
+        if examples:
+            axes[2].plot([e[0] for e in examples], [e[1] / 1000 for e in examples], color=color, linewidth=1.8, marker="o", markersize=5, label=label)
         for ax, level in zip(axes, levels):
             xs, ys, never = [], [], []
             for index, (n, (name, members)) in enumerate(zip(SIZES, groups)):
@@ -393,6 +412,8 @@ def growing(out: Path) -> None:
         style(ax, "primitives in the environment after it grew", "steps after the growth" if ax is axes[0] else "", f"until the new primitives reach {int(level * 100)}% transfer")
         ax.set_ylim(0, STAGE_STEPS + 800)
         ax.text(SIZES[0], STAGE_STEPS + 450, "x = not reached in this stage", color=MUTED, fontsize=7.5)
+    style(axes[2], "primitives in the environment after it grew", "thousand pairs of each new primitive", "pairs of each new primitive seen until 50%")
+    axes[2].set_ylim(0, None)
     style(axes[-1], "primitives in the environment", "transfer", "the first 8 primitives at the end of each stage")
     percent(axes[-1])
     for ax in axes:

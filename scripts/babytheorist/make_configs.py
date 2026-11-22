@@ -382,6 +382,9 @@ def growing_chain(model: str, seed: int = 42, steps: int = 6000, stages: tuple =
             config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data))
         elif model == "repeatcut":
             config = repeat_program(seed, steps=steps, codes=64, repeats=6, data=suite(data), changes={"model.gradient_between": False})
+        elif model == "counted":   # the fixed-angle kind-and-count codebook: 64 kinds x counts 1..6
+            config = repeat_program(seed, steps=steps, codes=384, repeats=6, data=suite(data), changes={
+                "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "circle", "model.code.kinds": 64, "model.code.amounts": list(range(1, 7))})
         else:
             raise ValueError(model)
         light = {**config["evals"][0], "every": 1000, "max_samples": 3000, "tables": True}
@@ -523,7 +526,7 @@ def main() -> None:
         configs[f"ladder_repeatcut_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data), changes={"model.gradient_between": False})
         configs[f"ladder_counted_{tag}_s42"] = repeat_program(42, codes=6 * primitives, repeats=6, data=suite(data), changes={
             "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
-    for model in ("lab", "repeat", "repeatcut"):
+    for model in ("lab", "repeat", "repeatcut", "counted"):
         configs.update(growing_chain(model))
     # control: the same stages, the same restart of the learning-rate schedule at every stage, but the environment stays
     # at 8 primitives; the dips right after each growth are read against the dips of this chain
