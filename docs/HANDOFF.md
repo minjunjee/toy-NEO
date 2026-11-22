@@ -1,5 +1,16 @@
 # 인수인계
 
+## 2026-11-22 14:05, 관찰 한 바퀴를 마친 뒤의 상태
+
+Claude Code가 썼다. 근거는 `docs/reports/2026-11-22-fast-search.md`의 6절부터 14절이고, 사람이 읽을 정리는 `docs/reports/2026-11-22-summary.html`이다. 도는 실험은 없다.
+
+- primitive 하나짜리 학습 쌍으로 program 한 단계만 학습한 모델이, 추가 학습 없이 다섯 단계까지 이어 쓰면 레벨 1의 transfer가 seed 여섯 평균 64%다. 31%에서 84%로 갈린다. 같은 부품으로 여러 단계를 학습하면 seed 셋 평균이 code 16개에서 32%, 12개에서 45%다. 랩 설정은 36,000스텝에 40%다.
+- 한 단계 모델에서 시작해 여러 단계 학습을 이어 가면 transfer가 83%에서 내려간다. 학습률 3e-4나 grounding 항이 켜진 조건에서는 300스텝 안에 무너져 6%에서 19%로 끝나고, 학습률 3e-5에 grounding 항을 끄면 2,400스텝에 50%다.
+- 길이를 읽지 않고 전체 학습 쌍으로 한 단계 학습을 하면 이어 쓴 transfer가 19%에서 35%다. 한 단계 학습의 결과는 벤치마크 점수가 아니다.
+- primitive를 늘리면 11개까지는 primitive 하나짜리의 transfer가 98%이고 16개부터 59%에서 85%다. 회전과 뒤집기 계열이 빠지고, 24개에서는 위로 가는 code가 칸 수로 나뉜다. program의 길이는 5까지 43%에서 46%, 8에서 10%에서 17%다.
+- 사용자가 정할 것. 고치는 단계로 넘어갈지. 후보는 보고서 14절에 적었다. 랩이 BabyTheorist에 쓴 모델 코드는 아직 받지 못했다. `learning-to-theorize`에는 BabyTheorist가 없다.
+- 도구. 여러 단계 과제로 이어 쓰는 평가는 `scripts/babytheorist/observe_rollout.py`에 `--rollout hard --max-steps 5`를 준 것이다. 한 단계 모델에서 시작하는 학습은 method `neo_warm`이다. seed와 조건의 config는 `make_configs.py`에 모두 있다.
+
 ## 2026-11-22 아침, 부품을 빠르게 찾은 뒤의 상태
 
 Claude Code가 썼다. 근거는 `docs/reports/2026-11-22-fast-search.md`다.
