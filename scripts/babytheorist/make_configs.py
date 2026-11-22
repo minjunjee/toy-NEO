@@ -425,6 +425,14 @@ def main() -> None:
         for key in ("restart_every", "restart_below", "usage_decay"):
             config["model"]["code"].pop(key, None)
         configs[f"fastneo_3k_{name}_single_a_lv1_s42"] = config
+    # seeds: the one-step result moved from 83% to 43% over three seeds, and the multi-step runs with the searched parts
+    # have one seed each. Two more seeds of the multi-step model with grid-only handover (12 and 16 codes), and three more
+    # of the one-step run
+    for seed in (43, 44):
+        for codes in (12, 16):
+            configs[f"fastneo_12k_hard_c{codes}_norestart_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, steps=12000, codes=codes, changes=hard)
+    for seed in (45, 46, 47):
+        configs[f"onestep_t_w_12k_s{seed}"] = one_step(seed, steps=12000, codes=16, changes=wide_512)
     for name, (codes, changes) in fast_neo_screen_1().items():
         for seed in ((42, 43) if name == "c16" else (42,)):
             configs[f"fastneo_12k_{name}_single_a_lv1_s{seed}"] = fast_neo(*SINGLE_A_LV1, seed, codes=codes, changes=changes)
