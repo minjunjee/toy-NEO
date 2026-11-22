@@ -589,6 +589,14 @@ def main() -> None:
     oracle = one_step(42, steps=24000, codes=24, changes={**wide, "train.compile": "parts", "model.type": "neo_oracle"}, data=suite("many_p24"))
     oracle["data"]["type"] = "babytheorist_pairs_labeled"
     configs["onestep_s_m24_oracle_s42"] = oracle
+    # a sleep step that splits mixed codes (scripts/babytheorist/split_mixed_codes.py, no labels): codes that are named
+    # often but reproduce fewer than 60% of their pairs get three fresh codes next to them; then the code of each pair is
+    # chosen by executing the 6 nearest candidates while the code vectors stay fixed. Control: the same training from the
+    # lab run's end without the children.
+    frozen = {**more, **compete, "model.candidates": 6, "method.freeze": ["encoder", "decoder", "code"]}
+    configs["onestep_m24_split_children_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_children3.pt"},
+                                                          data=suite("many_p24"))
+    configs["onestep_m24_compete6_frozen_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "train.init_from": lab_end}, data=suite("many_p24"))
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.
