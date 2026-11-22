@@ -56,6 +56,7 @@ def import_all() -> None:
     import models.neo  # noqa: F401
     import models.neo_visible_state  # noqa: F401
     import models.neo_repeat  # noqa: F401
+    import models.neo_counted  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401

@@ -26,6 +26,17 @@ from models.neo_visible_state import NEOVisibleState
 
 
 class NEORepeat(NEOVisibleState):
+    def __init__(self, *args, gradient_between: bool = True, **kwargs) -> None:
+        """gradient_between=False hands the decoded grid to the next application with no gradient, as the lab's
+        `reencode_hard` does: the loss at count t then trains only the t-th application."""
+
+        super().__init__(*args, **kwargs)
+        self.gradient_between = gradient_between
+        # evaluation switch, not a setting of the model: True runs the lab NEO's rollout with this model's parts (the
+        # programmer looks again after every single application and picks a code), which is how a task made of several
+        # different primitives can be explained. Set it on a loaded model (scripts/babytheorist/scale_table.py).
+        self.replan = False
+
     def forward(self, batch: dict, step: int = 0) -> NEOOutput:
         x, y = batch["x"], batch["y"]
         observations = torch.cat([x, y], dim=0)
@@ -46,9 +57,12 @@ class NEORepeat(NEOVisibleState):
                 clean_state = self.encoder(logits.argmax(dim=-1))
             if self.max_length != 1:
                 grounding = grounding + F.mse_loss(state, clean_state)
-            soft = torch.softmax(logits, dim=-1)
-            visible = F.one_hot(logits.argmax(dim=-1), soft.shape[-1]).to(soft.dtype)
-            state = self.encoder(visible + soft - soft.detach())  # the value of the hard grid, the gradient of the soft one
+            if self.gradient_between:
+                soft = torch.softmax(logits, dim=-1)
+                visible = F.one_hot(logits.argmax(dim=-1), soft.shape[-1]).to(soft.dtype)
+                state = self.encoder(visible + soft - soft.detach())  # the value of the hard grid, the gradient of the soft one
+            else:
+                state = clean_state
 
         if self.training:
             self.set_length_cost(step)
@@ -62,6 +76,8 @@ class NEORepeat(NEOVisibleState):
     def explain_mdl(self, x: Tensor, y: Tensor, max_steps: int, rollout: str):
         if rollout != "hard":
             raise ValueError('neo_repeat hands the grid between applications; evaluate with rollout "hard"')
+        if self.replan:
+            return NEOVisibleState.explain_mdl(self, x, y, max_steps, rollout)
         state, target_state = self.encoder(x), self.encoder(y)
         code = self.code(self.programmer(state, target_state), False)
         logits_by_length = []

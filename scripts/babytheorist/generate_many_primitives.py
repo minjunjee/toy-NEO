@@ -19,6 +19,8 @@ Sets (each contains the smaller ones):
   16  + shift_up/down/left/right (by one cell), rot180, rot270, transpose, prev_color
   24  + to_top/bottom/left/right (to the edge of the grid), anti_transpose, color_plus3, hollow, add_border
   32  + fill_bbox, invert_in_bbox, scale2, stretch_w, mirror_right, mirror_left, mirror_down, mirror_up
+  52  + shift_<up|down|left|right>_<2..6>, moves by two to six cells (the one-cell moves are in 16)
+  64  + color_plus2/4/5/6, shift_<up_left|up_right|down_left|down_right>_<1|2> (diagonal moves)
   shifts  a separate family for asking about amounts: shift_<up|down|left|right>_<1..6>, a move by that many cells
 
     python scripts/babytheorist/generate_many_primitives.py --primitives 32 --out data/babytheorist/many_p32 [--n-train 250000] [--n-eval 10000] [--workers 64]
@@ -104,7 +106,15 @@ SET_8 = ("rot90", "flip_h", "flip_v", "next_color", "translate_up", "translate_d
 SET_16 = SET_8 + ("shift_up", "shift_down", "shift_left", "shift_right", "rot180", "rot270", "transpose", "prev_color")
 SET_24 = SET_16 + ("to_top", "to_bottom", "to_left", "to_right", "anti_transpose", "color_plus3", "hollow", "add_border")
 SET_32 = SET_24 + ("fill_bbox", "invert_in_bbox", "scale2", "stretch_w", "mirror_right", "mirror_left", "mirror_down", "mirror_up")
-SETS = {"8": SET_8, "16": SET_16, "24": SET_24, "32": SET_32, "shifts": SET_SHIFTS}
+# two larger sets for asking how a model holds up as the environment grows; each contains the one before it
+for _k in (2, 4, 5, 6):
+    EXTRA[f"color_plus{_k}"] = recolor(_k)
+for _name, (_dr, _dc) in {"up_left": (-1, -1), "up_right": (-1, 1), "down_left": (1, -1), "down_right": (1, 1)}.items():
+    for _k in (1, 2):
+        EXTRA[f"shift_{_name}_{_k}"] = shift(_k * _dr, _k * _dc)
+SET_52 = SET_32 + tuple(f"shift_{name}_{k}" for name in SHIFT_DIRECTIONS for k in range(2, 7))   # shift_<direction> of SET_16 is the one-cell move
+SET_64 = SET_52 + ("color_plus2", "color_plus4", "color_plus5", "color_plus6") + tuple(f"shift_{name}_{k}" for name in ("up_left", "up_right", "down_left", "down_right") for k in (1, 2))
+SETS = {"8": SET_8, "16": SET_16, "24": SET_24, "32": SET_32, "52": SET_52, "64": SET_64, "shifts": SET_SHIFTS}
 
 
 def function_of(name: str):

@@ -332,7 +332,30 @@ def repeat_screen() -> dict:
     return {
         "c4": (4, {}), "c6": (6, {}), "c8": (8, {}), "c12": (12, {}), "c24": (24, {}),
         "c4_rot": (4, rot(1, 4)), "c8_rot": (8, rot(2, 4)), "c24_rot": (24, rot(3, 8)),
+        # added after the first runs: 6 and 12 codes reached 100% explained and transferred on all 24 primitives by step
+        # 7,200, the four-cell moves included, and 6 codes then fell to 2% on the training batch by step 10,750; 8 codes
+        # went up and down. Multi-step training wrecked a working model in the earlier report too, and there a lower
+        # learning rate with the grounding term off slowed it. These keep a checkpoint every 2,400 steps.
+        "c12_g0": (12, {"method.grounding_weight": 0.0, "train.ckpt_every": 2400}),
+        "c12_lr1e4": (12, {"method.lr": 1.0e-4, "train.ckpt_every": 2400}),
+        "c12_g0_lr1e4": (12, {"method.grounding_weight": 0.0, "method.lr": 1.0e-4, "train.ckpt_every": 2400}),
+        "c6_g0_lr1e4": (6, {"method.grounding_weight": 0.0, "method.lr": 1.0e-4, "train.ckpt_every": 2400}),
+        "c12_cut": (12, {"model.gradient_between": False, "train.ckpt_every": 2400}),
+        "c6_cut": (6, {"model.gradient_between": False, "train.ckpt_every": 2400}),
     }
+
+
+def counted_screen() -> dict:
+    """The codebook indexed by kind and amount, with the amount executed as that many applications of the kind's unit code
+    (models/neo_counted.py), on the shifts with the four-cell ones left out of training. What is varied is how the entries
+    of one kind are tied: by a rotation (the Lie algebra form), on a line, or not at all. With `free` the entry for an
+    amount that training never reached stays where it was initialised. 12 kinds x counts 1..6. name -> changes"""
+
+    def entries(family: str, kinds: int = 12) -> dict:
+        return {"model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": family, "model.code.kinds": kinds, "model.code.amounts": list(range(1, 7)),
+                "model.code.size": kinds * 6, "train.ckpt_every": 2400}
+
+    return {"rot": entries("rotation"), "free": entries("free"), "line": entries("line"), "rot_k6": entries("rotation", 6)}
 
 
 def fast_neo(train: list[str], evals: dict[str, str], seed: int, steps: int = 12000, codes: int = 16, max_length: int = 5, changes: dict | None = None) -> dict:
@@ -442,6 +465,28 @@ def main() -> None:
     for name, (codes, changes) in repeat_screen().items():
         for seed in (42, 43, 44) if name in ("c4", "c8", "c8_rot") else (42,):
             configs[f"repeat_{name}_s{seed}"] = repeat_program(seed, codes=codes, changes=changes)
+    for name, changes in counted_screen().items():
+        for seed in (42, 43, 44) if name in ("rot", "free") else (42,):
+            configs[f"counted_{name}_s{seed}"] = repeat_program(seed, codes=72, changes=changes)
+    # the size ladder: nested primitive sets of 8, 16, 24, 32, 52 and 64 (the last two without the four-cell moves in the
+    # train file), single-primitive training pairs only, the same budget at every size. What is read is how each model's
+    # numbers move from one size to the next, on the primitives it trained on, on programs of several primitives (never
+    # trained) and on the primitives left out.
+    #   lab       the lab NEO, one program step, twice as many codes as primitives (8..32 are the scale screen's runs)
+    #   repeat    one code applied a counted number of times, as many codes as primitives, count up to 6
+    #   counted   the kind-and-amount codebook tied by rotations, the amount executed as that many applications
+    for tag, data, primitives in (("p8", "many_p8", 8), ("p16", "many_p16", 16), ("p24", "many_p24", 24), ("p32", "many_p32", 32), ("p52", "many_p52_without4", 52),
+                                  ("p64", "many_p64_without4", 64)):
+        wide = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128}
+        if primitives > 32:
+            configs[f"ladder_lab_{tag}_s42"] = one_step(42, steps=24000, codes=2 * primitives, changes=wide, data=suite(data))
+        configs[f"ladder_repeat_{tag}_s42"] = repeat_program(42, codes=primitives, repeats=6, data=suite(data))
+        configs[f"ladder_counted_{tag}_s42"] = repeat_program(42, codes=6 * primitives, repeats=6, data=suite(data), changes={
+            "model.type": "neo_counted", "model.code.type": "vq_orbit", "model.code.family": "rotation", "model.code.kinds": primitives, "model.code.amounts": list(range(1, 7))})
+    # the counted program on the mixed primitive sets of the scale screen (as many codes as primitives, count up to 4): there
+    # a move by the object's own size or to the border has a count that differs from input to input
+    for tag, data, primitives in (("m16", "many_p16", 16), ("m24", "many_p24", 24)):
+        configs[f"repeat_{tag}_c{primitives}_s42"] = repeat_program(42, codes=primitives, repeats=4, data=suite(data))
     for name, (data, changes) in one_step_amount_screen().items():
         for seed in (42, 43, 44) if name in ("k_flat", "k_rot", "k_free_add", "k_rot_add") else (42,):
             configs[f"onestep_{name}_s{seed}"] = one_step(seed, steps=24000, codes=48, changes=changes, data=suite(data))

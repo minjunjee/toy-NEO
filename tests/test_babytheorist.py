@@ -206,6 +206,42 @@ def test_repeat_model_applies_one_code_a_counted_number_of_times() -> None:
         model.self_explain(x, y, max_steps=3, rollout="official")
 
 
+def test_counted_model_applies_the_unit_of_the_picked_kind_as_often_as_the_picked_amount_says() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq_orbit", "kinds": 2, "amounts": [1, 2, 3], "family": "rotation", "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 3, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_counted"](**spec)
+    x, y = torch.randint(0, 10, (7, 6, 6)), torch.randint(0, 10, (7, 6, 6))
+    out = model({"x": x, "y": y})
+    out.code_loss_by_length[0].mean().backward()
+    assert model.code.generator.grad is not None and bool(model.code.generator.grad.abs().sum() > 0)
+    model.eval()
+    explained = model.self_explain(x, y, max_steps=3, rollout="hard")
+    index = explained["indices"][0].view(7, -1)[:, 0]
+    kind, amount = model.code.kind_and_amount(index)
+    assert torch.equal(explained["n_steps"], amount)      # the count is the one the programmer named, not one chosen by looking at y
+    unit = model.code.table()[kind * 3][:, None]          # the entry of amount 1 of the picked kind
+    grid, by_count = x, []
+    with torch.no_grad():
+        for _ in range(3):
+            grid = model.decoder(model.executor(model.encoder(grid), unit)).argmax(dim=-1)
+            by_count.append(grid)
+    assert torch.equal(explained["pred"], torch.stack(by_count, dim=1)[torch.arange(7), amount - 1])
+    assert torch.equal(model.infer(x, y, x, max_steps=3, rollout="hard")["pred"], explained["pred"])
+    model.count_from = "rule"
+    assert model.self_explain(x, y, max_steps=3, rollout="hard")["n_steps"].shape == (7,)
+    with pytest.raises(ValueError):
+        MODELS["neo_counted"](**{**spec, "max_length": 4})
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

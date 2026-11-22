@@ -86,6 +86,22 @@ class OrbitVQ(VQ):
     def codebook(self, indices: Tensor) -> Tensor:
         return self.table()[indices]
 
+    def index_of(self, kinds: Tensor, amounts: Tensor) -> Tensor:
+        """Index of the code with that kind and that amount (the amount must be in the list)."""
+
+        position = (self.amounts[None, :] == amounts[:, None]).float().argmax(dim=1)
+        return kinds * len(self.amounts) + position
+
+    def loss_for(self, actions: Tensor, indices: Tensor) -> Tensor:
+        """The lab VQ's two loss terms per sample, toward the given codes instead of the nearest ones."""
+
+        with torch.autocast(device_type=actions.device.type, enabled=False):
+            quantized = self.table()[indices].view(actions.shape)
+            normalized = F.normalize(actions.float(), dim=-1)
+            committed = (quantized.detach() - normalized) if self.commitment_grad else (quantized - normalized.detach())
+            commitment = self.commitment_cost * committed.square().mean(dim=(1, 2))
+            return commitment + (quantized - normalized.detach()).square().mean(dim=(1, 2))
+
     def forward(self, actions: Tensor, training: bool = True) -> CodeOutput:
         """The lab VQ's forward with the table computed from the structure instead of read from an embedding."""
 

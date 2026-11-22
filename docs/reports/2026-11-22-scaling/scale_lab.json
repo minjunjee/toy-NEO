@@ -1,0 +1,178 @@
+[
+ {
+  "run": "onestep_s_m8_wide_s42",
+  "step": 24000,
+  "model": "neo",
+  "codes": 16,
+  "groups": {
+   "depth 1": {
+    "tasks": 1868,
+    "own_explain": 0.9914346895074947,
+    "own_transfer": 0.9668094218415417,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.9925053533190579,
+    "stepwise_transfer": 0.9662740899357601,
+    "stepwise_steps": 1.051391862955032
+   },
+   "depth 2": {
+    "tasks": 3192,
+    "own_explain": 0.0,
+    "own_transfer": 0.0003132832080200501,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.8671679197994987,
+    "stepwise_transfer": 0.8345864661654135,
+    "stepwise_steps": 3.168859649122807
+   },
+   "depth 3": {
+    "tasks": 628,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.7101910828025477,
+    "stepwise_transfer": 0.6178343949044586,
+    "stepwise_steps": 5.302547770700637
+   },
+   "depth 4": {
+    "tasks": 312,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.4519230769230769,
+    "stepwise_transfer": 0.3525641025641026,
+    "stepwise_steps": 7.92948717948718
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m16_wide_s42",
+  "step": 24000,
+  "model": "neo",
+  "codes": 32,
+  "groups": {
+   "depth 1": {
+    "tasks": 2052,
+    "own_explain": 0.8172514619883041,
+    "own_transfer": 0.5896686159844055,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.8664717348927875,
+    "stepwise_transfer": 0.5784600389863548,
+    "stepwise_steps": 1.260233918128655
+   },
+   "depth 2": {
+    "tasks": 3114,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.6734104046242775,
+    "stepwise_transfer": 0.3262684649967887,
+    "stepwise_steps": 3.95407835581246
+   },
+   "depth 3": {
+    "tasks": 577,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.5424610051993067,
+    "stepwise_transfer": 0.1611785095320624,
+    "stepwise_steps": 6.10051993067591
+   },
+   "depth 4": {
+    "tasks": 257,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.3346303501945525,
+    "stepwise_transfer": 0.07392996108949416,
+    "stepwise_steps": 8.237354085603112
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m24_wide_s42",
+  "step": 24000,
+  "model": "neo",
+  "codes": 48,
+  "groups": {
+   "depth 1": {
+    "tasks": 2061,
+    "own_explain": 0.7360504609412907,
+    "own_transfer": 0.6176613294517225,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.7627365356622998,
+    "stepwise_transfer": 0.6069868995633187,
+    "stepwise_steps": 1.3085880640465792
+   },
+   "depth 2": {
+    "tasks": 3148,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.49714104193138503,
+    "stepwise_transfer": 0.32592121982210925,
+    "stepwise_steps": 4.06702668360864
+   },
+   "depth 3": {
+    "tasks": 572,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.34440559440559443,
+    "stepwise_transfer": 0.14335664335664336,
+    "stepwise_steps": 6.045454545454546
+   },
+   "depth 4": {
+    "tasks": 219,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.182648401826484,
+    "stepwise_transfer": 0.0365296803652968,
+    "stepwise_steps": 8.155251141552512
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m32_wide_s42",
+  "step": 24000,
+  "model": "neo",
+  "codes": 64,
+  "groups": {
+   "depth 1": {
+    "tasks": 2067,
+    "own_explain": 0.8471214320270924,
+    "own_transfer": 0.7426221577164973,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.8587324625060474,
+    "stepwise_transfer": 0.7387518142235123,
+    "stepwise_steps": 1.1809385582970489
+   },
+   "depth 2": {
+    "tasks": 3030,
+    "own_explain": 0.0013201320132013201,
+    "own_transfer": 0.00033003300330033004,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.4752475247524752,
+    "stepwise_transfer": 0.33894389438943895,
+    "stepwise_steps": 4.275907590759076
+   },
+   "depth 3": {
+    "tasks": 625,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.2176,
+    "stepwise_transfer": 0.1088,
+    "stepwise_steps": 6.9344
+   },
+   "depth 4": {
+    "tasks": 278,
+    "own_explain": 0.0,
+    "own_transfer": 0.0,
+    "own_steps": 1.0,
+    "stepwise_explain": 0.08273381294964029,
+    "stepwise_transfer": 0.03597122302158273,
+    "stepwise_steps": 8.413669064748202
+   }
+  }
+ }
+]
