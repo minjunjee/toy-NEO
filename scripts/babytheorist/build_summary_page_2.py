@@ -154,28 +154,31 @@ BODY = r"""<main>
 </figure>
 <div class="fix">
 <h3>이 결과를 읽을 때 조심할 것</h3>
-<p>한 단계 학습은 숨은 program의 길이를 읽어서 primitive 하나짜리 학습 쌍만 골랐다. 벤치마크는 그 정보를 주지 않으므로 이 83%는 벤치마크 점수가 아니다. 원인을 가르는 진단이다. 길이를 읽지 않고 전체 학습 쌍에 한 단계만 허용해서 학습해도 같은 것이 나오는지는 지금 돌리고 있다.</p>
+<p>한 단계 학습은 숨은 program의 길이를 읽어서 primitive 하나짜리 학습 쌍만 골랐다. 벤치마크는 그 정보를 주지 않으므로 이 83%는 벤치마크 점수가 아니다. 원인을 가르는 진단이다.</p>
+<p>길이를 읽지 않고 전체 학습 쌍에 한 단계만 허용해서 학습하는 것도 돌려 봤다. 안 된다. transfer가 code 16개에서 19%, 32개에서 35%다. 학습 쌍의 70%가 primitive 여럿짜리라서 code가 그쪽에 쓰인다. 이 결과를 벤치마크의 규칙 안에서 얻으려면 한 단계로 설명되는 쌍을 길이 정보 없이 골라내는 방법이 필요하다.</p>
 </div>
+<p>반대 방향으로도 확인했다. 이 한 단계 모델에서 모든 부품을 그대로 가져와 여러 단계 학습을 이어 가면, 600스텝 만에 transfer가 83%에서 35%가 되고 2,400스텝에 16%까지 내려간다. codebook과 executor를 얼려서 깨끗한 code를 지켜 줘도, programmer만 학습하면 100스텝 안에 학습 정답률이 53%에서 18%가 되고 돌아오지 않는다. 여러 단계 학습의 gradient는 이미 되는 것을 깨뜨린다. 일정이 아직 끝나지 않은 도중의 값이고, 학습률이 너무 높아서일 가능성은 가르지 않았다.</p>
 <p>이 결과가 어제까지의 그림을 바꾼다. NEO가 40%에서 멈추는 이유를 codebook의 크기, 잠, 단계 사이의 통로에서 찾았는데, 그것들은 곁가지였다. 부품은 할 수 있다. 예시 하나를 여러 code로 한꺼번에 설명하도록 학습시키면, 설명만 되면 되는 목표 아래에서 code가 primitive가 아닌 것으로 굳는다.</p>
 
 <h2><span class="n">6</span>primitive를 늘리면 어디가 무너지나</h2>
 <p>BabyTheorist가 가진 primitive는 object 하나짜리로 11개가 전부라서, 같은 object 모양을 쓰고 primitive를 32개까지 늘린 데이터를 직접 만들었다. 한 칸 이동, 격자 가장자리로 붙이기, 180도와 270도 회전, 전치, 색을 거꾸로 돌리기, 두 배로 키우기, 거울처럼 이어 붙이기 같은 것이다. 싼 판으로 돌렸고, 아래는 primitive 하나짜리 과제의 값이다.</p>
 <div class="tablewrap"><table>
-<tr><th>primitive 수</th><th class="num">재현</th><th class="num">transfer</th><th>code 하나로 90% 넘게 옮겨 가는 primitive</th></tr>
-<tr><td>8</td><td class="num">99%</td><td class="num">96%</td><td>8개 가운데 7개</td></tr>
-<tr><td>11, BabyTheorist의 것 전부</td><td class="num">100%</td><td class="num">98%</td><td>10개 가운데 9개</td></tr>
-<tr><td>16</td><td class="num">81~84%</td><td class="num">59~60%</td><td>16개 가운데 6~8개</td></tr>
-<tr><td>24</td><td class="num">82%</td><td class="num">55%</td><td>24개 가운데 9개</td></tr>
-<tr><td>32</td><td class="num">88%</td><td class="num">66%</td><td>32개 가운데 16개</td></tr>
+<tr><th>primitive 수</th><th class="num">재현</th><th class="num">transfer</th><th>code 하나로 90% 넘게 옮겨 가는 것</th><th class="num">둘을 이은 과제의 transfer</th></tr>
+<tr><td>8</td><td class="num">99%</td><td class="num">96%</td><td>8개 가운데 7개</td><td class="num">84%</td></tr>
+<tr><td>11, BabyTheorist의 것 전부</td><td class="num">100%</td><td class="num">98%</td><td>10개 가운데 9개</td><td class="num">73%</td></tr>
+<tr><td>16</td><td class="num">81%</td><td class="num">59%</td><td>16개 가운데 6개</td><td class="num">33%</td></tr>
+<tr><td>24</td><td class="num">74%</td><td class="num">63%</td><td>24개 가운데 9개</td><td class="num">33%</td></tr>
+<tr><td>32, executor를 넓힌 것</td><td class="num">87%</td><td class="num">85%</td><td>32개 가운데 21개</td><td class="num">44%</td></tr>
 </table></div>
 <p>11개까지는 거의 다 된다. 16개부터 무너지고, 무너지는 종류가 정해져 있다.</p>
 <p>회전과 뒤집기 계열은 16개 이상에서 transfer가 8%에서 24%다. 재현도 30%에서 78%로 낮고 primitive 하나에 code가 네 개에서 일곱 개 붙는다.</p>
 <p>이동 계열은 더 흥미롭게 무너진다. primitive 8개일 때는 "자기 높이만큼 위로"가 code 하나였고 100% 옮겨 갔다. 한 칸 이동을 더한 16개에서도 그대로 100%다. 격자의 맨 위까지 붙이는 이동을 더한 24개에서 28%로 떨어진다. 이 모델의 code를 직접 보니 위로 가는 code가 primitive가 아니라 칸 수로 나뉘어 있다. 위로 2칸인 과제는 "자기 높이만큼"이든 "맨 위까지"든 같은 code 하나가 설명하고, 3칸은 다른 code, 4칸은 또 다른 code다. 두 primitive를 함께 설명하는 더 단순한 기준이 "위로 k칸"이기 때문으로 보인다. 그런데 k는 object의 크기와 위치에 따라 달라지므로 새 입력에서는 틀린다. 예시 하나만 보면 "위로 3칸"과 "자기 높이인 3칸만큼 위로"는 구별되지 않는다. 모델이 어느 쪽으로 일반화하는지는 데이터에 어떤 primitive가 섞여 있느냐에 따라 달라졌다.</p>
-<p>모양을 바꾸는 primitive는 잘 배운다. 속 비우기, 테두리 두르기, 두 배로 키우기, 거울 이어 붙이기는 88%에서 100%다. 16개 이상의 줄은 code를 primitive 수의 두 배로 준 조건이고, 24개와 32개는 안 쓰는 code를 다시 뿌리는 조건만 끝났다. code를 빠듯하게 준 조건은 아직 돌고 있다.</p>
+<p>모양을 바꾸는 primitive는 잘 배운다. 속 비우기, 테두리 두르기, 두 배로 키우기, 거울 이어 붙이기는 88%에서 100%다. 표는 code를 primitive 수의 두 배로 준 조건이고, 앞의 세 열은 primitive 하나짜리 과제의 값이다. 마지막 열은 그 모델에게 program을 네 단계까지 쓰게 했을 때 primitive 둘을 이은 과제에서 나온 값이다.</p>
+<p>program의 길이 쪽도 쟀다. 레벨 1로 학습한 한 단계 모델을 숨은 program이 훨씬 긴 레벨 5와 7에 시험하면 transfer가 39%와 21%다. 길이 5까지는 43%에서 46%를 유지하고, 길이 8에서 10%에서 17%로 떨어진다. 이 모델의 programmer는 두 단계 이상 떨어진 목표를 학습 때 본 적이 없다.</p>
 
 <h2><span class="n">7</span>지금 도는 것과 다음</h2>
 <p>@@RUNNING@@</p>
-<p>다음에 볼 것은 셋이다. 길이를 읽지 않는 한 단계 학습이 통하는가. 통하면 그것이 벤치마크의 규칙 안에서 쓸 수 있는 학습 방법의 출발점이다. 여러 단계 학습에서 code가 정확히 언제 망가지는가. 한 단계로 배운 모델에서 시작해 여러 단계 학습을 이어 가면 깨끗한 code가 유지되는지 보면 된다. 그리고 회전과 뒤집기가 왜 code 하나를 얻지 못하는가.</p>
+<p>못하는 것을 보이는 단계에서 지금까지 모은 것은 넷이다. 여러 단계 학습이 code를 망가뜨린다. 한 단계 학습은 길이 정보 없이는 안 된다. primitive가 16개를 넘으면 회전과 뒤집기 계열이 빠지고 이동의 기준이 칸 수로 바뀐다. program이 길어지면 길이 6부터 급히 떨어진다. 고치는 단계로 넘어갈 때 첫 과제는, 한 단계로 설명되는 쌍을 길이 정보 없이 골라내면서 배우는 방법이 될 것으로 본다.</p>
 <p>디스크는 <code>/home</code>이 있는 SSD가 58GB, <code>/data</code>가 435GB 남아 있다. 여러 개를 까는 실험은 체크포인트를 하나만 남기고 있다.</p>
 
 <h2><span class="n">8</span>이 문서에서 쓴 말</h2>
