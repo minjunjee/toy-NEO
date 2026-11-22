@@ -545,6 +545,52 @@ def executor_split(out: Path) -> None:
     save(fig, out, "executor_split.png")
 
 
+ORIENT = ("rot90", "rot180", "rot270", "flip_h", "flip_v", "transpose", "anti_transpose")
+ATTEMPTS = [  # (label, run, group) on 24 primitives, one program step; all end-of-training full evaluations
+    ("lab NEO (the starting point)", "onestep_s_m24_wide_s42", "baseline"),
+    ("lab programmer (two tokens per cell)", "onestep_s_m24_labprog_s42", "programmer"),
+    ("programmer twice as deep", "onestep_s_m24_deepprog_s42", "programmer"),
+    ("executor copied into one network per code, +12k steps", "onestep_m24_more_split_s42", "executor"),
+    ("shared executor + per-code low rank", "onestep_lora_m24_s42", "executor"),
+    ("2 shared layers + 2 per-code layers", "onestep_split2_m24_s42", "executor"),
+    ("code chosen by executing 4 candidates, +12k steps", "onestep_m24_more_compete4_s42", "code choice"),
+    ("code chosen by executing 8 candidates, +12k steps", "onestep_m24_more_compete8_s42", "code choice"),
+    ("sleep: children next to mixed codes, +12k steps", "onestep_m24_split_children_s42", "code choice"),
+    ("sleep: random children with families, +12k steps", "onestep_m24_split_random_s42", "code choice"),
+    ("four sleep-wake cycles, +48k steps", "onestep_m24_sleep4_s42", "code choice"),
+    ("one code per primitive given as a label (diagnostic)", "onestep_s_m24_oracle_s42", "label"),
+]
+GROUP_COLOR = {"baseline": SERIES[0], "programmer": SERIES[3], "executor": SERIES[1], "code choice": SERIES[2], "label": MUTED}
+
+
+def orientation_attempts(out: Path) -> None:
+    rows = []
+    for label, run, group in ATTEMPTS:
+        table = per_primitive(run)
+        if table and all(n in table for n in ORIENT):
+            values = [table[n] for n in ORIENT]
+            others = [v for n, v in table.items() if n not in ORIENT]
+            rows.append((label, group, values, sum(others) / len(others)))
+    if not rows:
+        return
+    fig, ax = plt.subplots(figsize=(11, 0.42 * len(rows) + 1.4))
+    for i, (label, group, values, others) in enumerate(rows):
+        y = len(rows) - 1 - i
+        color = GROUP_COLOR[group]
+        ax.plot([min(values), max(values)], [y, y], color=color, linewidth=2.2, alpha=0.5)
+        ax.scatter([sum(values) / len(values)], [y], color=color, s=46, zorder=3)
+        ax.scatter([others], [y], color=color, marker="|", s=160, linewidths=2, zorder=3)
+    ax.set_yticks(range(len(rows)))
+    ax.set_yticklabels([r[0] for r in reversed(rows)], fontsize=8.5, color=INK)
+    style(ax, "transfer on single-primitive tasks", "", "")
+    ax.set_xlim(-0.02, 1.02)
+    ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_xticklabels(["0%", "25%", "50%", "75%", "100%"])
+    ax.text(0.0, len(rows) - 0.35, "dot: mean of the seven orientation primitives, line: their range, tick: mean of the other 17 primitives", color=MUTED, fontsize=8)
+    fig.suptitle("24 primitives: every change tried tonight against the seven orientation primitives (seed 42)", color=INK, fontsize=11, x=0.01, y=1.0, ha="left")
+    save(fig, out, "orientation_attempts.png")
+
+
 def shift_family(out: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.4), sharey=True)
     groups = (("Codebook changes, the executor applied once", ("lab NEO", "rotation-tied codebook", "rotation-tied + addition loss", "free vectors + addition loss")),
@@ -575,7 +621,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     plt.rcParams["font.family"] = "DejaVu Sans"
-    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, program_length, executor_split, shift_family):
+    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, program_length, executor_split, orientation_attempts, shift_family):
         draw(args.out)
     _ = math
 
