@@ -73,11 +73,11 @@ def bars(rows: list[tuple[str, str, float]], title: str, label: str) -> str:
 
 
 def headline_figure() -> str:
-    return bars([("lab config", "several steps, 36,000 steps", 40),
-                 ("searched parts", "several steps, grid handed over", 38),
-                 ("searched parts", "several steps, probabilities handed over", 12),
-                 ("trained on one step only", "one of six seeds; the mean is 64%", 83)],
-                "transferred to a new input, all of level 1", "Transfer on level 1 for models trained on several steps and a model trained on one step")
+    return bars([("lab config, several steps", "one seed, 36,000 steps", 40),
+                 ("searched parts, several steps", "16 codes, mean of 3 seeds: 28 to 38", 32),
+                 ("searched parts, several steps", "12 codes, mean of 3 seeds: 37 to 52", 45),
+                 ("searched parts, one step only", "16 codes, mean of 6 seeds: 31 to 84", 64)],
+                "transferred to a new input, all of level 1", "Seed-mean transfer on level 1 for models trained on several steps and models trained on one step")
 
 
 def codes_figure() -> str:
@@ -94,13 +94,13 @@ BODY = r"""<main>
 
 <ol class="first">
 <li>primitive 하나짜리 학습 쌍으로 program 한 단계만 학습한 모델이, 한 번도 본 적 없는 여러 단계 과제를 푼다. transfer가 seed 여섯에서 31%에서 84%이고 평균 64%다.</li>
-<li>여러 단계로 학습한 모델은 랩 설정이든, 부품을 고치든, 단계 사이의 통로를 막든 39%에서 46%다.</li>
-<li>그러니 NEO의 부품은 primitive를 배우고 이어 쓸 수 있다. 여러 단계를 한꺼번에 학습하는 동안 code가 primitive가 아닌 다른 것이 된다.</li>
+<li>같은 부품으로 여러 단계를 학습한 모델은 seed 셋의 평균이 code 16개에서 32%, 12개에서 45%다. 랩 설정은 40%다.</li>
+<li>NEO의 부품은 primitive를 배우고 이어 쓸 수 있다. 여러 단계를 한꺼번에 학습하는 동안 code가 primitive가 아닌 다른 것이 된다. 다만 한 단계 학습은 seed에 따라 크게 갈리고, 숨은 program의 길이를 읽어야 한다.</li>
 </ol>
 
 <figure>
 <div class="scroll">@@FIG_HEADLINE@@</div>
-<figcaption>레벨 1의 평가 과제 10,000개. 예시 쌍 하나에서 뽑은 program을 새 입력에 실행하고, 정답은 보여 주지 않는다. 위 둘과 맨 아래는 단계 사이로 격자만 넘겨서 쟀다. 맨 아래 막대는 seed 여섯 가운데 하나이고, 여섯의 값은 84%, 83%, 77%, 64%, 43%, 31%다. 위의 셋은 seed 하나씩이다.</figcaption>
+<figcaption>레벨 1의 평가 과제에서 잰 transfer의 seed 평균. 예시 쌍 하나에서 뽑은 program을 새 입력에 실행하고, 정답은 보여 주지 않는다. 아래 셋은 단계 사이로 격자만 넘긴다. 맨 아래 막대의 여섯 seed는 84%, 83%, 77%, 64%, 43%, 31%다.</figcaption>
 </figure>
 
 <h2><span class="n">1</span>무엇을 재고 있나</h2>
@@ -136,16 +136,17 @@ BODY = r"""<main>
 <h2><span class="n">4</span>여러 단계로 학습하면 무엇을 해도 40%다</h2>
 <p>싼 판에서 고른 부품을 다섯 단계짜리 본 모델에 넣었다. 두 가지 일이 생겼다.</p>
 <p>단계 사이로 칸마다의 색 확률을 넘기는 랩의 방식으로 학습하면, 재현은 6,000스텝에 76%로 빨리 오르는데 transfer는 12%다. 이 모델은 primitive 하나짜리 과제를 전부 code 두 개짜리 program으로 설명한다. code 하나가 연산이 아니라, code 두 개가 합쳐져 변환 하나를 가리키는 주소다. 주소의 앞자리는 격자에 보이지 않는 확률에 실려 다음 단계로 넘어간다. 단계 사이로 격자만 넘기게 하고 재면 재현이 76%에서 2%가 된다.</p>
-<p>그래서 처음부터 격자만 넘기며 학습했다. 이번에는 code가 주소가 될 수 없다. 재현 84%, transfer 38%가 나온다. 랩 설정이 36,000스텝에 닿은 자리에 3분의 1의 스텝으로 닿지만, 같은 자리다. 이 모델의 program을 보면 이동조차 깔끔하지 않다. 아래로 이동 과제의 20%가 "거의 맞는 code 하나에 고치는 code 하나"로 설명되고, 뒤집기 둘은 같은 code 넷을 나눠 쓴다. 마지막 격자만 맞으면 loss가 0이라, code가 얼추 하는 단계와 땜질하는 단계로 나뉘어도 학습은 막지 않는다.</p>
+<p>그래서 처음부터 격자만 넘기며 학습했다. 이번에는 code가 주소가 될 수 없다. code 16개로 seed 셋을 돌리면 transfer가 38%, 28%, 30%이고, 12개로 줄이면 46%, 52%, 37%다. 랩 설정이 36,000스텝에 닿은 자리에 3분의 1의 스텝으로 닿지만, 같은 자리다. 이 모델의 program을 보면 이동조차 깔끔하지 않다. 아래로 이동 과제의 20%가 "거의 맞는 code 하나에 고치는 code 하나"로 설명되고, 뒤집기 둘은 같은 code 넷을 나눠 쓴다. 마지막 격자만 맞으면 loss가 0이라, code가 얼추 하는 단계와 땜질하는 단계로 나뉘어도 학습은 막지 않는다.</p>
 
 <h2><span class="n">5</span>한 단계로만 배운 모델은 이어 쓸 줄 안다</h2>
 <p>싼 판의 모델을 추가 학습 없이 그대로 가져왔다. program을 다섯 단계까지 쓰게 하고, 단계 사이로 격자만 넘기며 레벨 1 전체를 풀게 했다. 이 모델은 primitive 둘을 이은 과제를 한 번도 본 적이 없다.</p>
 <div class="tablewrap"><table>
 <tr><th>모델</th><th class="num">재현</th><th class="num">transfer</th><th>숨은 program 길이 1, 2, 3, 4의 transfer</th></tr>
 <tr><td>랩 설정, 여러 단계로 36,000스텝</td><td class="num">83%</td><td class="num">40%</td><td>57%, 39%, 28%, 21%</td></tr>
-<tr><td>고친 부품, 여러 단계로 10,800스텝</td><td class="num">84%</td><td class="num">38%</td><td>57%, 35%, 27%, 22%</td></tr>
-<tr class="hl"><td>한 단계로만 학습, code 16개</td><td class="num">87%</td><td class="num">83%</td><td>97%, 87%, 69%, 62%</td></tr>
-<tr><td>한 단계로만 학습, code 10개</td><td class="num">81%</td><td class="num">77%</td><td>97%, 81%, 56%, 43%</td></tr>
+<tr><td>고친 부품, 여러 단계, code 16개, seed 42</td><td class="num">84%</td><td class="num">38%</td><td>54%, 36%, 26%, 20%</td></tr>
+<tr><td>고친 부품, 여러 단계, code 12개, seed 42</td><td class="num">84%</td><td class="num">46%</td><td>64%, 46%, 32%, 19%</td></tr>
+<tr class="hl"><td>한 단계로만 학습, code 16개, seed 42</td><td class="num">87%</td><td class="num">83%</td><td>97%, 87%, 69%, 62%</td></tr>
+<tr><td>한 단계로만 학습, code 10개, seed 42</td><td class="num">81%</td><td class="num">77%</td><td>97%, 81%, 56%, 43%</td></tr>
 </table></div>
 <p>seed에 따라 크게 갈린다. 같은 설정으로 seed 여섯을 돌리면 transfer가 84%, 83%, 77%, 64%, 43%, 31%다. 한 단계 학습에서 primitive를 깨끗하게 배운 seed는 잘 이어 쓰고, code를 6개밖에 못 찾은 seed나 이동이 code 둘로 쪼개진 seed는 못 이어 쓴다. 위 표의 값은 좋은 쪽 seed이고 평균은 64%다.</p>
 <p>programmer가 목표를 보고 첫 primitive의 code를 고른다. executor가 깨끗한 격자를 낸다. 그 격자를 본 programmer가 다음 code를 고른다. 따로 가르치지 않았는데 이렇게 이어 간다. 더 긴 program에서도 같다.</p>
@@ -158,7 +159,7 @@ BODY = r"""<main>
 <p>한 단계 학습은 숨은 program의 길이를 읽어서 primitive 하나짜리 학습 쌍만 골랐다. 벤치마크는 그 정보를 주지 않으므로 이 83%는 벤치마크 점수가 아니다. 원인을 가르는 진단이다.</p>
 <p>길이를 읽지 않고 전체 학습 쌍에 한 단계만 허용해서 학습하는 것도 돌려 봤다. 안 된다. transfer가 code 16개에서 19%, 32개에서 35%다. 학습 쌍의 70%가 primitive 여럿짜리라서 code가 그쪽에 쓰인다. 이 결과를 벤치마크의 규칙 안에서 얻으려면 한 단계로 설명되는 쌍을 길이 정보 없이 골라내는 방법이 필요하다.</p>
 </div>
-<p>반대 방향으로도 확인했다. 이 한 단계 모델에서 모든 부품을 그대로 가져와 여러 단계 학습을 이어 가면, 600스텝 만에 transfer가 83%에서 35%가 되고 2,400스텝에 16%까지 내려간다. codebook과 executor를 얼려서 깨끗한 code를 지켜 줘도, programmer만 학습하면 100스텝 안에 학습 정답률이 53%에서 18%가 되고 돌아오지 않는다. 여러 단계 학습의 gradient는 이미 되는 것을 깨뜨린다. 학습률을 10분의 1로 낮춰도, 랩 loss에서 의심한 항 하나를 꺼도 똑같이 150스텝에서 300스텝 사이에 무너지고, 끝의 transfer는 6%에서 19%다.</p>
+<p>반대 방향으로도 확인했다. 이 한 단계 모델에서 모든 부품을 그대로 가져와 여러 단계 학습을 이어 가면, 600스텝 만에 transfer가 83%에서 35%가 되고 2,400스텝에 16%까지 내려간다. codebook과 executor를 얼려서 깨끗한 code를 지켜 줘도, programmer만 학습하면 100스텝 안에 학습 정답률이 53%에서 18%가 되고 돌아오지 않는다. 여러 단계 학습의 gradient는 이미 되는 것을 깨뜨린다. 학습률만 10분의 1로 낮춰도, 랩 loss에서 의심한 항 하나만 꺼도 똑같이 150스텝에서 300스텝 사이에 무너지고, 끝의 transfer는 6%에서 19%다. 둘을 함께 바꾸면 훨씬 천천히 내려가서 2,400스텝에 50%다. 그래도 83%에서 내려가는 방향이다.</p>
 <p>왜 그런지에 대한 내 해석은 이렇다. 실험으로 가르지는 않았다. 격자만 넘기면 gradient가 단계를 건너지 못해서 loss는 마지막 단계에만 닿는다. programmer가 받는 신호는 "지금 격자에서 code 하나를 한 번 실행해 최종 목표와 가장 비슷하게 만들어라"다. 목표가 두 단계 이상 떨어져 있으면 이것은 "다음 primitive를 골라라"와 다른 요구이고, 한 단계로 배운 programmer가 잘하던 것을 덮어쓴다.</p>
 <p>이 결과가 어제까지의 그림을 바꾼다. NEO가 40%에서 멈추는 이유를 codebook의 크기, 잠, 단계 사이의 통로에서 찾았는데, 그것들은 곁가지였다. 부품은 할 수 있다. 예시 하나를 여러 code로 한꺼번에 설명하도록 학습시키면, 설명만 되면 되는 목표 아래에서 code가 primitive가 아닌 것으로 굳는다.</p>
 
