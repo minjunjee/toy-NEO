@@ -605,6 +605,15 @@ def main() -> None:
         families = {int(k): v for k, v in json.loads(report.read_text())["children"].items()}
         configs["onestep_m24_split_random_s42"] = one_step(42, steps=12000, codes=48, changes={**frozen, "model.candidates": 4, "model.families": families,
             "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_children3_random.pt"}, data=suite("many_p24"))
+    # does the orientation family come with much longer training? (asked by the user on 2026-11-23: pretraining may take as
+    # long as it takes.) 24k and 48k steps did not move it; 200k steps here, with the lab executor and with one twice as
+    # wide (which moved it at 32 primitives). Per-primitive tables every 10k steps.
+    for name, changes in (("long200k", {}), ("long200k_x", {"model.executor.d_model": 256, "model.executor.d_ff": 1024})):
+        config = one_step(42, steps=200000, codes=48, changes={**wide, "model.type": "neo", "train.compile": "parts", "train.ckpt_every": 50000, **changes},
+                          data=suite("many_p24"))
+        config["evals"][0].update({"every": 10000, "max_samples": 3000, "tables": True})
+        config["evals"][-1]["every"] = 200000
+        configs[f"onestep_s_m24_{name}_s42"] = config
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.
