@@ -63,10 +63,12 @@ def import_all() -> None:
     import models.neo_expert  # noqa: F401
     import models.neo_compete  # noqa: F401
     import models.neo_oracle  # noqa: F401
+    import models.neo_em  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401
     import methods.neo_compose  # noqa: F401
+    import methods.neo_em  # noqa: F401
     import methods.vae_pretrain  # noqa: F401
     import evals.self_explain_exact  # noqa: F401
     import evals.transfer_exact  # noqa: F401

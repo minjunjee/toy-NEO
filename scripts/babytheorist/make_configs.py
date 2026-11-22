@@ -614,6 +614,15 @@ def main() -> None:
         config["evals"][0].update({"every": 10000, "max_samples": 3000, "tables": True})
         config["evals"][-1]["every"] = 200000
         configs[f"onestep_s_m24_{name}_s42"] = config
+    # soft EM over the codes with an annealed temperature (models/neo_em.py) and turns between the programmer and the
+    # executor (methods/neo_em.py, neo_alternate), both from the 24-primitive lab run's end, 12,000 steps, learning rate
+    # 1e-4; control: onestep_m24_more_shared_s42. Agreed with the user on 2026-11-23.
+    em = {**wide, "train.compile": "parts", "model.type": "neo_em", "method.type": "neo_em", "method.lr": 1.0e-4, "train.init_from": lab_end, "train.ckpt_every": 12000,
+          "model.candidates": 0, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.1, "model.anneal_steps": 10000}
+    configs["onestep_m24_em_s42"] = one_step(42, steps=12000, codes=48, changes=em, data=suite("many_p24"))
+    configs["onestep_m24_em_hot_s42"] = one_step(42, steps=12000, codes=48, changes={**em, "model.temperature_start": 100.0, "model.temperature_end": 1.0}, data=suite("many_p24"))
+    configs["onestep_m24_alternate_s42"] = one_step(42, steps=12000, codes=48, changes={**more, "model.type": "neo", "train.compile": "parts", "train.init_from": lab_end,
+                                                                                       "method.type": "neo_alternate", "method.period": 1000}, data=suite("many_p24"))
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.
