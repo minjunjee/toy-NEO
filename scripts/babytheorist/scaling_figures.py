@@ -498,6 +498,51 @@ def program_length(out: Path) -> None:
     plt.close(fig)
 
 
+SPLIT_RUNS = [  # (label, run, color, dashes) on 24 primitives, one program step, 48 codes
+    ("lab executor: 4 shared layers", "onestep_s_m24_wide_s42", SERIES[0], "-"),
+    ("3 shared, 1 per code", "onestep_split3_m24_s42", SERIES[5], "-"),
+    ("2 shared, 2 per code", "onestep_split2_m24_s42", SERIES[3], "-"),
+    ("1 shared, 3 per code", "onestep_split1_m24_s42", SERIES[1], "-"),
+    ("4 per code", "onestep_split0_m24_s42", SERIES[7], "-"),
+    ("1 shared, 2 per code, 1 shared", "onestep_sandwich_m24_s42", SERIES[4], "--"),
+    ("lab executor + per-code low rank, shared B", "onestep_lora_m24_s42", SERIES[6], "-"),
+    ("the same, shared parts 10x slower", "onestep_lora_m24_slow_s42", SERIES[6], "--"),
+]
+SPLIT_LATER = [  # continued from the lab run's step 24,000 (drawn at 24,000 + step)
+    ("lab run continued, executor still shared", "onestep_m24_more_shared_s42", SERIES[0], ":"),
+    ("lab run continued, executor copied into one network per code", "onestep_m24_more_split_s42", SERIES[7], ":"),
+]
+
+
+def executor_split(out: Path) -> None:
+    fig, axes = plt.subplots(1, 2, figsize=(14, 4.4), sharey=True)
+    for label, run, color, dashes in SPLIT_RUNS:
+        d = read(run)
+        if not d:
+            continue
+        steps, values = smooth(d["train"])
+        axes[0].plot(steps, values, color=color, linestyle=dashes, linewidth=1.6, label=label)
+        if d["evals"]:
+            axes[1].plot([e[0] for e in d["evals"]], [e[2] for e in d["evals"]], color=color, linestyle=dashes, linewidth=1.8, marker="o", markersize=3, label=label)
+    for label, run, color, dashes in SPLIT_LATER:
+        d = read(run)
+        if not d:
+            continue
+        steps, values = smooth(d["train"])
+        axes[0].plot([24000 + x for x in steps], values, color=color, linestyle=dashes, linewidth=1.6, label=label)
+        if d["evals"]:
+            axes[1].plot([24000 + e[0] for e in d["evals"]], [e[2] for e in d["evals"]], color=color, linestyle=dashes, linewidth=1.8, marker="o", markersize=3, label=label)
+    style(axes[0], "training steps", "training pairs reproduced", "On the training batch (smoothed)")
+    style(axes[1], "training steps", "", "Transfer, single-primitive tasks")
+    for ax in axes:
+        percent(ax)
+        ax.set_xlim(0, 37000)
+        ax.axvline(24000, color=GRID, linewidth=1.0)
+    axes[1].legend(frameon=False, fontsize=8, labelcolor=INK, loc="upper center", bbox_to_anchor=(-0.08, -0.15), ncol=4)
+    fig.suptitle("Which executor layers to share across codes (24 primitives, seed 42)", color=INK, fontsize=11, x=0.01, y=1.02, ha="left")
+    save(fig, out, "executor_split.png")
+
+
 def shift_family(out: Path) -> None:
     fig, axes = plt.subplots(1, 3, figsize=(17, 4.4), sharey=True)
     groups = (("Codebook changes, the executor applied once", ("lab NEO", "rotation-tied codebook", "rotation-tied + addition loss", "free vectors + addition loss")),
@@ -528,7 +573,7 @@ def main() -> None:
     args = parser.parse_args()
     args.out.mkdir(parents=True, exist_ok=True)
     plt.rcParams["font.family"] = "DejaVu Sans"
-    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, program_length, shift_family):
+    for draw in (curves_by_size, curves_by_model, steps_to_reach, final_by_size, by_depth, old_primitives, growing, heldout_curve, program_length, executor_split, shift_family):
         draw(args.out)
     _ = math
 

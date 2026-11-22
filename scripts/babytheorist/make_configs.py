@@ -564,6 +564,17 @@ def main() -> None:
     for name, changes in (("split0_m24", split(48, 0)), ("split1_m24", split(48, 1)), ("split2_m24", split(48, 2)), ("split3_m24", split(48, 3)),
                           ("sandwich_m24", split(48, 1, 1))):
         configs[f"onestep_{name}_s42"] = one_step(42, steps=24000, codes=48, changes={**wide, **changes}, data=suite("many_p24"))
+    # share first, split later: one network per code learns too little too late when it starts from nothing (the sweep
+    # above). Here every code's network starts as a copy of the trained shared executor of onestep_s_m24_wide_s42
+    # (scripts/babytheorist/split_executor_checkpoint.py), then 12,000 more steps. Control: the same 12,000 steps with the
+    # shared executor kept shared. Both at learning rate 1e-4, from the same checkpoint.
+    lab_end = "runs/onestep_s_m24_wide_s42/ckpt/step-024000.pt"
+    more = {**wide, "method.type": "neo_warm", "method.lr": 1.0e-4, "train.ckpt_every": 12000}
+    configs["onestep_m24_more_shared_s42"] = one_step(42, steps=12000, codes=48, changes={**more, "model.type": "neo", "train.init_from": lab_end, "train.compile": "parts"},
+                                                       data=suite("many_p24"))
+    configs["onestep_m24_more_split_s42"] = one_step(42, steps=12000, codes=48, changes={**more, "train.init_from": "runs/split_init/onestep_s_m24_wide_s42_split48.pt",
+        "model.executor": {"type": "per_code", "state_dim": 128, "cond_dim": 16, "size": 48, "d_model": 128, "num_layers": 4, "num_heads": 8, "d_ff": 512, "dropout": 0.0,
+                           "grid_dim": GRID}}, data=suite("many_p24"))
     # the lab executor plus a low-rank change per code with a shared up-projection (components/executors_lora.py), asked
     # by the user on 2026-11-22: B shared, A per code. `slow`: B and the base weights move ten times slower.
     def lora(codes: int, rank: int = 8, speed: float = 1.0) -> dict:
