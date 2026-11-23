@@ -160,3 +160,12 @@
 - 04:50부터 보고서 덱을 만들어 minjunjee.com/autoresearch_report에 올림. 사이트 저장소 profile-site의 tools/slides-autoresearch-report가 생성기이고, 숫자는 scripts/babytheorist/export_deck_data.py가 뽑은 스냅샷이다.
 - 05:31 랩 executor의 200,000스텝 run이 끝남. 회전 계열 평균은 끝에서 36%다. 두 뒤집기가 78%와 65%로 풀렸고, 90도와 270도 회전, 전치, 반대 전치 넷은 17%에서 24%, 180도 회전은 28%로 남았다. 나머지 17개는 82%다. 폭 두 배 executor는 끝에서 22%, 나머지 88%다. 학습률 일정도 함께 늘렸으므로 오래 학습한 효과와 일정의 효과는 아직 가르지 않았다.
 - 05:35 덱에 soft EM 슬라이드와 200,000스텝 최종 결과를 넣고 겹침 세 곳을 고쳐 사이트에 다시 올림. 사이트 저장소 커밋 48854a7.
+
+## 2026-11-23 오후
+
+- 16:28 프로젝트 전체를 한 파일에 정리한 `docs/project-overview.md`를 커밋함. repomix로 묶은 레포는 `/data/minjun_dev/toy-NEO/repomix/`에 있다.
+- 16:40 사용자가 다른 분석에서 온 계획을 가져옴. 레포 기록과 대조해, 이미 해결했거나 이미 해 본 것을 걸러 냄. 학습 속도는 이미 44ms이고, executor와 codebook을 얼리고 programmer만 다단계로 학습하는 것은 이미 무너졌으며, 섞인 code를 복제해 다시 나누는 것과 code별 low-rank executor도 이미 해 봤다. 남은 셋을 제안했고 사용자가 순서대로 하라고 함. support로 검증하는 program 탐색, code NMI 기록, 처음부터 학습하는 hard EM과 soft EM의 비교다.
+- 16:45 평가에 code NMI와 code 사용 엔트로피를 더함. NMI는 깊이 1 과제에서 primitive와 고른 code의 정규화 상호정보량이다. 이미 끝난 run의 표로 재면 회전 계열 일곱만의 NMI가 8개 환경 0.86, 24개 환경 랩 0.14, soft EM 0.16과 0.20, 200,000스텝 0.37, 정답 code를 준 진단 0.67이다. 전체 primitive의 NMI는 0.73에서 0.95로 덜 갈린다.
+- 17:15 support로 검증하는 program 탐색이 끝남. 스크립트는 `scripts/babytheorist/support_search.py`, 그림은 `docs/reports/2026-11-23-search/`다. 한 단계 모델 seed 여섯을 다시 학습하지 않고, 단계마다 programmer가 가까운 code 여러 개를 내게 해 executor로 실행하고, programmer의 선호를 누적한 점수로 상위 몇 갈래만 남긴다. 첫 support를 재현한 program은 둘째 support로 거른다. 후보를 support 출력과의 오차로 줄 세우면 여러 단계 program의 중간 격자가 목표와 멀어서 맞는 길이 잘렸고, 폭 4가 폭 1보다 나빴다. 그래서 programmer의 선호로 줄 세운다.
+- 17:15 결과. seed 평균 transfer가 숨은 길이 5, 6, 7, 8에서 폭 1은 24%, 15%, 10%, 7%이고 폭 16은 44%, 34%, 27%, 22%다. 길이 5에서 8을 모은 값은 code가 깨끗한 seed 42, 45, 47이 25%에서 47%에서 55%로 오르고, code가 갈라진 seed 43, 44, 46은 0%에서 6%이던 것이 0%에서 23%다. 첫 support를 재현한 첫 program이 둘째 support에서 걸러지는 비율은 길이 1의 11%에서 길이 5 이후 45%에서 50%로 늘고, 폭과 거의 무관하다. 두 support를 다 통과하고도 query에서 틀리는 비율은 길이 1의 5%에서 길이 5 이후 20%에서 30%다. 길이 8에서 폭 16이어도 두 support를 다 통과하는 program을 찾지 못하는 과제가 70%쯤이라, 긴 program에서는 거짓 통과보다 찾지 못하는 것이 더 큰 손실이다.
+- 17:19 처음부터 학습하는 hard EM과 soft EM, 그리고 랩 설정 seed 43과 44를 GPU 4번과 5번에 띄움. hard EM은 온도 0.01, executor는 첫 code로만 학습하고, 아무도 고르지 않는 code에는 E 단계 오차를 한 스텝에 0.05 nats씩 20까지 깎아 주고 쓰이면 0으로 되돌린다. soft EM은 온도 10에서 0.1로 20,000스텝에 걸쳐 내리고 구제는 없다. 셋 다 24,000스텝, seed 42, 43, 44다.
