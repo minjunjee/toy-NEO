@@ -12,11 +12,19 @@ babytheorist_observe   what a trained NEO does on the tasks of one eval file, sp
   program is one primitive, which code was chosen for which primitive (counted both when the length rule picked one
   code, and when that one code also reproduces the support output exactly). The hidden program is read here only to sort the
   results; the model never sees it.
+  Two summaries of that code-for-primitive table are reported always, also without the tables:
+    code_nmi           normalized mutual information between the primitive and the chosen code, over tasks whose program
+                       is one primitive and whose length rule picked one code (arithmetic normalization, 2I / (H_p + H_c));
+                       1 when every primitive has codes of its own and always the same one, low when primitives share codes
+                       or one primitive is spread over many codes
+    code_entropy       entropy of how often each code is used, divided by log(codebook size); 1 when all codes are used
+                       equally, 0 when one code does everything
 """
 
 from __future__ import annotations
 
 import json
+import math
 
 import torch
 from torch import nn
@@ -24,6 +32,35 @@ from torch import nn
 from core.registry import EVALS
 
 DEPTH_BUCKETS = (1, 2, 3, 4, 5)  # the default buckets; 5 stands for 5 and deeper
+
+
+def normalized_mutual_information(counts: torch.Tensor) -> float:
+    """NMI of a contingency table counts[label, cluster], arithmetic normalization; 0 when either side has one value."""
+
+    counts = counts.double()
+    total = counts.sum()
+    if total <= 0:
+        return 0.0
+    joint = counts / total
+    p_label, p_cluster = joint.sum(dim=1), joint.sum(dim=0)
+    entropy = lambda p: float(-(p[p > 0] * p[p > 0].log()).sum())  # noqa: E731
+    h_label, h_cluster = entropy(p_label), entropy(p_cluster)
+    if h_label + h_cluster <= 0:
+        return 0.0
+    outer = p_label[:, None] * p_cluster[None, :]
+    nonzero = joint > 0
+    mutual = float((joint[nonzero] * (joint[nonzero] / outer[nonzero]).log()).sum())
+    return 2.0 * mutual / (h_label + h_cluster)
+
+
+def usage_entropy(usage: torch.Tensor) -> float:
+    """Entropy of the code usage counts divided by the log of the codebook size."""
+
+    usage = usage.double()
+    if usage.sum() <= 0 or usage.numel() < 2:
+        return 0.0
+    p = usage / usage.sum()
+    return float(-(p[p > 0] * p[p > 0].log()).sum()) / math.log(usage.numel())
 
 
 def on_device(batch: dict, device: torch.device) -> dict:
@@ -120,6 +157,10 @@ def babytheorist_observe(model: nn.Module, data, cfg: dict, step: int, device: t
             out[f"{name}_depth{depth}"] = float(hits[name][b]) / max(float(counts[b]), 1.0)
     for b, depth in enumerate(DEPTH_BUCKETS):
         out[f"tasks_depth{depth}"] = int(counts[b])
+    if usage is not None:
+        if one_step:
+            out["code_nmi"] = normalized_mutual_information(torch.tensor([entry["code"] for entry in one_step.values()]))
+        out["code_entropy"] = usage_entropy(usage)
     if cfg.get("tables", True):
         out["extracted_length_by_depth"] = {str(depth): extracted_by_depth[b].int().tolist() for b, depth in enumerate(DEPTH_BUCKETS)}
         if usage is not None:

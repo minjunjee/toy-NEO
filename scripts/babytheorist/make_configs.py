@@ -623,6 +623,25 @@ def main() -> None:
     configs["onestep_m24_em_hot_s42"] = one_step(42, steps=12000, codes=48, changes={**em, "model.temperature_start": 100.0, "model.temperature_end": 1.0}, data=suite("many_p24"))
     configs["onestep_m24_alternate_s42"] = one_step(42, steps=12000, codes=48, changes={**more, "model.type": "neo", "train.compile": "parts", "train.init_from": lab_end,
                                                                                        "method.type": "neo_alternate", "method.period": 1000}, data=suite("many_p24"))
+    # soft EM and hard EM from the start (agreed with the user on 2026-11-23). The soft EM above began from a run whose
+    # orientation codes had already merged, where every code is about equally wrong on the merged pairs. Hard EM: a
+    # temperature near zero and the executor trained on the first code only; a code nothing chooses gets a bonus that
+    # grows by 0.05 nats a step up to 20 and returns to zero once it is used (models/neo_em.py). Soft EM: the annealing
+    # above over 20,000 steps, no rescue. Three seeds each, the lab's 24,000-step recipe otherwise; the lab runs of the same
+    # recipe for seeds 43 and 44 complete the control (seed 42 is onestep_s_m24_wide_s42). The light evaluation keeps the
+    # per-primitive tables, to follow the orientation primitives and the code NMI during training.
+    plain = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0, "train.batch_size": 128}
+    scratch = {**plain, "model.type": "neo_em", "method.type": "neo_em", "model.candidates": 0}
+    hard_em = {**scratch, "model.train_top": 1, "model.temperature_start": 0.01, "model.temperature_end": 0.01, "model.anneal_steps": 1,
+               "model.dead_share": 0.1, "model.usage_decay": 0.99, "model.bonus_step": 0.05, "model.bonus_cap": 20.0}
+    soft_em = {**scratch, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.1, "model.anneal_steps": 20000}
+    for seed in (42, 43, 44):
+        for name, changes in (("hardem", hard_em), ("softem", soft_em)):
+            config = one_step(seed, steps=24000, codes=48, changes=changes, data=suite("many_p24"))
+            config["evals"][0]["tables"] = True
+            configs[f"onestep_s_m24_{name}_s{seed}"] = config
+        if seed != 42:
+            configs[f"onestep_s_m24_wide_s{seed}"] = one_step(seed, steps=24000, codes=48, changes=plain, data=suite("many_p24"))
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.

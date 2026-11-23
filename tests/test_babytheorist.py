@@ -370,6 +370,34 @@ def test_soft_em_weights_codes_by_how_well_they_reproduce_and_alternate_freezes_
     assert any(not torch.equal(a, b) for a, b in zip(executor_before, model.executor.parameters()))
 
 
+def test_hard_em_rescues_only_dead_codes_up_to_a_cap() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_em"](**spec, train_top=1, temperature_start=0.01, temperature_end=0.01, dead_share=1.0, bonus_step=0.05, bonus_cap=0.5)
+    torch.nn.init.normal_(model.executor.stack.blocks[0].adaLN_modulation[-1].weight, std=0.3)
+    x, y = torch.randint(0, 10, (3, 6, 6)), torch.randint(0, 10, (3, 6, 6))
+    model.usage.copy_(torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0]))
+    model.bonus.copy_(torch.tensor([0.0, 0.0, 0.5, 0.0, 0.0]))
+    model({"x": x, "y": y}, step=0)
+    # code 0 is in use and gets no bonus; the dead codes gain one step, and code 2 stays at the cap
+    assert model.bonus[0] == 0.0 and torch.allclose(model.bonus[[1, 3, 4]], torch.full((3,), 0.05)) and model.bonus[2] == 0.5
+    # a dead code with a large enough bonus takes every pair, and once it is in use its bonus returns to zero
+    model.bonus.copy_(torch.tensor([0.0, 0.0, 0.0, 1.0e6, 0.0]))
+    model.usage_decay = 0.0
+    out = model({"x": x, "y": y}, step=0)
+    assert torch.equal(out.code_indices_by_length[0], torch.full((3,), 3))
+    assert model.bonus[3] == 0.0
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()
@@ -394,3 +422,16 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
             assert sum(results[f"{prefix}/tasks_depth{d}"] for d in (1, 2, 3, 4, 5)) == 6
         else:
             assert f"{prefix}/exact" in results
+
+
+def test_code_nmi_and_entropy():
+    from evals.babytheorist import normalized_mutual_information, usage_entropy
+
+    # every primitive has a code of its own: NMI 1; two primitives on one code: lower; one primitive spread over two codes: lower
+    assert abs(normalized_mutual_information(torch.tensor([[5, 0, 0], [0, 7, 0], [0, 0, 3]])) - 1.0) < 1e-9
+    shared = normalized_mutual_information(torch.tensor([[5, 0], [7, 0], [0, 3]]))
+    spread = normalized_mutual_information(torch.tensor([[5, 5, 0], [0, 0, 7]]))
+    assert 0.0 < shared < 1.0 and 0.0 < spread < 1.0
+    assert normalized_mutual_information(torch.tensor([[4], [6]])) == 0.0
+    assert abs(usage_entropy(torch.tensor([3, 3, 3, 3])) - 1.0) < 1e-9
+    assert usage_entropy(torch.tensor([9, 0, 0, 0])) == 0.0

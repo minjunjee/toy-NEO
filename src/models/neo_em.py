@@ -16,6 +16,16 @@ learn through the executor (they are its conditioning input). The programmer is 
 cross-entropy between them and a softmax over its cosine similarity to every code (scale `programmer_scale`). Evaluation
 is the lab NEO's: the programmer names the nearest code, nothing is searched.
 
+Hard EM is the same model with a temperature near zero and `train_top` 1: each pair goes to the code that reproduces it
+best, the executor learns that code on it, and the programmer learns to name it.
+
+Rescue of dead codes (`dead_share` > 0). A code whose moving share of first places (decay `usage_decay`) is below
+`dead_share` times the uniform share 1/size is dead. Each training step a dead code's loss in the E step is lowered by a
+further `bonus_step` nats, up to `bonus_cap`; the bonus returns to zero as soon as the code is used again. Codes in use get
+no bonus, so the rescue only revives codes that nothing chooses and does not take part in the competition between used
+codes. Exact ties in the E step (at the start every code executes the same, since the executor's modulation starts at
+zero) are broken by a jitter of `jitter` nats.
+
 No label and no grouping of pairs is used.
 """
 
@@ -32,13 +42,18 @@ from models.neo import NEO, NEOOutput
 
 class NEOEM(NEO):
     def __init__(self, *args, candidates: int = 0, train_top: int = 4, temperature_start: float = 10.0, temperature_end: float = 0.1,
-                 anneal_steps: int = 10000, programmer_scale: float = 10.0, **kwargs) -> None:
+                 anneal_steps: int = 10000, programmer_scale: float = 10.0, dead_share: float = 0.0, usage_decay: float = 0.99,
+                 bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.max_length != 1:
             raise ValueError("neo_em is a one-step model: max_length must be 1")
         self.candidates, self.train_top = candidates, train_top
         self.temperature_start, self.temperature_end, self.anneal_steps = temperature_start, temperature_end, anneal_steps
         self.programmer_scale = programmer_scale
+        self.dead_share, self.usage_decay, self.bonus_step, self.bonus_cap, self.jitter = dead_share, usage_decay, bonus_step, bonus_cap, jitter
+        size = self.code.size
+        self.register_buffer("usage", torch.full((size,), 1.0 / size), persistent=False)
+        self.register_buffer("bonus", torch.zeros(size), persistent=False)
         self.last = {}
 
     def temperature(self, step: int) -> float:
@@ -68,6 +83,8 @@ class NEOEM(NEO):
             logits = self.decoder(self.executor(state.repeat_interleave(m, dim=0), table.detach()[tried.flatten()][:, None].to(state.dtype)))
             loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.repeat_interleave(m, dim=0).reshape(-1).long(), reduction="none")
             loss = loss.view(batch_size, m, -1).sum(dim=2)                                         # summed over cells, nats
+            if self.training:
+                loss = loss - self.bonus[tried] + self.jitter * torch.rand_like(loss)
             temperature = self.temperature(step) if self.training else self.temperature_end
             weights = torch.softmax(-loss / temperature, dim=1)                                     # (B, m)
             responsibility = torch.zeros(batch_size, size, device=x.device).scatter_add_(1, tried, weights)
@@ -81,9 +98,16 @@ class NEOEM(NEO):
         # the programmer learns to predict the responsibilities
         programmer_loss = -(responsibility * F.log_softmax(self.programmer_scale * similarity, dim=1)).sum(dim=1)
         best = out.view(batch_size, k, *out.shape[1:])[:, 0]
+        if self.training:
+            with torch.no_grad():
+                firsts = torch.bincount(top.indices[:, 0], minlength=size).float() / batch_size
+                self.usage.mul_(self.usage_decay).add_((1 - self.usage_decay) * firsts)
+                dead = self.usage < self.dead_share / size
+                self.bonus.copy_(torch.where(dead, (self.bonus + self.bonus_step).clamp(max=self.bonus_cap), torch.zeros_like(self.bonus)))
         self.last = {"em_recon": recon.mean().detach(), "em_programmer": programmer_loss.mean().detach(), "em_temperature": temperature,
                      "em_entropy": -(responsibility.clamp_min(1e-9).log() * responsibility).sum(dim=1).mean(),
-                     "em_programmer_agrees": (similarity.argmax(dim=1) == top.indices[:, 0]).float().mean()}
+                     "em_programmer_agrees": (similarity.argmax(dim=1) == top.indices[:, 0]).float().mean(),
+                     "em_dead": (self.usage < max(self.dead_share, 0.1) / size).float().sum(), "em_bonus_max": self.bonus.max()}
         return NEOOutput([best], torch.ones(batch_size, dtype=torch.long, device=x.device), torch.zeros((), device=x.device),
                          [recon + programmer_loss], [top.indices[:, 0]], 0.0, auto_logits, observations, y)
 
