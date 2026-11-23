@@ -21,7 +21,7 @@
 
 ## 1. 한눈에 보기
 
-이 레포는 랩의 NEO가 더 어려운 상황에서 어디서 왜 틀리는지를 관찰하는 곳이다. 무대는 격자 퍼즐 벤치마크 BabyTheorist이고, 모델은 랩 NEO 코드를 고치지 않고 들여온 것이다. 사흘 동안 알게 된 것은 다섯 가지다.
+이 레포는 랩의 NEO가 더 어려운 상황에서 어디서 왜 틀리는지를 관찰하는 곳이다. 무대는 격자 퍼즐 벤치마크 BabyTheorist이고, 모델은 랩 NEO 코드를 고치지 않고 들여온 것이다. 사흘 동안 알게 된 것은 다섯 가지이고, 23일 오후와 밤에 셋을 더 알게 됐다.
 
 첫째, NEO가 program 여러 단계를 한꺼번에 학습하면 code가 primitive가 아닌 것으로 굳는다. 단계 사이에 확률을 넘기면 code 둘이 변환 하나의 주소가 되고, 격자만 넘기게 막으면 대충 하는 code와 고치는 code로 나뉜다. 같은 부품을 primitive 하나짜리 pair로 한 단계만 학습하면 이어 쓸 수 있어서, 레벨 1 transfer가 여섯 seed 평균 64%로 랩 설정의 40%보다 높다. 다만 그 pair를 고르는 데 숨은 길이를 썼다. program 길이를 점진적으로 늘리는 일정은 세 seed 중 하나에서만 통했다.
 
@@ -32,6 +32,12 @@
 넷째, 큰 환경에서 깨지는 것은 부품이 아니라 정답 없는 code 배정이다. 24개 환경에서 회전, 뒤집기, 전치 계열 일곱 개만 15% 근처에 머문다. primitive마다 정답 code를 주면 같은 부품이 83%에서 98%를 해낸다. programmer, executor, code를 고르는 방식, 잠, soft EM 등 라벨 없이 시도한 열세 가지는 9%에서 21%였고 대부분 15% 근처였다. 8배 오래 학습하면 뒤집기 둘은 풀리지만 가로세로를 바꾸는 넷은 남는다.
 
 다섯째, 평가가 틀리게 말하는 경우가 있었다. transfer 하나로는 단계 사이 확률로 넘기는 지름길이 가려지고, 한 단계 학습의 좋은 숫자는 숨은 길이를 쓴 진단이었다. 그래서 transfer를 두 방식으로 재고, 라벨에 기대는 설정은 진단이라고 밝혀 둔다.
+
+여섯째, 긴 program에서 떨어지는 것은 executor가 아니라 programmer의 계획이다. code가 깨끗한 seed에서 정답 program을 그대로 실행하면 길이 8에서도 92%에서 97%를 맞히는데, programmer가 고른 program은 탐색 폭 16에서도 30%에서 42%다. 라벨 없이 programmer가 자기 executor로 만든 여러 단계 program을 꿈처럼 배우게 하면, 폭 16의 길이 8이 seed 평균 22%에서 38%로 오른다.
+
+일곱째, 섞인 code를 푸는 데 빠져 있던 것은 같은 code가 다른 입력에서도 같은 일을 하라는 요구다. pair 하나로 학습하면 hard EM도 soft EM도 회전 계열을 풀지 못하고, hard EM은 code를 입력 모양별 전문가로 쪼갠다. 같은 program을 공유하는 pair 둘을 한 과제로 주고 두 pair를 모두 재현하는 code를 고르게 하면, 가로세로를 바꾸는 넷이 seed 평균 17%에서 56%가 되고 한 seed는 96%로 완전히 풀린다. 숨은 program은 쓰지 않지만 pair의 묶음은 쓴다.
+
+여덟째, 처음에 굳은 배정은 그 요구가 있어도 잘 풀리지 않는다. 두 pair hard EM에서 갈라진 seed는 7,200스텝 이전에 갈라졌고, 나머지 둘은 넷이 code 하나를 함께 쓴 채 35% 근처에서 멈췄다.
 
 ## 2. 왜 이 연구를 하는가
 
@@ -550,7 +556,64 @@ soft EM은 사용자가 "EM처럼은 못하나"라고 물어서 합의한 시도
 
 **해석.** 지금의 학습 신호에는 같은 code가 다른 입력에서도 같은 일을 하라는 요구가 없다. pair 하나를 재현하는 것만 요구하면, 더 잘게 쪼갤수록 재현은 쉬워지고 transfer는 떨어진다. 섞인 code를 나누려는 이번의 모든 시도가 이 자리에서 막혔다.
 
-<!-- later sections -->
+### 5.17 꿈 학습: programmer가 스스로 만든 여러 단계 program으로 배우기
+
+2026-11-23 18:30부터 20:59까지. method는 `src/methods/neo_dream.py`, 그림은 `docs/reports/2026-11-23-dream/`다. 자율 연구 중에 정했다.
+
+**문제.** 5.14절에서 code가 깨끗한 seed는 정답 program을 그대로 실행하면 길이 8에서도 92%에서 97%를 맞혔다. 같은 executor로 programmer가 고른 program은 탐색 폭 16에서 30%에서 42%였다. 병목은 programmer다.
+
+**원인 분석.** 한 단계 모델의 programmer는 학습 때 한 단계 떨어진 목표만 봤다. 목표가 여러 단계 떨어지면 지금 격자에서 무엇을 먼저 해야 하는지 배운 적이 없다.
+
+**해결 방안.** 라벨 없이 모델 자신이 만든 데이터로 가르친다. 학습 입력 격자에서 출발해 programmer가 실제 학습 pair에서 고르는 code를, 고르는 빈도에 비례해 1개에서 8개 뽑는다. 얼린 executor로 그 열을 실행하고, 단계마다 격자로 읽어 다음 단계에 넘긴다. 마지막 격자를 목표로 삼고, 중간 격자마다 다음에 실행한 code를 programmer가 맞히게 cross-entropy로 학습한다. 격자가 바뀌지 않은 단계와 이미 지난 격자로 돌아오는 단계는 다음 code가 목표로 가는 길이 아니므로 뺀다. 스텝마다 그런 위치 512개를 뽑는다. programmer만 배우고 state encoder, state decoder, executor, codebook은 얼린다. 깨어 있는 동안 확정된 executor로 잠에서 꿈을 꾸어 programmer만 고치는 것에 해당한다. 아래에서는 이것을 꿈 학습이라고 부른다.
+
+**실험 설정.** 8개 primitive 한 단계 모델 seed 여섯 각각의 끝에서 6,000스텝, batch 128, programmer 학습률 7.5e-5다. 처음에는 원래 run의 batch 512를 그대로 받아 GPU 메모리가 모자랐고, 다음에는 스텝마다 예시 수가 달라 메모리가 32GB까지 커져서 위치 수를 고정했다. 평가는 5.13절과 같은 탐색이다.
+
+**결과.** seed 여섯의 평균 transfer다.
+
+| 숨은 길이 | 폭 16, 전 | 폭 16, 후 | greedy, 전 | greedy, 후 |
+|---|---|---|---|---|
+| 1 | 86% | 86% | 85% | 76% |
+| 2 | 78% | 77% | 66% | 54% |
+| 5 | 44% | 56% | 24% | 27% |
+| 6 | 34% | 49% | 15% | 24% |
+| 8 | 22% | 38% | 7% | 21% |
+| 10 | 6% | 23% | 1% | 13% |
+
+![꿈 학습 전후의 길이별 transfer](reports/2026-11-23-dream/dream_by_length.png)
+
+폭 16에서 길이 8은 seed 45가 42%에서 67%, seed 42가 30%에서 53%, seed 44가 18%에서 46%로 올랐다. code가 많이 갈라진 seed 46은 0%에서 그대로다. 대가도 둘 있다. greedy로 쓰면 짧은 program이 나빠져 길이 1이 85%에서 76%가 됐다. 먼 목표를 배우면서 한 단계짜리 결정이 흐려진 것으로 보인다. 그리고 두 support를 통과하고도 query에서 틀리는 비율이 길이 8에서 24%에서 36%로 늘었다. programmer가 support를 맞히는 다른 길도 많이 내게 됐기 때문이다.
+
+**해석.** 긴 program의 병목이 programmer의 계획이라는 5.14절의 진단이 맞았고, 라벨 없이 자기 executor로 만든 꿈으로 그 일부를 채울 수 있다. 상한인 92%에서 97%까지는 아직 멀다. 짧은 program의 손실은 꿈의 길이 분포를 바꾸거나 실제 한 단계 pair를 섞어 다룰 수 있을 것이다.
+
+### 5.18 같은 program의 pair 둘을 한 학습 과제로
+
+2026-11-23 19:23부터 22:17까지. 데이터는 `data/babytheorist/many_p24_pairs2`와 `many_p32_pairs2`, 부품은 `babytheorist_episodes`, `neo_episode`, 두 pair 기준의 `neo_em`이다. 자율 연구 중에 정했다.
+
+**문제.** 5.16절에서 hard EM은 code를 입력 모양별 전문가로 만들었다. 섞인 code를 나누려는 모든 시도가 같은 자리에서 막혔다. 지금의 학습 신호에는 같은 code가 다른 입력에서도 같은 일을 하라는 요구가 없다.
+
+**원인 분석.** 학습 과제가 pair 하나뿐이면, 어떤 code가 그 pair를 재현하기만 하면 loss가 0이다. 회전 계열 넷을 한 code가 맡아도, 한 primitive를 모양별로 여러 code가 나눠 맡아도 학습은 그것을 구별하지 못한다. 평가는 다르다. support에서 고른 code가 다른 object의 query에도 맞아야 한다.
+
+**해결 방안.** 학습 과제를 같은 program을 다른 object 둘에 적용한 pair 둘로 준다. 숨은 program 이름은 쓰지 않지만 어느 pair끼리 같은 규칙인지는 알려 준다. ARC의 과제와 랩 GridWorld의 episode가 같은 형식이다. 랩 모델 `neo_episode`는 첫 pair에서 고른 code를 두 입력에 모두 실행해 두 출력을 학습한다. hard EM은 code를 고르는 기준이 두 pair의 재현 오차의 합이 되고, executor도 두 pair로 학습한다. 입력별 전문가 code는 두 번째 pair에서 틀리므로 선택받지 못한다.
+
+**실험 설정.** 24개 묶음의 깊이 1 과제 4만 개, pair 8만 개다. 한 pair 학습이 쓰던 깊이 1 pair 약 7만 5천 개와 비슷하게 맞췄고, 평가 파일의 pair는 학습에서 뺐다. 평가 파일은 한 pair 학습과 같다. 24,000스텝, seed 42, 43, 44다. 같은 것을 32개 묶음 5만 3천 과제로 seed 42 하나 돌렸다. code는 primitive 수의 두 배다.
+
+**결과.** 24개 환경, 끝값이다.
+
+| 조건 | 가로세로를 바꾸는 넷, seed별 | seed 평균 | 나머지 17개 | 회전 계열 NMI |
+|---|---|---|---|---|
+| 랩 모델, 한 pair | 16%, 15%, 20% | 17% | 84% | 0.18 |
+| 랩 모델, 두 pair | 35%, 34%, 34% | 34% | 88% | 0.53 |
+| hard EM, 한 pair | 30%, 13%, 20% | 21% | 66% | 0.35 |
+| hard EM, 두 pair | 96%, 35%, 37% | 56% | 96% | 0.63 |
+
+![조건별 회전 계열 넷, 나머지 17개, 회전 계열 NMI](reports/2026-11-23-em/orientation_by_condition.png)
+
+미리 정한 판정 기준 60%에는 seed 평균 56%로 못 미친다. 그러나 seed 42는 회전 계열 일곱이 97%, 나머지가 99%로, primitive마다 정답 code를 준 진단과 같은 수준까지 라벨 없이 갔다. 이 seed는 7,200스텝에 이미 넷이 95%였다. seed 43과 44는 같은 시점부터 35%와 37%에서 멈췄고, 들여다보면 넷이 여전히 code 하나를 함께 쓴다. 처음에 갈라지지 않으면 쓰이지 않는 code가 남지 않아 구제가 작동하지 않는 것으로 보인다. 나머지 17개는 한 pair의 hard EM과 달리 96%로, 입력별 전문가 code가 사라졌다.
+
+32개 환경은 seed 42 하나다. 가로세로를 바꾸는 넷이 한 pair 랩 모델 15%, 두 pair 랩 모델 38%, 두 pair hard EM 59%이고, 회전 계열 일곱은 19%, 61%, 71%, 나머지 25개는 89%, 93%, 98%다. 환경이 커져도 같은 방향이다.
+
+**해석.** 섞인 code를 푸는 데 빠져 있던 것은 같은 code가 다른 입력에서도 같은 일을 하라는 요구였다. 이 요구는 pair의 묶음만으로 넣을 수 있고, 그것만으로 랩 모델도 넷이 17%에서 34%로 두 배가 된다. 이 요구로 code를 고르는 hard EM은 한 seed에서 문제를 완전히 풀었다. 남은 것은 처음에 굳은 seed를 다시 여는 일이다. 같은 기준으로 잠에서 두 pair 오차가 큰 code를 찾아 새 code를 붙이는 것이 다음 후보다. 이번에 pair의 묶음을 쓴 것은 숨은 program보다 약하지만 아무것도 없는 것보다는 강한 신호라는 점을 밝혀 둔다. BabyTheorist의 벤치마크 학습 파일은 pair 하나짜리라, 이 방식을 벤치마크 규칙 안에서 쓰려면 묶음을 데이터에서 찾아야 한다.
+
 
 ## 6. 지금까지 알게 된 것과 고친 해석
 
@@ -570,6 +633,11 @@ soft EM은 사용자가 "EM처럼은 못하나"라고 물어서 합의한 시도
 | 큰 환경의 실패는 정답 없는 code 배정이 섞인 채 굳는 것이다 | 정답 code를 주면 83%에서 98%, 넷이 code 39와 8로 감, probe 38% 대 82% | 여러 확인이 같은 방향 |
 | 라벨 없이 시도한 것 중 그 덩어리를 푼 것은 없다 | 열세 가지 모두 9%에서 21% | seed 42 |
 | 오래 학습하면 일부는 풀린다 | 200,000스텝에 36%, 뒤집기 둘 78%와 65% | 학습률 일정 효과와 섞임 |
+| 탐색을 넓히면 긴 program이 2배에서 3배가 된다 | 길이 8 seed 평균 7%에서 22%, 폭 1에서 16 | seed 여섯, 재학습 없음 |
+| 긴 program의 병목은 executor가 아니라 programmer의 계획이다 | 정답 program 상한 92%에서 97% 대 탐색 30%에서 42%, 길이 8 | code가 깨끗한 seed 둘 |
+| 꿈 학습이 programmer의 여러 단계 계획을 일부 채운다 | 폭 16 길이 8 seed 평균 22%에서 38%. greedy 길이 1은 85%에서 76%로 손해 | seed 여섯, 라벨 없음 |
+| pair 하나로 하는 EM은 섞인 code를 풀지 못한다 | 넷 soft 25%, hard 21% 대 랩 17%. hard EM은 code를 입력별로 쪼갬 | seed 셋, 기준 60% 실패 |
+| 같은 program의 pair 둘로 code를 고르면 섞인 code가 풀리기 시작한다 | hard EM 넷 seed 평균 56%, seed 42 96%. 32개 환경 59% | 24개 seed 셋, 32개 seed 하나. 기준 60%에 조금 못 미침. pair 묶음 사용 |
 
 ### 6.2 고친 해석
 
@@ -584,14 +652,24 @@ soft EM은 사용자가 "EM처럼은 못하나"라고 물어서 합의한 시도
 | 점진적 길이 일정이 무너짐을 막는다 | seed 42에서만이고, 효과는 데이터 제한에서 온다 | seed 43, 44와 대조 둘 |
 | executor가 회전 계열을 한꺼번에 담지 못한다 | executor는 정답 code가 있으면 83%에서 98%를 한다 | code별 executor 사본, 정답 code 진단 |
 | Lie algebra codebook의 seed 44가 94%다 | 53%이고, 94%는 학습한 이동까지 합친 가벼운 평가였다 | checkpoint마다 다시 잼 |
+| 섞인 code는 라벨 없이는 풀리지 않는다 | pair 하나만 볼 때의 이야기다. 같은 program의 pair 둘을 주면 seed 셋 중 하나에서 완전히 풀린다 | 두 pair hard EM |
 
 ### 6.3 이 결과가 장기 목표에 알려 주는 것
 
-사용자가 바라는 학습자는 아는 것이 많아질수록 새 것을 싸게 배운다. 이번 라운드에서 그 반대편의 실패 둘이 보였다. 하나는 비슷한 것들이 처음에 한 code로 묶이면 학습 신호 안에 그것을 떼어 놓는 힘이 없다는 것이다. 다른 하나는 새 것이 들어올 때 옛것이 밀려난다는 것이다. 둘 다 code를 언제 새로 만들고 언제 나누는지를 정하는 이산 결정의 문제이고, gradient만으로는 풀리지 않았다. 다른 한편, 양을 회전으로 묶은 codebook이 본 적 없는 양을 말한 것은 구조를 넣은 codebook이 재사용을 싸게 만들 수 있다는 첫 신호다. 다만 지금까지 잰 것은 처음부터 하는 pretraining이고, 충분히 배운 뒤 primitive를 하나씩 더할 때의 비용, 곧 reuse는 아직 재지 않았다.
+사용자가 바라는 학습자는 아는 것이 많아질수록 새 것을 싸게 배운다. 이번 라운드에서 그 반대편의 실패 둘이 보였다. 하나는 비슷한 것들이 처음에 한 code로 묶이면 학습 신호 안에 그것을 떼어 놓는 힘이 없다는 것이다. 다른 하나는 새 것이 들어올 때 옛것이 밀려난다는 것이다. 둘 다 code를 언제 새로 만들고 언제 나누는지를 정하는 이산 결정의 문제이고, gradient만으로는 풀리지 않았다. 다른 한편, 양을 회전으로 묶은 codebook이 본 적 없는 양을 말한 것은 구조를 넣은 codebook이 재사용을 싸게 만들 수 있다는 첫 신호다. 다만 지금까지 잰 것은 처음부터 하는 pretraining이고, 충분히 배운 뒤 primitive를 하나씩 더할 때의 비용, 곧 reuse는 아직 재지 않았다. 23일 밤의 결과는 그 이산 결정에 무엇이 필요한지를 하나 보여 준다. code를 나누고 고르는 기준은 pair 하나의 재현이 아니라 같은 code가 여러 입력에서 같은 일을 하는지여야 한다. 뇌에 빗대면 한 번의 경험이 아니라 같은 규칙의 여러 경험을 묶어 개념을 세우는 것에 해당한다. 그리고 여러 단계를 계획하는 능력은 확정된 executor로 꿈을 꾸어 programmer만 고치는 방식으로 라벨 없이 일부 얻을 수 있었다. 깨어 있을 때 확정된 지식으로 추론하고 잠에서만 고친다는 원칙과 같은 꼴이다.
 
 ## 7. 열린 질문과 사용자가 정할 것
 
 ### 7.1 다음 실험 후보
+
+23일 밤의 결과에서 나온 후보가 먼저다.
+
+1. 처음에 굳은 배정 다시 열기. 두 pair hard EM에서 멈춘 seed 43과 44는 넷이 code 하나를 함께 쓴다. 잠에서 두 pair 오차가 큰 code를 찾아 새 code를 붙이고, 같은 두 pair 기준으로 고르게 한다. pair 하나의 재현으로 찾던 이전의 잠과 기준만 다르다.
+2. pair의 묶음을 데이터에서 찾기. 벤치마크 학습 파일은 pair 하나짜리다. 같은 code로 서로를 재현하는 pair를 모아 묶음을 스스로 만드는 방법이 필요하다.
+3. 꿈 학습과 두 pair hard EM을 합치기. code가 깨끗해진 모델에 꿈 학습을 얹으면 긴 program의 상한까지 얼마나 가는지 본다. 꿈 학습의 짧은 program 손실은 꿈 길이 분포나 실제 한 단계 pair 섞기로 줄인다.
+4. 두 pair 방식의 확장성. 32개 환경 seed 하나에서 59%였다. 52개와 64개, 그리고 커지는 환경에서 본다.
+
+11월 23일 아침까지의 후보는 아래와 같다.
 
 1. 오래 학습한 효과 확인. 학습률 일정을 고정한 긴 run을 하나 돌려 200,000스텝의 36%가 학습 길이에서 왔는지 일정에서 왔는지 가른다.
 2. 섞인 code를 나누는 새 기준. 지금 잠의 기준은 pair 하나를 재현하는지만 본다. 같은 code가 다른 입력에서도 같은 변환을 하는지를 봐야 한다.
@@ -680,6 +758,10 @@ soft EM은 사용자가 "EM처럼은 못하나"라고 물어서 합의한 시도
 | 11-23 | Claude Code | 섞인 code를 잠에서 찾아 새 code를 붙이고 실행으로 고르며 학습 |
 | 11-23 | 사용자 | 같은 설정을 200,000스텝 학습해 본다 |
 | 11-23 | 사용자와 합의 | soft EM과 programmer와 executor 번갈아 얼리기 |
+| 11-23 | 사용자와 합의 | 외부 분석의 계획에서 이미 해 본 것을 걸러 내고, support로 검증하는 탐색, code NMI, 처음부터 하는 hard EM과 soft EM을 순서대로. 판정은 가로세로를 바꾸는 넷의 seed 평균 60% |
+| 11-23 | Claude Code | 탐색의 순위는 programmer의 선호를 누적한 점수로 |
+| 11-23 | 사용자 | 자정까지 자율 연구 |
+| 11-23 | Claude Code | 꿈 학습, 그리고 학습 과제를 같은 program의 pair 둘로. pair의 묶음은 라벨보다 약한 신호로 밝혀 둠 |
 
 ## 10. 코드
 
@@ -724,11 +806,14 @@ config는 yaml 하나이고 최상위 키는 `data`, `model`, `method`, `evals`,
 | `neo_expert` | model | `per_code` executor에 codebook을 넘겨줌 | 5.12 |
 | `neo_compete` | model | 후보 code를 실행해 가장 잘 재현한 것만 학습 | 5.12 |
 | `neo_oracle` | model | 숨은 primitive 번호를 code로 씀. 진단용 | 5.12 |
-| `neo_em` | model, method | code에 대한 soft EM과 온도 내리기 | 5.12 |
+| `neo_em` | model, method | code에 대한 soft EM과 온도 내리기. 온도를 0 가까이 두면 hard EM이고, 아무도 고르지 않는 code를 구제하는 보너스와 두 pair 과제의 오차 합 기준이 있음 | 5.12, 5.16, 5.18 |
 | `neo_alternate` | method | programmer와 executor를 일정 주기로 번갈아 얼림 | 5.12 |
 | `neo_warm` | method | 체크포인트의 모든 부품을 불러와 이어 학습 | 5.7 |
 | `neo_compose` | method | 양이 더해지도록 executor를 학습 | 5.9 |
-| `reconstruct_exact`, `babytheorist_observe` | eval | 격자 복원률, 그리고 explain, transfer 세 가지, 깊이별 값, primitive별 표 | 3.3 |
+| `reconstruct_exact`, `babytheorist_observe` | eval | 격자 복원률, 그리고 explain, transfer 세 가지, 깊이별 값, primitive별 표, code NMI와 사용 엔트로피 | 3.3, 5.15 |
+| `babytheorist_episodes` | dataset | 같은 program을 공유하는 pair 둘을 한 학습 과제로. 첫 pair가 x, y, 둘째가 x2, y2 | 5.18 |
+| `neo_episode` | model | 첫 pair에서 고른 code를 두 입력에 모두 실행해 학습하는 한 단계 랩 모델 | 5.18 |
+| `neo_dream` | method | programmer가 얼린 executor로 만든 꿈 program으로 여러 단계 계획을 배움 | 5.17 |
 
 ### 10.4 도구
 
@@ -747,6 +832,12 @@ config는 yaml 하나이고 최상위 키는 `data`, `model`, `method`, `evals`,
 | `split_executor_checkpoint.py`, `split_mixed_codes.py`, `sleep_cycles.py` | executor를 code별로 복사, 섞인 code 찾기와 새 code 붙이기, 잠 사이클 |
 | `export_deck_data.py` | 덱에 쓰는 숫자 스냅샷 |
 | `scripts/arc/primitive_ceiling.py` | ARC 천장 전수 탐색 |
+| `support_search.py`, `search_figures.py` | support로 검증하는 program 탐색과 그 그림 |
+| `oracle_program.py` | 정답 program을 primitive별 code로 적어 실행한 상한. 라벨을 쓰는 진단 |
+| `dream_figures.py` | 꿈 학습 전후 비교 그림 |
+| `orientation_table.py`, `orientation_figure.py` | 회전 계열의 transfer와 NMI를 평가마다 표로, 조건별로 그림으로 |
+| `generate_many_primitives.py --train-pairs 2 --train-only --exclude-from` | 같은 program의 pair 둘로 된 학습 과제 |
+| `scripts/build_overview_page.py` | 이 문서를 그림을 넣은 HTML 한 파일로 |
 
 ### 10.5 실행과 테스트
 
@@ -792,4 +883,5 @@ CUDA_VISIBLE_DEVICES= .venv/bin/python -m pytest -q tests
 | `docs/reports/2026-11-22-kind-and-amount.md` | 5.9절의 앞부분 |
 | `docs/reports/2026-11-22-scaling.html` | 5.8절부터 5.12절의 그림 |
 | `docs/reports/2026-11-21-summary.html`, `2026-11-22-summary.html` | 그날까지의 정리 페이지 |
-| 이 문서 | 전체를 한 파일에 |
+| `docs/reports/2026-11-23-search/`, `2026-11-23-dream/`, `2026-11-23-em/` | 5.13절부터 5.18절의 그림과 숫자 |
+| 이 문서, `docs/project-overview.html` | 전체를 한 파일에. HTML은 그림이 들어간 같은 내용 |

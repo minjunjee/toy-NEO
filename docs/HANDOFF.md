@@ -1,5 +1,16 @@
 # 인수인계
 
+## 2026-11-23 22:30, 탐색, 꿈 학습, 두 pair 학습 뒤의 상태
+
+Claude Code가 썼다. 23일 오후 사용자와 정한 세 실험과 17:25부터 자정까지의 자율 연구다. 전체는 `docs/project-overview.md`와 그림이 들어간 `docs/project-overview.html`의 5.13절부터 5.18절에 있다.
+
+- support로 검증하는 탐색. 한 단계 모델 seed 여섯을 다시 학습하지 않고, programmer의 선호를 누적한 점수로 상위 몇 갈래를 남기며 실행하고 둘째 support로 거른다. 폭 16에서 길이 8 transfer가 seed 평균 7%에서 22%다. 도구는 `scripts/babytheorist/support_search.py`.
+- 정답 program을 primitive별 code로 적어 실행하면 code가 깨끗한 seed는 길이 8에서 92%에서 97%다. 긴 program의 병목은 executor가 아니라 programmer의 계획이다. 라벨을 쓰는 진단이다.
+- 꿈 학습. programmer가 얼린 executor로 만든 1에서 8단계 program의 중간 격자마다 다음 code를 배운다. 폭 16의 길이 8이 seed 평균 22%에서 38%. greedy의 길이 1은 85%에서 76%로 손해. method `neo_dream`.
+- 처음부터 하는 hard EM과 soft EM은 pair 하나로는 회전 계열을 풀지 못했다. 미리 정한 기준 60%에 넷 21%와 25%. hard EM은 code를 입력별 전문가로 쪼갠다.
+- 같은 program의 pair 둘을 한 과제로 주고 두 pair 오차의 합으로 code를 고르는 hard EM은 넷이 seed 평균 56%, seed 42는 96%로 완전히 풀렸다. 32개 환경 seed 42는 59%. 숨은 program은 쓰지 않지만 pair의 묶음을 쓴다. seed 45와 46이 23시 반쯤 끝난다.
+- 사용자가 정할 것. pair의 묶음을 쓰는 것을 받아들일지. 받아들이면 다음은 처음에 굳은 seed를 잠에서 두 pair 기준으로 다시 여는 것과, 묶음을 데이터에서 스스로 찾는 것이다.
+
 ## 2026-11-23 05:35, soft EM과 200,000스텝 학습 뒤의 상태
 
 Claude Code가 썼다. 사람이 볼 정리는 minjunjee.com/autoresearch_report의 덱이고, 생성기는 사이트 저장소의 `tools/slides-autoresearch-report`, 숫자 스냅샷은 `docs/reports/2026-11-22-scaling/deck_data.json`이다. 도는 실험은 없다.

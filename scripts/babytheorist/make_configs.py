@@ -648,9 +648,10 @@ def main() -> None:
     # primitives): nothing asks a code to do the same on another input. Here a code is chosen, and trained, for what it does
     # on both pairs of a task (models/neo_em.py); the lab model trains the code named from the first pair on both
     # (models/neo_episode.py). The grouping of pairs is used, never the program. Same eval file as above.
-    for seed in (42, 43, 44):
+    # seeds 45 and 46 of hard EM were added at 22:17 because seeds 42, 43, 44 ended at 96%, 35% and 37%
+    for seed in (42, 43, 44, 45, 46):
         for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em), ("softem_pairs2", soft_em)):
-            if name == "softem_pairs2" and seed != 42:
+            if (name == "softem_pairs2" and seed != 42) or (name == "lab_pairs2" and seed > 44):
                 continue
             config = one_step(seed, steps=24000, codes=48, changes=changes, data=suite("many_p24"))
             config["data"]["type"] = "babytheorist_episodes"
