@@ -662,15 +662,45 @@ def main() -> None:
     # dead-code bonus stayed near 0.1 nats where seed 42's reached its cap of 20. Two ways to explore harder early on
     # (2026-11-24): a rescue ten times stronger (0.5 nats a step, up to 200), and soft-to-hard annealing (temperature 10
     # to 0.01 over the first 6,000 steps, the executor on the top four codes, which become one as the temperature falls).
-    for seed in (43, 44, 45):
+    # (seeds 42 and 46 of the annealed form were added at 04:30, to judge it on the same five seeds as the default form)
+    for seed in (42, 43, 44, 45, 46):
         for name, changes in (("hardem_pairs2_rescue", {**hard_em, "model.bonus_step": 0.5, "model.bonus_cap": 200.0}),
                               ("hardem_pairs2_anneal", {**hard_em, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.01,
                                                         "model.anneal_steps": 6000})):
+            if name == "hardem_pairs2_rescue" and seed in (42, 46):
+                continue
             config = one_step(seed, steps=24000, codes=48, changes=changes, data=suite("many_p24"))
             config["data"]["type"] = "babytheorist_episodes"
             config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
             config["evals"][0]["tables"] = True
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
+    # two-pair tasks up the size ladder (2026-11-24): 52 and 64 primitives with the four-cell moves left out of training as
+    # in the ladder (80,000 and 100,000 tasks, in proportion to the trained primitives), the lab model and both forms of
+    # hard EM, seed 42. Every code is executed in the E step, as at 24 and 32. Single-pair reference: ladder_lab_p52/p64.
+    for tag, folder, primitives in (("m52", "many_p52", 52), ("m64", "many_p64", 64)):
+        for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em),
+                              ("hardem_pairs2_anneal", {**hard_em, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.01,
+                                                        "model.anneal_steps": 6000})):
+            config = one_step(42, steps=24000, codes=2 * primitives, changes=changes, data=suite(f"{folder}_without4"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/{folder}_pairs2/lv1_train.h5"]
+            config["evals"][0]["tables"] = True
+            configs[f"onestep_s_{tag}_{name}_s42"] = config
+    # dream training with verified real pairs on the 24-primitive models (2026-11-24): does a programmer whose codes are
+    # clean (two-pair hard EM, seeds 42, 45, 46) plan further than one whose codes stayed mixed (seed 43) or the lab's
+    # single-pair model? The input grids of the whole train file, no depth filter; only the programmer learns. The
+    # 24-primitive eval file goes to programs of four primitives (a longer one is too slow to generate with 24 primitives).
+    for tag, source, changes in (("hardem_pairs2_s42", "onestep_s_m24_hardem_pairs2_s42", hard_em), ("hardem_pairs2_s43", "onestep_s_m24_hardem_pairs2_s43", hard_em),
+                                 ("hardem_pairs2_s45", "onestep_s_m24_hardem_pairs2_s45", hard_em), ("hardem_pairs2_s46", "onestep_s_m24_hardem_pairs2_s46", hard_em),
+                                 ("wide_s42", "onestep_s_m24_wide_s42", plain)):
+        seed = int(tag[-2:])
+        config = one_step(seed, steps=6000, codes=48, changes={**changes, "method.type": "neo_dream", "method.freeze": ["encoder", "decoder", "executor", "code"],
+                                                              "train.init_from": f"runs/{source}/ckpt/step-024000.pt"}, data=suite("many_p24"))
+        del config["data"]["train_max_depth"]
+        config["method"]["real_share"] = 0.5
+        for block in config["evals"]:
+            block["infer"] = {"max_steps": 4, "rollout": "hard"}
+        configs[f"dream_mix_m24_{tag}"] = config
     # the same at 32 primitives (64 codes), seed 42: does the split hold as the environment grows? 53,000 two-pair tasks,
     # in proportion to the 40,000 at 24 primitives. Single-pair reference: onestep_s_m32_wide_s42.
     for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em)):
