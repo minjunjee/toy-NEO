@@ -784,6 +784,16 @@ def main() -> None:
         mixed = copy.deepcopy(config)
         mixed["method"]["real_share"] = 0.5
         configs[f"dream_mix_onestep_s{seed}"] = mixed
+        # four times longer (2026-11-24): clean seeds reached 65% to 74% at length 8 against a ceiling of 92% to 97%
+        if seed in (42, 44, 45):
+            longer = copy.deepcopy(mixed)
+            longer["train"]["steps"] = longer["method"]["total_steps"] = longer["train"]["ckpt_every"] = 24000
+            for block in longer["evals"]:
+                if block.get("max_samples"):
+                    block["every"] = 2400
+                else:
+                    block["every"] = 24000
+            configs[f"dream_mix_long_onestep_s{seed}"] = longer
     # does training on several steps damage codes that start out clean? The multi-step model with grid-only handover,
     # started from that one-step model (all parts), with everything trained and with only the programmer trained
     start = "runs/onestep_t_w_12k_s42/ckpt/step-012000.pt"
