@@ -30,8 +30,8 @@ img { max-width: 100%; height: auto; display: block; margin: 18px auto; border-r
 .meta { color: var(--muted); font-size: 13px; }
 @media (max-width: 900px) { .wrap { grid-template-columns: 1fr; gap: 0; } nav { display: none; } }
 </style></head>
-<body><div class="wrap"><nav><a href="#_1">목차</a><a href="#1">1. 한눈에 보기</a><a class="h3" href="#11">1.1 현재 최선과 부족한 곳</a><a href="#2">2. 왜 이 연구를 하는가</a><a class="h3" href="#21">2.1 사용자와 장기 목표</a><a class="h3" href="#22">2.2 출발점</a><a class="h3" href="#23">2.3 방향이 바뀐 자리</a><a class="h3" href="#24">2.4 연구 계획의 원래 모양</a><a href="#3-babytheorist">3. 무대: BabyTheorist와 평가 지표</a><a class="h3" href="#31">3.1 과제</a><a class="h3" href="#32-primitive">3.2 이 레포가 만든 primitive 묶음</a><a class="h3" href="#33">3.3 평가 지표</a><a class="h3" href="#34-arc">3.4 ARC에서의 천장</a><a href="#4-neo">4. 모델: 랩 NEO와 이 레포의 기준 설정</a><a class="h3" href="#41">4.1 흐름</a><a class="h3" href="#42-run">4.2 기준 run의 상세 스펙</a><a class="h3" href="#43">4.3 랩 설정과 다른 점</a><a href="#5">5. 실험</a><a class="h3" href="#51-neo-gridworld-babytheorist">5.1 랩 NEO를 GridWorld 설정 그대로 BabyTheorist에</a><a class="h3" href="#52-transformer-neo-code-primitive">5.2 transformer NEO의 첫 숫자와 code 대 primitive 표</a><a class="h3" href="#53-code-code">5.3 잠: 겹친 code를 합치고 비운 code를 다시 쓰기</a><a class="h3" href="#54">5.4 단계 사이로 넘어가는 보이지 않는 정보</a><a class="h3" href="#55">5.5 학습을 빠르게 하고 한 단계짜리 싼 판으로 부품 찾기</a><a class="h3" href="#56-code">5.6 찾은 부품을 다섯 단계 모델에 넣기: code가 주소가 된다</a><a class="h3" href="#57">5.7 한 단계로만 배운 모델은 이어 쓸 수 있다</a><a class="h3" href="#58-program">5.8 program 길이를 점진적으로 늘리기</a><a class="h3" href="#59-code">5.9 양을 code에 담기: 학습하지 않은 칸 수를 말할 수 있는가</a><a class="h3" href="#510-primitive-8-64">5.10 크기 사다리: primitive 8개에서 64개까지</a><a class="h3" href="#511-primitive">5.11 커지는 환경: 새 primitive 하나를 배우는 비용</a><a class="h3" href="#512">5.12 회전 계열: 큰 환경에서 무너지는 일곱 개</a><a class="h3" href="#513-support-program">5.13 support로 검증하는 program 탐색</a><a class="h3" href="#514-program">5.14 정답 program을 그대로 실행한 상한</a><a class="h3" href="#515-code-nmi">5.15 code NMI를 평가에 넣기</a><a class="h3" href="#516-hard-em-soft-em">5.16 처음부터 학습하는 hard EM과 soft EM</a><a class="h3" href="#517-programmer-program">5.17 꿈 학습: programmer가 스스로 만든 여러 단계 program으로 배우기</a><a class="h3" href="#518-program-pair">5.18 같은 program의 pair 둘을 한 학습 과제로</a><a class="h3" href="#519-pair">5.19 꿈 학습에 검증된 실제 pair 섞기</a><a class="h3" href="#520">5.20 처음에 굳은 배정을 이른 탐색으로 풀기</a><a href="#6">6. 지금까지 알게 된 것과 고친 해석</a><a class="h3" href="#61">6.1 알게 된 것</a><a class="h3" href="#62">6.2 고친 해석</a><a class="h3" href="#63">6.3 이 결과가 장기 목표에 알려 주는 것</a><a href="#7">7. 열린 질문과 사용자가 정할 것</a><a class="h3" href="#71">7.1 다음 실험 후보</a><a class="h3" href="#72">7.2 사용자의 답을 아직 받지 못한 것</a><a class="h3" href="#73">7.3 결과가 아직 없는 것</a><a href="#8">8. 사용자가 정한 원칙과 방향</a><a class="h3" href="#81">8.1 연구</a><a class="h3" href="#82">8.2 소통</a><a class="h3" href="#83">8.3 실행</a><a href="#9">9. 결정 기록 요약</a><a href="#10">10. 코드</a><a class="h3" href="#101">10.1 구조</a><a class="h3" href="#102">10.2 랩 부품</a><a class="h3" href="#103">10.3 이 레포가 더한 부품</a><a class="h3" href="#104">10.4 도구</a><a class="h3" href="#105">10.5 실행과 테스트</a><a href="#11_1">11. 저장소, 서버, 공개된 정리</a><a href="#12">12. 문서 지도</a></nav><main>
-<p class="meta">Built from docs/project-overview.md at 2026-11-24 05:24 KST</p>
+<body><div class="wrap"><nav><a href="#_1">목차</a><a href="#1">1. 한눈에 보기</a><a class="h3" href="#11">1.1 현재 최선과 부족한 곳</a><a href="#2">2. 왜 이 연구를 하는가</a><a class="h3" href="#21">2.1 사용자와 장기 목표</a><a class="h3" href="#22">2.2 출발점</a><a class="h3" href="#23">2.3 방향이 바뀐 자리</a><a class="h3" href="#24">2.4 연구 계획의 원래 모양</a><a href="#3-babytheorist">3. 무대: BabyTheorist와 평가 지표</a><a class="h3" href="#31">3.1 과제</a><a class="h3" href="#32-primitive">3.2 이 레포가 만든 primitive 묶음</a><a class="h3" href="#33">3.3 평가 지표</a><a class="h3" href="#34-arc">3.4 ARC에서의 천장</a><a href="#4-neo">4. 모델: 랩 NEO와 이 레포의 기준 설정</a><a class="h3" href="#41">4.1 흐름</a><a class="h3" href="#42-run">4.2 기준 run의 상세 스펙</a><a class="h3" href="#43">4.3 랩 설정과 다른 점</a><a href="#5">5. 실험</a><a class="h3" href="#51-neo-gridworld-babytheorist">5.1 랩 NEO를 GridWorld 설정 그대로 BabyTheorist에</a><a class="h3" href="#52-transformer-neo-code-primitive">5.2 transformer NEO의 첫 숫자와 code 대 primitive 표</a><a class="h3" href="#53-code-code">5.3 잠: 겹친 code를 합치고 비운 code를 다시 쓰기</a><a class="h3" href="#54">5.4 단계 사이로 넘어가는 보이지 않는 정보</a><a class="h3" href="#55">5.5 학습을 빠르게 하고 한 단계짜리 싼 판으로 부품 찾기</a><a class="h3" href="#56-code">5.6 찾은 부품을 다섯 단계 모델에 넣기: code가 주소가 된다</a><a class="h3" href="#57">5.7 한 단계로만 배운 모델은 이어 쓸 수 있다</a><a class="h3" href="#58-program">5.8 program 길이를 점진적으로 늘리기</a><a class="h3" href="#59-code">5.9 양을 code에 담기: 학습하지 않은 칸 수를 말할 수 있는가</a><a class="h3" href="#510-primitive-8-64">5.10 크기 사다리: primitive 8개에서 64개까지</a><a class="h3" href="#511-primitive">5.11 커지는 환경: 새 primitive 하나를 배우는 비용</a><a class="h3" href="#512">5.12 회전 계열: 큰 환경에서 무너지는 일곱 개</a><a class="h3" href="#513-support-program">5.13 support로 검증하는 program 탐색</a><a class="h3" href="#514-program">5.14 정답 program을 그대로 실행한 상한</a><a class="h3" href="#515-code-nmi">5.15 code NMI를 평가에 넣기</a><a class="h3" href="#516-hard-em-soft-em">5.16 처음부터 학습하는 hard EM과 soft EM</a><a class="h3" href="#517-programmer-program">5.17 꿈 학습: programmer가 스스로 만든 여러 단계 program으로 배우기</a><a class="h3" href="#518-program-pair">5.18 같은 program의 pair 둘을 한 학습 과제로</a><a class="h3" href="#519-pair">5.19 꿈 학습에 검증된 실제 pair 섞기</a><a class="h3" href="#520">5.20 처음에 굳은 배정을 이른 탐색으로 풀기</a><a class="h3" href="#521-code-24">5.21 깨끗한 code 위의 꿈 학습, 24개 환경</a><a href="#6">6. 지금까지 알게 된 것과 고친 해석</a><a class="h3" href="#61">6.1 알게 된 것</a><a class="h3" href="#62">6.2 고친 해석</a><a class="h3" href="#63">6.3 이 결과가 장기 목표에 알려 주는 것</a><a href="#7">7. 열린 질문과 사용자가 정할 것</a><a class="h3" href="#71">7.1 다음 실험 후보</a><a class="h3" href="#72">7.2 사용자의 답을 아직 받지 못한 것</a><a class="h3" href="#73">7.3 결과가 아직 없는 것</a><a href="#8">8. 사용자가 정한 원칙과 방향</a><a class="h3" href="#81">8.1 연구</a><a class="h3" href="#82">8.2 소통</a><a class="h3" href="#83">8.3 실행</a><a href="#9">9. 결정 기록 요약</a><a href="#10">10. 코드</a><a class="h3" href="#101">10.1 구조</a><a class="h3" href="#102">10.2 랩 부품</a><a class="h3" href="#103">10.3 이 레포가 더한 부품</a><a class="h3" href="#104">10.4 도구</a><a class="h3" href="#105">10.5 실행과 테스트</a><a href="#11_1">11. 저장소, 서버, 공개된 정리</a><a href="#12">12. 문서 지도</a></nav><main>
+<p class="meta">Built from docs/project-overview.md at 2026-11-24 07:26 KST</p>
 <h1 id="toy-neo">toy-NEO 프로젝트 전체 정리</h1>
 <p>2026-11-23 KST, Claude Code가 썼고 같은 날 밤에 오후의 실험을 더했다. 2026-11-20에 레포를 만든 때부터 23일 밤까지의 모든 것을 한 파일에 모은다. 같은 내용의 HTML은 <code>docs/project-overview.html</code>이고 <code>scripts/build_overview_page.py</code>가 만든다. 근거는 레포의 문서, 보고서, 연구 로그, 코드, run 기록이다. 숫자는 모두 직접 돌려 잰 것이고, 그렇지 않은 것은 그렇다고 적었다. 따로 적지 않으면 seed 42 하나의 결과다. 같은 내용을 그림으로 본 덱은 https://minjunjee.com/autoresearch_report 에 있다.</p>
 <p>읽는 순서를 권한다. 1절에서 결론을 보고, 3절과 4절에서 환경과 모델을 익힌 뒤, 5절의 실험을 필요한 만큼 읽는다. 실험마다 문제, 원인 분석, 해결 방안, 실험 설정, 결과의 순서로 적었다.</p>
@@ -109,6 +109,24 @@ img { max-width: 100%; height: auto; display: block; margin: 18px auto; border-r
 <td>두 pair hard EM</td>
 <td>한 pair 랩 15%</td>
 </tr>
+<tr>
+<td>24개 환경, 평가 파일 전체, 폭 16</td>
+<td>94%, seed 42</td>
+<td>두 pair hard EM과 꿈 학습</td>
+<td>한 pair 랩 43%</td>
+</tr>
+<tr>
+<td>24개 환경, 길이 4, 폭 16</td>
+<td>54%, 깨끗한 seed 셋 평균. 최고 58%</td>
+<td>두 pair hard EM과 꿈 학습</td>
+<td>꿈 전 43%, 한 pair 랩 6%</td>
+</tr>
+<tr>
+<td>52개 환경, 넷</td>
+<td>37%, 랩 모델 두 pair, seed 하나</td>
+<td>두 pair 과제</td>
+<td>한 pair 랩 16%</td>
+</tr>
 </tbody>
 </table></div>
 <p><strong>부족한 곳.</strong> 하나씩 고칠 대상이다.</p>
@@ -118,7 +136,7 @@ img { max-width: 100%; height: auto; display: block; margin: 18px auto; border-r
 <li>길이가 길수록 support 둘을 통과하고도 query에서 틀리는 비율이 20%에서 30%로 늘어난다.</li>
 <li>환경 크기 52개와 64개에서는 아직 재지 않았다. 시험 중이다.</li>
 <li>학습이 pair의 묶음과 깊이 1 과제 선택에 기댄다. 벤치마크 학습 파일은 pair 하나짜리이고 깊이도 학습에 쓸 수 없다. 묶음과 한 단계 pair를 executor 검증으로 스스로 찾아야 한다.</li>
-<li>꿈 학습을 두 pair hard EM 위에 얹은 조합은 24개 환경의 길이 4까지로만 잴 수 있다. 시험 중이다.</li>
+<li>꿈 학습을 두 pair hard EM 위에 얹으면 24개 환경 길이 4가 43%에서 54%가 된다. 다만 24개 환경에서는 길이 4까지만 잴 수 있다. 긴 평가 과제를 싸게 만드는 방법이 필요하다.</li>
 </ol>
 <h2 id="2">2. 왜 이 연구를 하는가</h2>
 <h3 id="21">2.1 사용자와 장기 목표</h3>
@@ -1410,6 +1428,54 @@ img { max-width: 100%; height: auto; display: block; margin: 18px auto; border-r
 </table></div>
 <p>구제 강화는 어느 seed가 풀리느냐만 바꿨다. soft에서 hard로 푸는 형태는 35%에 멈춘 seed가 하나도 없고 나머지 17개가 모두 100%다. 다만 잘 풀리던 seed 45가 83%에서 61%로 낮아졌다. 들여다보면 넷이 한꺼번에 묶였던 덩어리가 둘이나 셋짜리 덩어리로 줄었다. seed 43은 90도 회전과 반대 전치, seed 44는 90도와 270도 회전과 반대 전치, seed 45는 90도와 270도 회전이 code 하나를 함께 쓴다.</p>
 <p><strong>다음.</strong> 남은 작은 덩어리를 풀려고, 세 run의 끝에서 온도를 다시 10으로 올렸다가 내리는 run을 12,000스텝 돌리는 중이다.</p>
+<h3 id="521-code-24">5.21 깨끗한 code 위의 꿈 학습, 24개 환경</h3>
+<p>2026-11-24 04:30부터 07:24까지. 최선의 여섯째 약점을 겨냥한 실험이다.</p>
+<p><strong>문제.</strong> 꿈 학습은 8개 환경의 한 단계 모델에서만 시험했다. 두 pair hard EM으로 세운 24개 환경의 깨끗한 code 위에서도 programmer의 계획을 채우는지, 그리고 code가 섞인 모델에서도 그런지 묻는다.</p>
+<p><strong>실험 설정.</strong> 두 pair hard EM의 seed 42, 45, 46은 code가 깨끗하게 갈라진 모델이고, seed 43은 넷이 섞인 채 멈춘 모델이며, 한 pair 랩 설정 seed 42는 비교용이다. 각각의 끝에서 검증된 실제 pair를 반 섞은 꿈 학습을 6,000스텝 하고, 학습 입력은 깊이를 거르지 않은 학습 파일 전체다. 24개 환경 평가 파일의 과제 3,000개로 탐색해 잰다. 이 평가 파일은 숨은 길이가 4까지다. 24개 primitive로 길이 5에서 8의 과제를 만드는 것은, 생성기가 더 짧은 program으로 같은 결과가 나오는지를 너비 우선 탐색으로 확인하느라 과제 240개에 15분을 넘겨 포기했다.</p>
+<p><strong>결과.</strong> 폭 16의 숨은 길이 1, 2, 3, 4의 transfer다.</p>
+<div class="table"><table>
+<thead>
+<tr>
+<th>모델</th>
+<th>꿈 학습 전</th>
+<th>후</th>
+<th>평가 파일 전체</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>한 pair 랩 설정, seed 42</td>
+<td>60%, 39%, 22%, 6%</td>
+<td>60%, 39%, 20%, 11%</td>
+<td>43%에서 44%</td>
+</tr>
+<tr>
+<td>두 pair hard EM, seed 42</td>
+<td>99%, 93%, 72%, 47%</td>
+<td>100%, 96%, 76%, 53%</td>
+<td>92%에서 94%</td>
+</tr>
+<tr>
+<td>두 pair hard EM, seed 45</td>
+<td>98%, 87%, 64%, 37%</td>
+<td>98%, 91%, 73%, 52%</td>
+<td>87%에서 91%</td>
+</tr>
+<tr>
+<td>두 pair hard EM, seed 46</td>
+<td>98%, 90%, 69%, 45%</td>
+<td>98%, 93%, 74%, 58%</td>
+<td>89%에서 92%</td>
+</tr>
+<tr>
+<td>두 pair hard EM, seed 43, 넷이 섞임</td>
+<td>87%, 72%, 53%, 35%</td>
+<td>87%, 75%, 58%, 39%</td>
+<td>74%에서 76%</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>해석.</strong> code가 깨끗한 모델에서 꿈 학습은 길이 4를 seed 셋 평균 43%에서 54%로 올렸다. code가 섞인 한 pair 랩 모델에서는 거의 효과가 없다. 깨끗한 code가 먼저이고, 꿈 학습은 그 위에서 계획을 채운다. 두 support를 통과하고도 query에서 틀리는 비율은 24개 환경에서 2%에서 7%로 낮게 유지됐다.</p>
 <h2 id="6">6. 지금까지 알게 된 것과 고친 해석</h2>
 <h3 id="61">6.1 알게 된 것</h3>
 <div class="table"><table>
