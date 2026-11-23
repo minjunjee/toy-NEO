@@ -26,7 +26,12 @@ no bonus, so the rescue only revives codes that nothing chooses and does not tak
 codes. Exact ties in the E step (at the start every code executes the same, since the executor's modulation starts at
 zero) are broken by a jitter of `jitter` nats.
 
-No label and no grouping of pairs is used.
+Tasks of two pairs (batches with x2, y2 from the babytheorist_episodes dataset). A code's loss in the E step is its loss
+on the first pair plus its loss on the second, so a code is chosen for what it does on both inputs, and the executor is
+trained on both pairs with the chosen codes; the programmer still names the code from the first pair. Without x2 nothing
+changes.
+
+No label is used. With two-pair tasks the grouping of pairs is used, never the program.
 """
 
 from __future__ import annotations
@@ -79,10 +84,15 @@ class NEOEM(NEO):
             tried = torch.arange(size, device=x.device).expand(batch_size, size)
         m = tried.shape[1]
         # E step: every tried code executed, no gradient
+        pairs = [(state, y)]
+        if "x2" in batch:
+            pairs.append((self.encoder(batch["x2"]), batch["y2"]))
         with torch.no_grad():
-            logits = self.decoder(self.executor(state.repeat_interleave(m, dim=0), table.detach()[tried.flatten()][:, None].to(state.dtype)))
-            loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.repeat_interleave(m, dim=0).reshape(-1).long(), reduction="none")
-            loss = loss.view(batch_size, m, -1).sum(dim=2)                                         # summed over cells, nats
+            loss = 0
+            for source, goal in pairs:  # summed over the task's pairs
+                logits = self.decoder(self.executor(source.repeat_interleave(m, dim=0), table.detach()[tried.flatten()][:, None].to(source.dtype)))
+                part = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), goal.repeat_interleave(m, dim=0).reshape(-1).long(), reduction="none")
+                loss = loss + part.view(batch_size, m, -1).sum(dim=2)                              # summed over cells, nats
             if self.training:
                 loss = loss - self.bonus[tried] + self.jitter * torch.rand_like(loss)
             temperature = self.temperature(step) if self.training else self.temperature_end
@@ -92,9 +102,13 @@ class NEOEM(NEO):
         top = responsibility.topk(min(self.train_top, m), dim=1)
         share = top.values / top.values.sum(dim=1, keepdim=True)
         k = top.indices.shape[1]
-        out = self.decoder(self.executor(state.repeat_interleave(k, dim=0), table[top.indices.flatten()][:, None].to(state.dtype)))
-        recon = F.cross_entropy(out.reshape(-1, out.shape[-1]).float(), y.repeat_interleave(k, dim=0).reshape(-1).long(), reduction="none")
-        recon = (recon.view(batch_size, k, -1).mean(dim=2) * share).sum(dim=1)                     # per pair
+        recon = 0
+        for i, (source, goal) in enumerate(pairs):
+            decoded = self.decoder(self.executor(source.repeat_interleave(k, dim=0), table[top.indices.flatten()][:, None].to(source.dtype)))
+            part = F.cross_entropy(decoded.reshape(-1, decoded.shape[-1]).float(), goal.repeat_interleave(k, dim=0).reshape(-1).long(), reduction="none")
+            recon = recon + (part.view(batch_size, k, -1).mean(dim=2) * share).sum(dim=1) / len(pairs)   # per task
+            if i == 0:
+                out = decoded
         # the programmer learns to predict the responsibilities
         programmer_loss = -(responsibility * F.log_softmax(self.programmer_scale * similarity, dim=1)).sum(dim=1)
         best = out.view(batch_size, k, *out.shape[1:])[:, 0]

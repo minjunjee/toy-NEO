@@ -28,8 +28,8 @@ def write_files(directory: Path, tasks: int = 6, grid: int = 15) -> tuple[Path, 
     depths = np.array([1, 1, 2, 3, 5, 7][:tasks], dtype=np.int32)
     train, evaluation = directory / "train.h5", directory / "eval.h5"
     with h5py.File(train, "w") as f:
-        f["inputs"] = rng.integers(0, 10, (tasks, 1, grid, grid), dtype=np.int8)
-        f["outputs"] = rng.integers(0, 10, (tasks, 1, grid, grid), dtype=np.int8)
+        f["inputs"] = rng.integers(0, 10, (tasks, 2, grid, grid), dtype=np.int8)  # two pairs per task; single-pair readers take the first
+        f["outputs"] = rng.integers(0, 10, (tasks, 2, grid, grid), dtype=np.int8)
         f["depths"] = depths
         f.create_dataset("transformation_suites", data=[program(d) for d in depths], dtype=h5py.string_dtype())
     with h5py.File(evaluation, "w") as f:
@@ -426,6 +426,39 @@ def test_dream_trains_only_the_programmer_on_codes_it_uses() -> None:
     method.usage = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0])
     method.min_share, method.usage_decay = 0.5, 1.0
     assert method.train_step(model, {"x": x, "y": y}, step=2)["dream_codes"] == 1.0
+
+
+def test_two_pair_tasks_train_the_named_code_on_both_inputs() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_episode"](**spec)
+    x, y, x2, y2 = (torch.randint(0, 10, (3, 6, 6)) for _ in range(4))
+    out = model({"x": x, "y": y, "x2": x2, "y2": y2})
+    # the code is named from the first pair and executed on both inputs; the targets are both outputs
+    assert out.logits_by_length[0].shape[0] == 6 and torch.equal(out.targets, torch.cat([y, y2]))
+    assert torch.equal(out.code_indices_by_length[0][:3], out.code_indices_by_length[0][3:])
+    named = model.code(model.programmer(model.encoder(x), model.encoder(y)), False).indices
+    assert torch.equal(out.code_indices_by_length[0][:3], named)
+    # hard EM over codes with two-pair tasks chooses a code by its loss on both pairs
+    em = MODELS["neo_em"](**spec, train_top=1, temperature_start=0.01, temperature_end=0.01, jitter=0.0)
+    torch.nn.init.normal_(em.executor.stack.blocks[0].adaLN_modulation[-1].weight, std=0.3)
+    em.eval()
+    table = em.code.codebook(torch.arange(5))
+    with torch.no_grad():
+        def loss(source, goal):
+            return torch.stack([torch.nn.functional.cross_entropy(em.decoder(em.executor(em.encoder(source), table[k].expand(3, 1, -1))).reshape(3, -1, 10).transpose(1, 2),
+                                                                  goal.reshape(3, -1), reduction="none").sum(dim=1) for k in range(5)], dim=1)
+        both = loss(x, y) + loss(x2, y2)
+    assert torch.equal(em({"x": x, "y": y, "x2": x2, "y2": y2}).code_indices_by_length[0], both.argmin(dim=1))
 
 
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])

@@ -642,6 +642,21 @@ def main() -> None:
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
         if seed != 42:
             configs[f"onestep_s_m24_wide_s{seed}"] = one_step(seed, steps=24000, codes=48, changes=plain, data=suite("many_p24"))
+    # train tasks of two pairs that share a program (generate_many_primitives.py --train-pairs 2, 40,000 single-primitive
+    # tasks, 80,000 pairs; the single-pair runs above keep about 75,000 single-primitive pairs). Hard EM from the start made
+    # codes that reproduce their support pair and fail the query (98% to 100% against 69% on the seventeen non-orientation
+    # primitives): nothing asks a code to do the same on another input. Here a code is chosen, and trained, for what it does
+    # on both pairs of a task (models/neo_em.py); the lab model trains the code named from the first pair on both
+    # (models/neo_episode.py). The grouping of pairs is used, never the program. Same eval file as above.
+    for seed in (42, 43, 44):
+        for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em), ("softem_pairs2", soft_em)):
+            if name == "softem_pairs2" and seed != 42:
+                continue
+            config = one_step(seed, steps=24000, codes=48, changes=changes, data=suite("many_p24"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+            config["evals"][0]["tables"] = True
+            configs[f"onestep_s_m24_{name}_s{seed}"] = config
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.

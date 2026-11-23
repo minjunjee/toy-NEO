@@ -309,6 +309,9 @@ def main() -> None:
     parser.add_argument("--n-eval", type=int, default=10000)
     parser.add_argument("--workers", type=int, default=64)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--train-pairs", type=int, default=1, help="pairs per train task, all from the same program on different objects")
+    parser.add_argument("--train-only", action="store_true", help="write the train file only")
+    parser.add_argument("--exclude-from", type=Path, help="an eval file whose pairs the train file must not contain")
     args = parser.parse_args()
     names = SETS[args.primitives]
     depths = None
@@ -321,8 +324,15 @@ def main() -> None:
     if unknown:
         raise SystemExit(f"--train-without names primitives that are not in the set: {unknown}")
     args.out.mkdir(parents=True, exist_ok=True)
-    train = generate(names, args.n_train, 1, args.seed, args.workers, set(), depths, without)
-    write(args.out / "lv1_train.h5", names, train, 1)
+    exclude = set()
+    if args.exclude_from:
+        with h5py.File(args.exclude_from, "r") as f:
+            ins, outs = f["inputs"][:], f["outputs"][:]
+        exclude = {pair_hash(ins[i, j].astype(np.int8), outs[i, j].astype(np.int8)) for i in range(len(ins)) for j in range(ins.shape[1])}
+    train = generate(names, args.n_train, args.train_pairs, args.seed, args.workers, exclude, depths, without)
+    write(args.out / "lv1_train.h5", names, train, args.train_pairs)
+    if args.train_only:
+        return
     evaluation = generate(names, args.n_eval, 3, args.seed + 1, args.workers, train["hashes"], depths)
     write(args.out / "lv1_eval.h5", names, evaluation, 3)
 
