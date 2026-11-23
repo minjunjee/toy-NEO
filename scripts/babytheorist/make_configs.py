@@ -657,6 +657,14 @@ def main() -> None:
             config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
             config["evals"][0]["tables"] = True
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
+    # the same at 32 primitives (64 codes), seed 42: does the split hold as the environment grows? 53,000 two-pair tasks,
+    # in proportion to the 40,000 at 24 primitives. Single-pair reference: onestep_s_m32_wide_s42.
+    for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em)):
+        config = one_step(42, steps=24000, codes=64, changes=changes, data=suite("many_p32"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p32_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m32_{name}_s42"] = config
     # is it the programmer we chose? The searched programmer joins the state and the target cell by cell before attention;
     # the lab programmer keeps them as two tokens per cell. The same 24-primitive run with the lab programmer, and with the
     # searched programmer twice as deep.
