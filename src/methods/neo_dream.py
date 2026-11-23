@@ -16,6 +16,11 @@ program returns to a grid it has already passed (then the next code is not the w
 are drawn from the kept ones every step, so the programmer always sees the same number. Only the programmer
 learns; the state encoder and decoder, the executor and the codebook are frozen.
 
+Real one-step pairs (`real_share` > 0). Trained on dreams alone, the programmer got worse at one-step decisions. A share
+of the positions is then taken from the batch's real pairs that one code reproduces exactly: every code is executed on
+the pair, and the pair is kept, with the best code as its target, only if that code's output is exactly the pair's
+output. This picks single-step pairs by verification with the executor, not by the stored depth.
+
 No label is used: no hidden program, no depth. The real pairs are used only for their input grids and for which codes
 the programmer names on them.
 """
@@ -35,9 +40,10 @@ class NEODreamMethod(NEOMethod):
     init_prefixes = None
 
     def __init__(self, *args, max_dream: int = 8, scale: float = 10.0, usage_decay: float = 0.99, min_share: float = 0.25,
-                 examples: int = 512, freeze: list[str] | None = None, **kwargs) -> None:
+                 examples: int = 512, real_share: float = 0.0, freeze: list[str] | None = None, **kwargs) -> None:
         super().__init__(*args, freeze=freeze if freeze is not None else ["encoder", "decoder", "executor", "code"], **kwargs)
         self.max_dream, self.scale, self.usage_decay, self.min_share, self.examples = max_dream, scale, usage_decay, min_share, examples
+        self.real_share = real_share
         self.usage: torch.Tensor | None = None
 
     def compute_loss(self, model: nn.Module, batch: dict, step: int) -> TrainingStep:
@@ -72,17 +78,35 @@ class NEODreamMethod(NEOMethod):
                 states.append(grids[t][index])
                 labels.append(programs[index, t])
             rows, states, labels = torch.cat(rows), torch.cat(states), torch.cat(labels)
+            targets = target[rows]
             kept = rows.numel()
-            if kept and self.examples:  # a fixed number of positions per step, drawn from the kept ones, so shapes never change
-                pick = torch.randperm(kept, device=x.device)[: self.examples] if kept >= self.examples else torch.randint(kept, (self.examples,), device=x.device)
-                rows, states, labels = rows[pick], states[pick], labels[pick]
+            real = int(round(self.real_share * self.examples)) if self.examples else 0
+            dreamed = (self.examples - real) if self.examples else kept
+            if kept and dreamed:  # a fixed number of positions per step, drawn from the kept ones, so shapes never change
+                pick = torch.randperm(kept, device=x.device)[:dreamed] if kept >= dreamed else torch.randint(kept, (dreamed,), device=x.device)
+                states, labels, targets = states[pick], labels[pick], targets[pick]
+            real_kept = 0
+            if real:
+                losses = []
+                state = module.encoder(x)
+                for c in range(size):
+                    logits = module.decoder(module.executor(state, table[c].expand(x.shape[0], 1, -1)))
+                    losses.append(F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1).long(), reduction="none").view(x.shape[0], -1).sum(dim=1))
+                best = torch.stack(losses, dim=1).argmin(dim=1)
+                out = module.decoder(module.executor(state, table[best][:, None])).argmax(dim=-1)
+                exact = torch.nonzero(out.eq(y).flatten(1).all(dim=1)).flatten()
+                real_kept = exact.numel()
+                if real_kept:
+                    pick = exact[torch.randint(real_kept, (real,), device=x.device)]
+                    states, labels, targets = torch.cat([states, x[pick]]), torch.cat([labels, best[pick]]), torch.cat([targets, y[pick]])
+            rows = torch.arange(labels.numel(), device=x.device)
         if rows.numel() == 0:
             zero = sum(p.sum() for p in module.programmer.parameters()) * 0.0
             return TrainingStep(zero, {"loss": zero, "dream_examples": 0.0})
-        action = module.programmer(module.encoder(states), module.encoder(target[rows]))
+        action = module.programmer(module.encoder(states), module.encoder(targets))
         logits = self.scale * (F.normalize(action.flatten(1).float(), dim=-1) @ table.T)
         loss = F.cross_entropy(logits, labels)
-        metrics = {"loss": loss, "dream_examples": float(kept), "dream_codes": float(codes_used.numel()),
+        metrics = {"loss": loss, "dream_examples": float(kept), "real_exact": float(real_kept), "dream_codes": float(codes_used.numel()),
                    "dream_agree": float((logits.argmax(dim=1) == labels).float().mean()), "mean_length": float(lengths.float().mean()), "code_utilization": codes_used.numel() / size}
         return TrainingStep(loss, metrics)
 

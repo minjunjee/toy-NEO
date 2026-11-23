@@ -658,6 +658,19 @@ def main() -> None:
             config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
             config["evals"][0]["tables"] = True
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
+    # seeds 43 and 44 stayed at 35% with the four orientation primitives that swap width and height on one code, and their
+    # dead-code bonus stayed near 0.1 nats where seed 42's reached its cap of 20. Two ways to explore harder early on
+    # (2026-11-24): a rescue ten times stronger (0.5 nats a step, up to 200), and soft-to-hard annealing (temperature 10
+    # to 0.01 over the first 6,000 steps, the executor on the top four codes, which become one as the temperature falls).
+    for seed in (43, 44, 45):
+        for name, changes in (("hardem_pairs2_rescue", {**hard_em, "model.bonus_step": 0.5, "model.bonus_cap": 200.0}),
+                              ("hardem_pairs2_anneal", {**hard_em, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.01,
+                                                        "model.anneal_steps": 6000})):
+            config = one_step(seed, steps=24000, codes=48, changes=changes, data=suite("many_p24"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+            config["evals"][0]["tables"] = True
+            configs[f"onestep_s_m24_{name}_s{seed}"] = config
     # the same at 32 primitives (64 codes), seed 42: does the split hold as the environment grows? 53,000 two-pair tasks,
     # in proportion to the 40,000 at 24 primitives. Single-pair reference: onestep_s_m32_wide_s42.
     for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em)):
@@ -736,6 +749,11 @@ def main() -> None:
         for block in config["evals"]:
             block["infer"] = {"max_steps": 5, "rollout": "hard"}
         configs[f"dream_onestep_s{seed}"] = config
+        # half of the positions from real pairs that one code reproduces exactly, labelled by that code (2026-11-24): the
+        # dreams alone cost one-step decisions (greedy length 1 from 85% to 76%)
+        mixed = copy.deepcopy(config)
+        mixed["method"]["real_share"] = 0.5
+        configs[f"dream_mix_onestep_s{seed}"] = mixed
     # does training on several steps damage codes that start out clean? The multi-step model with grid-only handover,
     # started from that one-step model (all parts), with everything trained and with only the programmer trained
     start = "runs/onestep_t_w_12k_s42/ckpt/step-012000.pt"
