@@ -699,6 +699,19 @@ def main() -> None:
     wide_512 = {"model.programmer": {**PAIR_PROGRAMMER, "d_model": 256, "d_ff": 1024}, "train.ema": 0.0}
     for seed in (43, 44):
         configs[f"onestep_t_w_12k_s{seed}"] = one_step(seed, steps=12000, codes=16, changes=wide_512)
+    # the programmer learns to plan toward far targets from programs it dreams with its own frozen executor
+    # (methods/neo_dream.py), started 2026-11-23 in the autonomous session: written in each primitive's best code, the
+    # hidden program reaches 92% to 97% of eight-step queries with the executor of seeds 42 and 45, the programmer's own
+    # choices 11% to 42%. From the end of each one-step run, 6,000 steps, the input grids of all training pairs (no depth
+    # filter, no label); only the programmer learns. The evaluation rolls out up to five steps, only the grid handed over.
+    for seed in (42, 43, 44, 45, 46, 47):
+        config = one_step(seed, steps=6000, codes=16, changes={**wide_512, "method.type": "neo_dream", "method.freeze": ["encoder", "decoder", "executor", "code"],
+                                                                "train.init_from": f"runs/onestep_t_w_12k_s{seed}/ckpt/step-012000.pt",
+                                                                "train.batch_size": 128})  # a pair gives four to five dreamed positions
+        del config["data"]["train_max_depth"]
+        for block in config["evals"]:
+            block["infer"] = {"max_steps": 5, "rollout": "hard"}
+        configs[f"dream_onestep_s{seed}"] = config
     # does training on several steps damage codes that start out clean? The multi-step model with grid-only handover,
     # started from that one-step model (all parts), with everything trained and with only the programmer trained
     start = "runs/onestep_t_w_12k_s42/ckpt/step-012000.pt"

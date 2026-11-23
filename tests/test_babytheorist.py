@@ -398,6 +398,36 @@ def test_hard_em_rescues_only_dead_codes_up_to_a_cap() -> None:
     assert model.bonus[3] == 0.0
 
 
+def test_dream_trains_only_the_programmer_on_codes_it_uses() -> None:
+    from core.registry import METHODS, MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo"](**spec)
+    torch.nn.init.normal_(model.executor.stack.blocks[0].adaLN_modulation[-1].weight, std=0.3)
+    method = METHODS["neo_dream"](lr=1e-2, programmer_lr_scale=1.0, executor_lr_scale=1.0, weight_decay=0.0, warmup_ratio=0.0, min_lr_ratio=1.0, grad_clip=1.0,
+                                  grounding_weight=0.0, code_weight=1.0, auto_weight=0.0, total_steps=10, max_dream=3, min_share=0.0)
+    method.attach(model, torch.device("cpu"), "fp32")
+    executor_before = [p.detach().clone() for p in model.executor.parameters()]
+    programmer_before = [p.detach().clone() for p in model.programmer.parameters()]
+    x, y = torch.randint(0, 10, (16, 6, 6)), torch.randint(0, 10, (16, 6, 6))
+    metrics = method.train_step(model, {"x": x, "y": y}, step=1)
+    assert metrics["dream_examples"] > 0
+    assert all(torch.equal(a, b) for a, b in zip(executor_before, model.executor.parameters()))
+    assert any(not torch.equal(a, b) for a, b in zip(programmer_before, model.programmer.parameters()))
+    # codes the programmer never names are never dreamed
+    method.usage = torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0])
+    method.min_share, method.usage_decay = 0.5, 1.0
+    assert method.train_step(model, {"x": x, "y": y}, step=2)["dream_codes"] == 1.0
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

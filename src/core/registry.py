@@ -69,6 +69,7 @@ def import_all() -> None:
     import methods.neo_warm  # noqa: F401
     import methods.neo_compose  # noqa: F401
     import methods.neo_em  # noqa: F401
+    import methods.neo_dream  # noqa: F401
     import methods.vae_pretrain  # noqa: F401
     import evals.self_explain_exact  # noqa: F401
     import evals.transfer_exact  # noqa: F401
