@@ -31,6 +31,12 @@ on the first pair plus its loss on the second, so a code is chosen for what it d
 trained on both pairs with the chosen codes; the programmer still names the code from the first pair. Without x2 nothing
 changes.
 
+Selection by fit (`keep_fraction` < 1). Train files mix programs of one and of several primitives, and a one-step model
+can reproduce only the first kind; the earlier runs kept them apart with the stored depth, which a learner is not given.
+Here every task's smallest E-step loss (over the codes tried) ranks it, and only the `keep_fraction` of the batch that
+the best code fits most closely enters the M step and the programmer's loss. A task that no single code can explain fits
+badly and is left out, without reading its depth.
+
 No label is used. With two-pair tasks the grouping of pairs is used, never the program.
 """
 
@@ -48,7 +54,7 @@ from models.neo import NEO, NEOOutput
 class NEOEM(NEO):
     def __init__(self, *args, candidates: int = 0, train_top: int = 4, temperature_start: float = 10.0, temperature_end: float = 0.1,
                  anneal_steps: int = 10000, programmer_scale: float = 10.0, dead_share: float = 0.0, usage_decay: float = 0.99,
-                 bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, **kwargs) -> None:
+                 bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, keep_fraction: float = 1.0, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.max_length != 1:
             raise ValueError("neo_em is a one-step model: max_length must be 1")
@@ -56,6 +62,7 @@ class NEOEM(NEO):
         self.temperature_start, self.temperature_end, self.anneal_steps = temperature_start, temperature_end, anneal_steps
         self.programmer_scale = programmer_scale
         self.dead_share, self.usage_decay, self.bonus_step, self.bonus_cap, self.jitter = dead_share, usage_decay, bonus_step, bonus_cap, jitter
+        self.keep_fraction = keep_fraction
         size = self.code.size
         self.register_buffer("usage", torch.full((size,), 1.0 / size), persistent=False)
         self.register_buffer("bonus", torch.zeros(size), persistent=False)
@@ -97,6 +104,10 @@ class NEOEM(NEO):
                 loss = loss - self.bonus[tried] + self.jitter * torch.rand_like(loss)
             temperature = self.temperature(step) if self.training else self.temperature_end
             weights = torch.softmax(-loss / temperature, dim=1)                                     # (B, m)
+            fit = loss.min(dim=1).values                                                           # how well the best code explains the task
+            kept = torch.ones(batch_size, dtype=torch.bool, device=x.device)
+            if self.training and self.keep_fraction < 1.0:
+                kept = fit <= torch.quantile(fit.float(), self.keep_fraction)
             responsibility = torch.zeros(batch_size, size, device=x.device).scatter_add_(1, tried, weights)
         # M step: the executor on the top codes, weighted
         top = responsibility.topk(min(self.train_top, m), dim=1)
@@ -111,17 +122,20 @@ class NEOEM(NEO):
                 out = decoded
         # the programmer learns to predict the responsibilities
         programmer_loss = -(responsibility * F.log_softmax(self.programmer_scale * similarity, dim=1)).sum(dim=1)
+        keep = kept.float() / kept.float().mean().clamp(min=1e-6)                                  # dropped tasks weigh nothing
+        recon, programmer_loss = recon * keep, programmer_loss * keep
         best = out.view(batch_size, k, *out.shape[1:])[:, 0]
         if self.training:
             with torch.no_grad():
-                firsts = torch.bincount(top.indices[:, 0], minlength=size).float() / batch_size
+                firsts = torch.bincount(top.indices[kept, 0], minlength=size).float() / kept.sum().clamp(min=1)
                 self.usage.mul_(self.usage_decay).add_((1 - self.usage_decay) * firsts)
                 dead = self.usage < self.dead_share / size
                 self.bonus.copy_(torch.where(dead, (self.bonus + self.bonus_step).clamp(max=self.bonus_cap), torch.zeros_like(self.bonus)))
         self.last = {"em_recon": recon.mean().detach(), "em_programmer": programmer_loss.mean().detach(), "em_temperature": temperature,
                      "em_entropy": -(responsibility.clamp_min(1e-9).log() * responsibility).sum(dim=1).mean(),
                      "em_programmer_agrees": (similarity.argmax(dim=1) == top.indices[:, 0]).float().mean(),
-                     "em_dead": (self.usage < max(self.dead_share, 0.1) / size).float().sum(), "em_bonus_max": self.bonus.max()}
+                     "em_dead": (self.usage < max(self.dead_share, 0.1) / size).float().sum(), "em_bonus_max": self.bonus.max(),
+                     "em_fit_kept": fit[kept].float().mean(), "em_fit_dropped": fit[~kept].float().mean() if (~kept).any() else fit.new_zeros(())}
         return NEOOutput([best], torch.ones(batch_size, dtype=torch.long, device=x.device), torch.zeros((), device=x.device),
                          [recon + programmer_loss], [top.indices[:, 0]], 0.0, auto_logits, observations, y)
 

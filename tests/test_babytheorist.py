@@ -461,6 +461,29 @@ def test_two_pair_tasks_train_the_named_code_on_both_inputs() -> None:
     assert torch.equal(em({"x": x, "y": y, "x2": x2, "y2": y2}).code_indices_by_length[0], both.argmin(dim=1))
 
 
+def test_selection_by_fit_drops_the_worst_explained_tasks() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_em"](**spec, train_top=1, temperature_start=0.01, temperature_end=0.01, jitter=0.0, keep_fraction=0.5)
+    torch.nn.init.normal_(model.executor.stack.blocks[0].adaLN_modulation[-1].weight, std=0.3)
+    x = torch.randint(0, 10, (8, 6, 6))
+    y = x.clone()
+    y[4:] = torch.randint(0, 10, (4, 6, 6))  # the last four tasks are far from anything the codes do
+    out = model({"x": x, "y": y})
+    loss = out.code_loss_by_length[0]
+    # half the batch is kept, and the dropped half contributes nothing
+    assert int((loss == 0).sum()) >= 3 and model.last["em_fit_kept"] < model.last["em_fit_dropped"]
+
+
 @pytest.mark.parametrize("path", CONFIGS, ids=[p.stem for p in CONFIGS])
 def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     import_all()

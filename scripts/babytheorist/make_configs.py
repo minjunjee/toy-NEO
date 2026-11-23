@@ -686,6 +686,17 @@ def main() -> None:
         config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
         config["evals"][0]["tables"] = True
         configs[f"onestep_s_m24_hardem_pairs2_reheat_s{seed}"] = config
+    # without the depth (2026-11-24): the two-pair train file above holds single-primitive programs only, chosen by the
+    # stored depth, which the benchmark does not give a learner. Here the train file mixes depths as level 1 does (133,000
+    # tasks, 48,129 of one primitive) and hard EM keeps, in every batch, the half of the tasks that the best code explains
+    # most closely (models/neo_em.py, keep_fraction). Compare with onestep_s_m24_hardem_pairs2_s42/43/44.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "model.keep_fraction": 0.5}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2_mix/lv1_train.h5"]
+        del config["data"]["train_max_depth"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m24_hardem_pairs2_mix_s{seed}"] = config
     # two-pair tasks up the size ladder (2026-11-24): 52 and 64 primitives with the four-cell moves left out of training as
     # in the ladder (80,000 and 100,000 tasks, in proportion to the trained primitives), the lab model and both forms of
     # hard EM, seed 42. Every code is executed in the E step, as at 24 and 32. Single-pair reference: ladder_lab_p52/p64.
