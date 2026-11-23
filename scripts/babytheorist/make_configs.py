@@ -674,6 +674,18 @@ def main() -> None:
             config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
             config["evals"][0]["tables"] = True
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
+    # reheating (2026-11-24): annealed from 10 to 0.01, seeds 43, 44, 45 ended with two or three of the four on one code
+    # (rot90 with anti_transpose, or rot90 with rot270). From each end, 12,000 more steps with the temperature raised to 10
+    # again and lowered to 0.01 over 6,000 steps (the schedule restarts with the run's step), learning rate 1e-4.
+    for seed in (43, 44, 45):
+        config = one_step(seed, steps=12000, codes=48, changes={**hard_em, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.01,
+                                                               "model.anneal_steps": 6000, "method.lr": 1.0e-4,
+                                                               "train.init_from": f"runs/onestep_s_m24_hardem_pairs2_anneal_s{seed}/ckpt/step-024000.pt"},
+                          data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m24_hardem_pairs2_reheat_s{seed}"] = config
     # two-pair tasks up the size ladder (2026-11-24): 52 and 64 primitives with the four-cell moves left out of training as
     # in the ladder (80,000 and 100,000 tasks, in proportion to the trained primitives), the lab model and both forms of
     # hard EM, seed 42. Every code is executed in the E step, as at 24 and 32. Single-pair reference: ladder_lab_p52/p64.
