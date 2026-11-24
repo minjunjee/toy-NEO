@@ -304,7 +304,7 @@ def chart_scale():
     dys = {"랩, pair 하나": 4, "랩, pair 둘": 0, "hard EM, pair 둘": 8, "온도를 내리는 hard EM": -6}
     for name, cls, pts in series:
         c.line(pts, cls, name, dashed="온도" in name, label_dy=dys[name])
-    return figure(c.svg("scale"), "환경 크기에 따른 가로세로 넷. 24개는 seed 셋에서 다섯의 평균, 32개부터는 seed 42 하나다. 52개의 온도를 내리는 형태만 21,600스텝의 평가다. 큰 환경에서는 두 hard EM 형태 가운데 하나가 넷을 완전히 푼다.", 9)
+    return figure(c.svg("scale"), "환경 크기에 따른 가로세로 넷. 24개는 seed 셋에서 다섯의 평균, 32개부터는 seed 42 하나다. 큰 환경에서는 두 hard EM 형태 가운데 하나가 넷을 완전히 푼다.", 9)
 
 
 def architecture():
