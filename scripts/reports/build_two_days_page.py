@@ -390,7 +390,7 @@ def main() -> None:
     body = re.sub(r"<table>", '<div class="tablewrap"><table>', body).replace("</table>", "</table></div>")
     body = body.replace('<h2>6. 한계와 다음 일</h2>', architecture() + '<h2>6. 한계와 다음 일</h2>')
     title = re.search(r"<h1>(.*?)</h1>", body).group(1)
-    body = re.sub(r"<p>(2026-11-24 14시 KST, Claude Code가 썼다\..*?)</p>", r'<p class="meta">\1</p>', body, count=1, flags=re.S)
+    body = re.sub(r"<p>(2026-11-24 14시 KST, Claude Code가 썼.*?)</p>", r'<p class="meta">\1</p>', body, count=1, flags=re.S)
     page = f"""<title>섞이는 code와 짧은 계획</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+KR:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap">
