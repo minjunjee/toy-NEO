@@ -145,13 +145,50 @@ def pad(programs: list[list[int]], length: int) -> list[int]:
     return [list(p) + [-1] * (length - len(p)) for p in programs]
 
 
+VOTES = ("vote", "vote_shortest", "vote_weighted")
+PER_CHOICE = ("transfer", "query_wrong_verified")  # the metrics that depend on how the answer is chosen
+
+
+@torch.no_grad()
+def vote(model, table, qx, chosen_pred, rows, rows_t, programs, prog_t, passes, choose):
+    """Programs that reproduce all supports answer the query; the answer with the most votes wins (ties go to the earlier program).
+    vote: one vote each; vote_shortest: only the shortest passing programs of a task vote; vote_weighted: a vote weighs 0.5 to the program's length."""
+    pred = chosen_pred.clone()
+    keep = torch.nonzero(passes).flatten()
+    if choose == "vote_shortest" and len(keep):
+        shortest = {}
+        for idx in keep.tolist():
+            shortest[rows[idx]] = min(shortest.get(rows[idx], 99), len(programs[idx]))
+        keep = torch.tensor([idx for idx in keep.tolist() if len(programs[idx]) == shortest[rows[idx]]], device=pred.device, dtype=torch.long)
+    if not len(keep):
+        return pred
+    voters = rows_t[keep]
+    answers = run_programs(model, table, qx[voters], prog_t[keep])
+    salt = torch.arange(1, answers[0].numel() + 1, device=pred.device, dtype=torch.long) * 7919
+    keys = (answers.flatten(1).long() * salt).sum(dim=1).tolist()
+    lengths = [len(programs[idx]) for idx in keep.tolist()]
+    weights = [0.5 ** n for n in lengths] if choose == "vote_weighted" else [1.0] * len(keys)
+    tally: dict[int, dict] = {}
+    for v, key, answer_index, weight in zip(voters.tolist(), keys, range(len(keys)), weights):
+        entry = tally.setdefault(v, {})
+        count, first = entry.get(key, (0.0, answer_index))
+        entry[key] = (count + weight, first)
+    for v, entry in tally.items():
+        best = max(entry.items(), key=lambda item: (item[1][0], -item[1][1]))
+        pred[v] = answers[best[1][1]]
+    return pred
+
+
 @torch.no_grad()
 def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: int | None, batch_tasks: int, device, deepest: int, rank: str, tau: float,
-             critic=None, critic_weight: float = 0.0, choose: str = "first"):
+             critic=None, critic_weight: float = 0.0, choose=("first",)):
+    """Returns one result per way of choosing the answer in `choose`; the search itself runs once."""
+    if isinstance(choose, str):
+        choose = (choose,)
     table = code_table(model)
     buckets = deepest
-    sums = {m: torch.zeros(buckets) for m in METRICS}
-    denominators = {m: torch.zeros(buckets) for m in METRICS}
+    sums = {c: {m: torch.zeros(buckets) for m in METRICS} for c in choose}
+    denominators = {c: {m: torch.zeros(buckets) for m in METRICS} for c in choose}
     counts = torch.zeros(buckets)
     lengths_chosen = torch.zeros(buckets, max_steps + 1)
     for batch in data.eval_loader(split, batch_tasks, max_samples=max_samples):
@@ -167,6 +204,7 @@ def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: i
                 rows.append(i)
                 programs.append(p)
         passes = torch.zeros(len(rows), dtype=torch.bool, device=device)
+        rows_t = prog_t = None
         if rows:
             rows_t = torch.tensor(rows, device=device)
             prog_t = torch.tensor(pad(programs, max_steps), device=device)
@@ -192,43 +230,35 @@ def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: i
             stats["rescued"].append((bool(progs) and not mine[0] and first_all is not None, bool(progs) and not mine[0]))
         chosen_pred = run_programs(model, table, qx, torch.tensor(pad(chosen, max_steps), device=device))
         unverified_pred = run_programs(model, table, qx, torch.tensor(pad(unverified, max_steps), device=device))
-        if choose == "vote" and rows:  # every program that reproduces all supports answers the query; the most common answer wins
-            keep = torch.nonzero(passes).flatten()
-            if len(keep):
-                voters = rows_t[keep]
-                answers = run_programs(model, table, qx[voters], prog_t[keep])
-                salt = torch.arange(1, answers[0].numel() + 1, device=device, dtype=torch.long) * 7919
-                keys = (answers.flatten(1).long() * salt).sum(dim=1).tolist()
-                tally: dict[int, dict] = {}
-                for v, key, answer_index in zip(voters.tolist(), keys, range(len(keys))):
-                    entry = tally.setdefault(v, {})
-                    count, first = entry.get(key, (0, answer_index))
-                    entry[key] = (count + 1, first)
-                for v, entry in tally.items():
-                    best = max(entry.items(), key=lambda item: (item[1][0], -item[1][1]))
-                    chosen_pred[v] = answers[best[1][1]]
-        right = chosen_pred.eq(qy).flatten(1).all(dim=1).tolist()
         right_unverified = unverified_pred.eq(qy).flatten(1).all(dim=1).tolist()
         for i in range(n):
-            stats["transfer"].append((right[i], True))
             stats["transfer_unverified"].append((right_unverified[i], True))
-            stats["query_wrong_verified"].append((not right[i], stats["found_all"][i][0]))
         for i in range(n):
             b = int(depth[i])
             counts[b] += 1
             lengths_chosen[b, min(len(chosen[i]), max_steps)] += 1
-            for m in METRICS:
-                value, counted = stats[m][i]
-                if counted:
-                    sums[m][b] += float(value)
-                    denominators[m][b] += 1
-    out = {"tasks": int(counts.sum())}
-    for m in METRICS:
-        out[m] = float(sums[m].sum() / denominators[m].sum().clamp(min=1))
-        out[f"{m}_by_depth"] = [float(s / d) if d > 0 else None for s, d in zip(sums[m], denominators[m])]
-    out["tasks_by_depth"] = counts.int().tolist()
-    out["chosen_length_by_depth"] = lengths_chosen.int().tolist()
-    return out
+        for c in choose:
+            pred = vote(model, table, qx, chosen_pred, rows, rows_t, programs, prog_t, passes, c) if c in VOTES and rows else chosen_pred
+            right = pred.eq(qy).flatten(1).all(dim=1).tolist()
+            own = {"transfer": [(right[i], True) for i in range(n)],
+                   "query_wrong_verified": [(not right[i], stats["found_all"][i][0]) for i in range(n)]}
+            for i in range(n):
+                b = int(depth[i])
+                for m in METRICS:
+                    value, counted = own[m][i] if m in PER_CHOICE else stats[m][i]
+                    if counted:
+                        sums[c][m][b] += float(value)
+                        denominators[c][m][b] += 1
+    results = {}
+    for c in choose:
+        out = {"tasks": int(counts.sum())}
+        for m in METRICS:
+            out[m] = float(sums[c][m].sum() / denominators[c][m].sum().clamp(min=1))
+            out[f"{m}_by_depth"] = [float(s / d) if d > 0 else None for s, d in zip(sums[c][m], denominators[c][m])]
+        out["tasks_by_depth"] = counts.int().tolist()
+        out["chosen_length_by_depth"] = lengths_chosen.int().tolist()
+        results[c] = out
+    return results if len(choose) > 1 else results[choose[0]]
 
 
 def main() -> None:
@@ -247,8 +277,10 @@ def main() -> None:
     parser.add_argument("--tau", type=float, default=0.1)
     parser.add_argument("--critic", type=Path, help="a remaining-steps critic written by train_critic.py, added to the ranking")
     parser.add_argument("--critic-weight", type=float, default=1.0)
-    parser.add_argument("--choose", choices=("first", "vote"), default="first",
-                        help="first: the first program that reproduces all supports; vote: the query answer most of those programs give")
+    parser.add_argument("--choose", choices=("first",) + VOTES, nargs="+", default=["first"],
+                        help="first: the first program that reproduces all supports; vote: the query answer most of those programs give; "
+                             "vote_shortest: the same among the shortest of them; vote_weighted: each vote weighs 0.5 to the program's length. "
+                             "Several can be given; the search runs once and each is reported as its own row")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -256,7 +288,8 @@ def main() -> None:
     torch.backends.cudnn.allow_tf32 = True
     report = json.loads(args.out.read_text()) if args.out.exists() else []
     done = {(r["run"], r["split"], r["width"], r.get("rank", "ce")) for r in report}
-    rank_name = args.rank + (f"+critic{args.critic_weight:g}" if args.critic else "") + ("+vote" if args.choose == "vote" else "")
+    base_name = args.rank + (f"+critic{args.critic_weight:g}" if args.critic else "")
+    names = {c: base_name + (f"+{c}" if c != "first" else "") for c in args.choose}
     critic = None
     if args.critic:
         sys.path.insert(0, str(REPO / "src"))
@@ -272,21 +305,27 @@ def main() -> None:
         if args.eval_file:
             data.eval_paths[args.split] = str(args.eval_file)
         for width in args.widths:
-            if (label, args.split, width, rank_name) in done:
+            todo = [c for c in args.choose if (label, args.split, width, names[c]) not in done]
+            if not todo:
                 continue
             start = time.time()
             batch_tasks = max(4, args.rows // (width * width))
-            result = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau,
-                              critic=critic, critic_weight=args.critic_weight, choose=args.choose)
-            entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": rank_name, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
-            report.append(entry)
+            results = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau,
+                               critic=critic, critic_weight=args.critic_weight, choose=tuple(todo))
+            if len(todo) == 1:
+                results = {todo[0]: results}
+            seconds = round(time.time() - start, 1)
+            for c, result in results.items():
+                rank_name = names[c]
+                entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": rank_name, "tau": args.tau, "max_steps": args.max_steps, "seconds": seconds, **result}
+                report.append(entry)
+                by_depth = " ".join("-" if v is None else f"{v:.2f}" for v in result["transfer_by_depth"])
+                print(f"{label} {args.split} {rank_name} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
+                      f"found_s1 {result['found_s1']:.3f} found_all {result['found_all']:.3f} s1_rejected {result['s1_rejected']:.3f} "
+                      f"rescued {result['rescued']:.3f} query_wrong_verified {result['query_wrong_verified']:.3f} | by depth {by_depth} "
+                      f"({seconds}s)", flush=True)
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(json.dumps(report, indent=1) + "\n")
-            by_depth = " ".join("-" if v is None else f"{v:.2f}" for v in result["transfer_by_depth"])
-            print(f"{label} {args.split} {rank_name} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
-                  f"found_s1 {result['found_s1']:.3f} found_all {result['found_all']:.3f} s1_rejected {result['s1_rejected']:.3f} "
-                  f"rescued {result['rescued']:.3f} query_wrong_verified {result['query_wrong_verified']:.3f} | by depth {by_depth} "
-                  f"({entry['seconds']}s)", flush=True)
 
 
 if __name__ == "__main__":

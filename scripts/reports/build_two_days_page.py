@@ -198,6 +198,27 @@ def chart_critic():
     return figure(svg, "남은 거리 예측기를 탐색 순위에 더했을 때. 폭이 좁을 때 효과가 크다. 세로축은 50%에서 시작한다.", 4)
 
 
+def chart_vote():
+    rows = {}
+    for f in ("runs/queue/critic_search_lv7_s45.json", "runs/queue/critic_vote_lv7_s45.json"):
+        for r in load(f):
+            if r["width"] == 16 and r["run"].endswith("s45"):
+                rows[r.get("rank", "policy")] = r["transfer_by_depth"]
+    depths = list(range(2, 11))
+    c = Chart(x=(2, 10), y=(0.4, 1.0), right=150)
+    c.yaxis([.4, .6, .8, 1.0], label="transfer, 폭 16, 레벨 7, seed 45")
+    c.xaxis(depths, label="숨은 program의 길이")
+    lines = (("policy+critic1", "c5", "처음 통과한 program", False, 0),
+             ("policy+critic1+vote", "c1", "모두 투표", False, 0),
+             ("policy+critic1+vote_shortest", "c2", "가장 짧은 것만 투표", True, 0),
+             ("policy+critic1+vote_weighted", "c4", "짧을수록 큰 표", False, 0))
+    for key, cls, name, dashed, dy in lines:
+        if key in rows:
+            c.line([(d, rows[key][d - 1]) for d in depths], cls, name, dashed=dashed, label_dy=dy)
+    return figure(c.svg("answer voting"), "support를 모두 통과한 program이 여럿일 때 query 답을 고르는 방법. 남은 거리 예측기를 쓴 같은 탐색에서 고르는 단계만 다르다. "
+                  "모두 투표하면 길이 6 이상이 오르고 길이 2와 3이 조금 내려가며, 가장 짧은 program만 투표하면 짧은 과제의 손실이 사라진다. 세로축은 40%에서 시작한다.", 5)
+
+
 def chart_m24():
     rows = {}
     for f in glob.glob(str(REPO / "runs/queue/m24_search_*.json")):
@@ -212,7 +233,7 @@ def chart_m24():
         if b in rows and a in rows:
             groups.append((label, [rows[b][3], rows[a][3]]))
     svg = bars(groups, [("꿈 학습 전", "c5"), ("꿈과 실제 pair", "c1")], label="24개 환경, 숨은 길이 4, 폭 16", value_labels=True)
-    return figure(svg, "24개 환경에서 code를 먼저 깨끗하게 세운 모델에 꿈 학습을 얹었을 때. code가 섞인 한 pair 랩 모델에서는 거의 효과가 없다.", 5)
+    return figure(svg, "24개 환경에서 code를 먼저 깨끗하게 세운 모델에 꿈 학습을 얹었을 때. code가 섞인 한 pair 랩 모델에서는 거의 효과가 없다.", 6)
 
 
 def chart_conditions():
@@ -242,7 +263,7 @@ def chart_conditions():
         c.parts.append(f'<line class="axis" x1="{c.l}" x2="{c.w - c.r}" y1="{c.Y(0)}" y2="{c.Y(0)}"/>')
         panels.append(c.svg(title))
     return figure(f'<div class="pair">{panels[0]}{panels[1]}</div>',
-                  "24개 환경, 조건별 결과. 막대는 seed 평균, 점은 seed 하나씩이다. pair 둘로 된 과제의 hard EM만 기준선 근처까지 올라오고, 한 seed는 96%다.", 6)
+                  "24개 환경, 조건별 결과. 막대는 seed 평균, 점은 seed 하나씩이다. pair 둘로 된 과제의 hard EM만 기준선 근처까지 올라오고, 한 seed는 96%다.", 7)
 
 
 def chart_validation():
@@ -262,7 +283,7 @@ def chart_validation():
     best = max(pts, key=lambda p: p[1])
     c.parts.append(f'<text class="direct c1t" x="{c.X(best[1]) - 8:.1f}" y="{c.Y(best[2]) + 4:.1f}" text-anchor="end">점수 최고 run: 96%</text>')
     legend = legend_html([("hard EM 기본 형태", "c1"), ("온도를 내리는 형태", "c2")])
-    return figure(legend + c.svg("validation"), "두 pair hard EM 열 run의 라벨 없는 검증 점수와 가로세로 넷. 순위 상관은 0.98이고, 점수가 가장 높은 run이 가장 잘 풀린 run이다.", 7)
+    return figure(legend + c.svg("validation"), "두 pair hard EM 열 run의 라벨 없는 검증 점수와 가로세로 넷. 순위 상관은 0.98이고, 점수가 가장 높은 run이 가장 잘 풀린 run이다.", 8)
 
 
 def chart_scale():
@@ -283,13 +304,13 @@ def chart_scale():
     dys = {"랩, pair 하나": 4, "랩, pair 둘": 0, "hard EM, pair 둘": 8, "온도를 내리는 hard EM": -6}
     for name, cls, pts in series:
         c.line(pts, cls, name, dashed="온도" in name, label_dy=dys[name])
-    return figure(c.svg("scale"), "환경 크기에 따른 가로세로 넷. 24개는 seed 셋에서 다섯의 평균, 32개부터는 seed 42 하나이고 52개와 64개는 학습 도중의 마지막 평가다. 큰 환경에서는 두 hard EM 형태 가운데 하나가 넷을 완전히 푼다.", 8)
+    return figure(c.svg("scale"), "환경 크기에 따른 가로세로 넷. 24개는 seed 셋에서 다섯의 평균, 32개부터는 seed 42 하나다. 52개의 온도를 내리는 형태만 21,600스텝의 평가다. 큰 환경에서는 두 hard EM 형태 가운데 하나가 넷을 완전히 푼다.", 9)
 
 
 def architecture():
     data = base64.b64encode((REPO / "docs/figures/neo_architecture.png").read_bytes()).decode()
     return (f'<figure class="fig arch"><div class="figbox white"><img src="data:image/png;base64,{data}" alt="NEO 구조도"></div>'
-            f'<figcaption><b>그림 9.</b> 이번 결과를 합친 NEO. (a) 깨어 있을 때 support로 검증하며 program을 찾고, (b) 같은 program의 pair 둘로 code를 배우고, '
+            f'<figcaption><b>그림 10.</b> 이번 결과를 합친 NEO. (a) 깨어 있을 때 support로 검증하며 program을 찾고, (b) 같은 program의 pair 둘로 code를 배우고, '
             f'(c) 잠에서 얼린 executor로 꿈을 꾸어 programmer와 남은 거리 예측기를 고친다. 논문용 원본은 docs/figures/neo_architecture.pdf다.</figcaption></figure>')
 
 
@@ -351,14 +372,12 @@ figcaption b{color:var(--fg)}
 def main() -> None:
     text = (REPO / "docs/reports/2026-11-24-two-days.md").read_text()
     figs = {
-        "### 3.2": chart_search(), "### 3.3": chart_ceiling(), "### 3.5": chart_dream(), "### 3.6": chart_critic(),
+        "### 3.2": chart_search(), "### 3.3": chart_ceiling(), "### 3.5": chart_dream(), "### 3.6": chart_critic(), "### 3.7": chart_vote(),
         "## 4. ": chart_m24(), "### 4.3": chart_conditions(), "### 4.5": chart_validation(), "## 5. ": chart_scale(),
     }
     for heading, html in figs.items():  # each chart goes right before the next section's heading
         i = text.index(heading)
         text = text[:i] + f"\n<!--FIG {heading}-->\n\n" + text[i:]
-    text = text.replace("| 52개 | 16% | 37% | 97%, 14,400스텝 | 75%, 14,400스텝 |", "| 52개 | 16% | 37% | 100%, 16,800스텝 | 75%, 14,400스텝 |")
-    text = text.replace("| 52개, 64개 환경, 넷 | 97%, seed 하나, 학습 중 | pair 하나 랩 16%, 11% |", "| 52개, 64개 환경, 넷 | 100%와 97%, seed 하나, 학습 중 | pair 하나 랩 16%, 11% |")
     md = markdown.Markdown(extensions=["tables", "fenced_code"])
     body = md.convert(text)
     for heading, html in figs.items():
