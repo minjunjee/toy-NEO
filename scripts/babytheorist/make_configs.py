@@ -697,6 +697,15 @@ def main() -> None:
         del config["data"]["train_max_depth"]
         config["evals"][0]["tables"] = True
         configs[f"onestep_s_m24_hardem_pairs2_mix_s{seed}"] = config
+    # waking after the exemplar split (scripts/babytheorist/split_by_exemplars.py, 2026-11-24): seed 43's mixed code was
+    # split into four by the executor; train tasks went from 35% to 94% reproduced but the eval did not move. Two-pair
+    # hard EM for 12,000 more steps from the split, and the same from the unsplit end as the control, learning rate 1e-4.
+    for name, start in (("wake_split", "runs/split_init/hardem_pairs2_s43_exemplars.pt"), ("wake_control", "runs/onestep_s_m24_hardem_pairs2_s43/ckpt/step-024000.pt")):
+        config = one_step(43, steps=12000, codes=48, changes={**hard_em, "method.lr": 1.0e-4, "train.init_from": start}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m24_hardem_pairs2_{name}_s43"] = config
     # two-pair tasks up the size ladder (2026-11-24): 52 and 64 primitives with the four-cell moves left out of training as
     # in the ladder (80,000 and 100,000 tasks, in proportion to the trained primitives), the lab model and both forms of
     # hard EM, seed 42. Every code is executed in the E step, as at 24 and 32. Single-pair reference: ladder_lab_p52/p64.

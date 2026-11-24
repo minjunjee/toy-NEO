@@ -217,6 +217,8 @@ def main() -> None:
     parser.add_argument("--max-samples", type=int)
     parser.add_argument("--deepest", type=int, default=10, help="depths are reported one by one up to this, which also holds deeper")
     parser.add_argument("--rows", type=int, default=4096, help="executor rows per batch; tasks per batch = rows // width**2")
+    parser.add_argument("--ckpt", type=Path, help="a checkpoint other than the run's last, e.g. one written by a sleep step")
+    parser.add_argument("--name", help="the name recorded for the run (default: the run directory's)")
     parser.add_argument("--rank", choices=("policy", "ce"), default="policy")
     parser.add_argument("--tau", type=float, default=0.1)
     parser.add_argument("--out", type=Path, required=True)
@@ -227,22 +229,23 @@ def main() -> None:
     report = json.loads(args.out.read_text()) if args.out.exists() else []
     done = {(r["run"], r["split"], r["width"], r.get("rank", "ce")) for r in report}
     for run in args.runs:
-        model, data, config, step = load_run(run, None, device)
+        model, data, config, step = load_run(run, args.ckpt, device)
         model.eval()
+        label = args.name or run.name
         if args.eval_file:
             data.eval_paths[args.split] = str(args.eval_file)
         for width in args.widths:
-            if (run.name, args.split, width, args.rank) in done:
+            if (label, args.split, width, args.rank) in done:
                 continue
             start = time.time()
             batch_tasks = max(4, args.rows // (width * width))
             result = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau)
-            entry = {"run": run.name, "step": step, "split": args.split, "width": width, "rank": args.rank, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
+            entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": args.rank, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
             report.append(entry)
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(json.dumps(report, indent=1) + "\n")
             by_depth = " ".join("-" if v is None else f"{v:.2f}" for v in result["transfer_by_depth"])
-            print(f"{run.name} {args.split} {args.rank} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
+            print(f"{label} {args.split} {args.rank} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
                   f"found_s1 {result['found_s1']:.3f} found_all {result['found_all']:.3f} s1_rejected {result['s1_rejected']:.3f} "
                   f"rescued {result['rescued']:.3f} query_wrong_verified {result['query_wrong_verified']:.3f} | by depth {by_depth} "
                   f"({entry['seconds']}s)", flush=True)
