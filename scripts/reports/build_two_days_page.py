@@ -205,7 +205,7 @@ def chart_vote():
             if r["width"] == 16 and r["run"].endswith("s45"):
                 rows[r.get("rank", "policy")] = r["transfer_by_depth"]
     depths = list(range(2, 11))
-    c = Chart(x=(2, 10), y=(0.4, 1.0), right=150)
+    c = Chart(x=(2, 10), y=(0.3, 1.0), right=150)
     c.yaxis([.4, .6, .8, 1.0], label="transfer, 폭 16, 레벨 7, seed 45")
     c.xaxis(depths, label="숨은 program의 길이")
     lines = (("policy+critic1", "c5", "처음 통과한 program", False, 0),
@@ -216,7 +216,7 @@ def chart_vote():
         if key in rows:
             c.line([(d, rows[key][d - 1]) for d in depths], cls, name, dashed=dashed, label_dy=dy)
     return figure(c.svg("answer voting"), "support를 모두 통과한 program이 여럿일 때 query 답을 고르는 방법. 남은 거리 예측기를 쓴 같은 탐색에서 고르는 단계만 다르다. "
-                  "모두 투표하면 길이 6 이상이 오르고 길이 2와 3이 조금 내려가며, 가장 짧은 program만 투표하면 짧은 과제의 손실이 사라진다. 세로축은 40%에서 시작한다.", 5)
+                  "모두 투표하면 길이 6 이상이 오르고 길이 2와 3이 조금 내려간다. 표의 무게를 program 길이가 하나 늘 때마다 반으로 줄이면 짧은 과제는 그대로 두고 긴 과제만 오른다. 세로축은 30%에서 시작한다.", 5)
 
 
 def chart_m24():
