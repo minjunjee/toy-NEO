@@ -1,0 +1,13 @@
+Figure. The long-term NEO.
+(a) Wake. A task gives support pairs and a query. The state encoder E maps grids to states. A program is searched one
+code per step: the programmer pi scores the codes of the codebook C from the current state s_k and the target s_y, the
+best B codes are applied by the executor f, decoded by the state decoder D and re-encoded for the next step. Partial
+programs are ranked by -log pi + lambda h, where the critic h estimates the grid-changing steps left. A program that
+reproduces every support pair is run on the query. Codes are indexed by kind and amount.
+(b) Learning codes. A training task holds two pairs that share one hidden program. Every code is executed on both pairs
+(E step); the code with the smallest summed loss, c*, trains the executor (M step) and is the programmer's target. Codes
+that no task selects receive a slowly growing bonus.
+(c) Sleep. With f and C frozen, the model runs dreamed programs from real input grids; the programmer learns the next
+code toward a far target and the critic the number of steps left, alongside real pairs that one code reproduces
+exactly. A label-free gate keeps an update only if held-out two-pair tasks are still reproduced; the wake phase uses the
+kept snapshot. The hidden program and its depth are never used.
