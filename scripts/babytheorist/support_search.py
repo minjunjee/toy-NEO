@@ -68,7 +68,8 @@ def run_programs(model, table: torch.Tensor, grids: torch.Tensor, programs: torc
 
 
 @torch.no_grad()
-def beam_search(model, table: torch.Tensor, x: torch.Tensor, y: torch.Tensor, width: int, max_steps: int, rank: str = "policy", tau: float = 0.1, keep: int = 32):
+def beam_search(model, table: torch.Tensor, x: torch.Tensor, y: torch.Tensor, width: int, max_steps: int, rank: str = "policy", tau: float = 0.1, keep: int = 32,
+                critic=None, critic_weight: float = 0.0):
     """Programs reproducing y from x, in order of discovery, and the best beam program at the end (the fallback)."""
 
     n, h, w = x.shape
@@ -99,8 +100,12 @@ def beam_search(model, table: torch.Tensor, x: torch.Tensor, y: torch.Tensor, wi
         candidate_programs = torch.cat([programs.repeat_interleave(k, dim=1), nearest.reshape(n, beam * k, 1)], dim=2)
         alive = valid.repeat_interleave(k, dim=1)
         step_cost = cost.repeat_interleave(k, dim=1) - preference
+        heuristic = torch.zeros_like(step_cost)
+        if critic is not None and critic_weight:  # expected grid-changing steps left, from the critic trained on dreams
+            left = critic(model.encoder(new.reshape(n * beam * k, h, w)), target.repeat_interleave(beam * k, dim=0)).reshape(n * beam * k, -1).float()
+            heuristic = (torch.softmax(left, dim=1) * torch.arange(left.shape[1], device=device)).sum(dim=1).reshape(n, beam * k) * critic_weight
         closeness = torch.where(alive, score, torch.full_like(score, float("inf")))
-        score = torch.where(alive, step_cost if rank == "policy" else score, torch.full_like(score, float("inf")))
+        score = torch.where(alive, step_cost + heuristic if rank == "policy" else score, torch.full_like(score, float("inf")))
         order = score.argsort(dim=1)
         score = score.gather(1, order)
         closeness = closeness.gather(1, order)
@@ -138,7 +143,8 @@ def pad(programs: list[list[int]], length: int) -> list[int]:
 
 
 @torch.no_grad()
-def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: int | None, batch_tasks: int, device, deepest: int, rank: str, tau: float):
+def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: int | None, batch_tasks: int, device, deepest: int, rank: str, tau: float,
+             critic=None, critic_weight: float = 0.0):
     table = code_table(model)
     buckets = deepest
     sums = {m: torch.zeros(buckets) for m in METRICS}
@@ -150,7 +156,7 @@ def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: i
         k_support, qx, qy = batch["n_support"].to(device), batch["query_x"].to(device), batch["query_y"].to(device)
         depth = batch["depth"].clamp(max=deepest) - 1
         n = sx.shape[0]
-        found, fallback = beam_search(model, table, sx[:, 0], sy[:, 0], width, max_steps, rank, tau)
+        found, fallback = beam_search(model, table, sx[:, 0], sy[:, 0], width, max_steps, rank, tau, critic=critic, critic_weight=critic_weight)
         # check every found program on the other support pairs
         rows, programs = [], []
         for i, progs in enumerate(found):
@@ -221,6 +227,8 @@ def main() -> None:
     parser.add_argument("--name", help="the name recorded for the run (default: the run directory's)")
     parser.add_argument("--rank", choices=("policy", "ce"), default="policy")
     parser.add_argument("--tau", type=float, default=0.1)
+    parser.add_argument("--critic", type=Path, help="a remaining-steps critic written by train_critic.py, added to the ranking")
+    parser.add_argument("--critic-weight", type=float, default=1.0)
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -228,6 +236,15 @@ def main() -> None:
     torch.backends.cudnn.allow_tf32 = True
     report = json.loads(args.out.read_text()) if args.out.exists() else []
     done = {(r["run"], r["split"], r["width"], r.get("rank", "ce")) for r in report}
+    rank_name = args.rank + (f"+critic{args.critic_weight:g}" if args.critic else "")
+    critic = None
+    if args.critic:
+        sys.path.insert(0, str(REPO / "src"))
+        from core.registry import PROGRAMMERS, build, import_all
+        import_all()
+        saved = torch.load(args.critic, map_location="cpu", weights_only=False)
+        critic = build(PROGRAMMERS, dict(saved["config"])).to(device).eval()
+        critic.load_state_dict(saved["state"])
     for run in args.runs:
         model, data, config, step = load_run(run, args.ckpt, device)
         model.eval()
@@ -235,17 +252,18 @@ def main() -> None:
         if args.eval_file:
             data.eval_paths[args.split] = str(args.eval_file)
         for width in args.widths:
-            if (label, args.split, width, args.rank) in done:
+            if (label, args.split, width, rank_name) in done:
                 continue
             start = time.time()
             batch_tasks = max(4, args.rows // (width * width))
-            result = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau)
-            entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": args.rank, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
+            result = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau,
+                              critic=critic, critic_weight=args.critic_weight)
+            entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": rank_name, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
             report.append(entry)
             args.out.parent.mkdir(parents=True, exist_ok=True)
             args.out.write_text(json.dumps(report, indent=1) + "\n")
             by_depth = " ".join("-" if v is None else f"{v:.2f}" for v in result["transfer_by_depth"])
-            print(f"{label} {args.split} {args.rank} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
+            print(f"{label} {args.split} {rank_name} width {width}: transfer {result['transfer']:.3f} unverified {result['transfer_unverified']:.3f} "
                   f"found_s1 {result['found_s1']:.3f} found_all {result['found_all']:.3f} s1_rejected {result['s1_rejected']:.3f} "
                   f"rescued {result['rescued']:.3f} query_wrong_verified {result['query_wrong_verified']:.3f} | by depth {by_depth} "
                   f"({entry['seconds']}s)", flush=True)
