@@ -14,6 +14,9 @@ then best ranked) that reproduces all support pairs; if none does, the first one
 if none does, the program of the grid closest to the first support output, by cell cross-entropy, over all steps. Width 1 is the greedy stepwise rollout that stops
 at the first exact reproduction.
 
+With --choose vote, every program that reproduces all support pairs is run on the query and the most common answer is
+used (ties go to the earlier program); without it, the first such program is used.
+
 Reported per depth of the hidden program (the hidden program is read only to sort the results):
     transfer             the query answer is reproduced by the program chosen as above
     transfer_unverified  the same without the check on the other supports (first program reproducing support 1)
@@ -144,7 +147,7 @@ def pad(programs: list[list[int]], length: int) -> list[int]:
 
 @torch.no_grad()
 def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: int | None, batch_tasks: int, device, deepest: int, rank: str, tau: float,
-             critic=None, critic_weight: float = 0.0):
+             critic=None, critic_weight: float = 0.0, choose: str = "first"):
     table = code_table(model)
     buckets = deepest
     sums = {m: torch.zeros(buckets) for m in METRICS}
@@ -189,6 +192,21 @@ def evaluate(model, data, split: str, width: int, max_steps: int, max_samples: i
             stats["rescued"].append((bool(progs) and not mine[0] and first_all is not None, bool(progs) and not mine[0]))
         chosen_pred = run_programs(model, table, qx, torch.tensor(pad(chosen, max_steps), device=device))
         unverified_pred = run_programs(model, table, qx, torch.tensor(pad(unverified, max_steps), device=device))
+        if choose == "vote" and rows:  # every program that reproduces all supports answers the query; the most common answer wins
+            keep = torch.nonzero(passes).flatten()
+            if len(keep):
+                voters = rows_t[keep]
+                answers = run_programs(model, table, qx[voters], prog_t[keep])
+                salt = torch.arange(1, answers[0].numel() + 1, device=device, dtype=torch.long) * 7919
+                keys = (answers.flatten(1).long() * salt).sum(dim=1).tolist()
+                tally: dict[int, dict] = {}
+                for v, key, answer_index in zip(voters.tolist(), keys, range(len(keys))):
+                    entry = tally.setdefault(v, {})
+                    count, first = entry.get(key, (0, answer_index))
+                    entry[key] = (count + 1, first)
+                for v, entry in tally.items():
+                    best = max(entry.items(), key=lambda item: (item[1][0], -item[1][1]))
+                    chosen_pred[v] = answers[best[1][1]]
         right = chosen_pred.eq(qy).flatten(1).all(dim=1).tolist()
         right_unverified = unverified_pred.eq(qy).flatten(1).all(dim=1).tolist()
         for i in range(n):
@@ -229,6 +247,8 @@ def main() -> None:
     parser.add_argument("--tau", type=float, default=0.1)
     parser.add_argument("--critic", type=Path, help="a remaining-steps critic written by train_critic.py, added to the ranking")
     parser.add_argument("--critic-weight", type=float, default=1.0)
+    parser.add_argument("--choose", choices=("first", "vote"), default="first",
+                        help="first: the first program that reproduces all supports; vote: the query answer most of those programs give")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -236,7 +256,7 @@ def main() -> None:
     torch.backends.cudnn.allow_tf32 = True
     report = json.loads(args.out.read_text()) if args.out.exists() else []
     done = {(r["run"], r["split"], r["width"], r.get("rank", "ce")) for r in report}
-    rank_name = args.rank + (f"+critic{args.critic_weight:g}" if args.critic else "")
+    rank_name = args.rank + (f"+critic{args.critic_weight:g}" if args.critic else "") + ("+vote" if args.choose == "vote" else "")
     critic = None
     if args.critic:
         sys.path.insert(0, str(REPO / "src"))
@@ -257,7 +277,7 @@ def main() -> None:
             start = time.time()
             batch_tasks = max(4, args.rows // (width * width))
             result = evaluate(model, data, args.split, width, args.max_steps, args.max_samples, batch_tasks, device, args.deepest, args.rank, args.tau,
-                              critic=critic, critic_weight=args.critic_weight)
+                              critic=critic, critic_weight=args.critic_weight, choose=args.choose)
             entry = {"run": label, "step": step, "split": args.split, "width": width, "rank": rank_name, "tau": args.tau, "max_steps": args.max_steps, "seconds": round(time.time() - start, 1), **result}
             report.append(entry)
             args.out.parent.mkdir(parents=True, exist_ok=True)

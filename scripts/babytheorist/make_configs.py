@@ -690,13 +690,16 @@ def main() -> None:
     # stored depth, which the benchmark does not give a learner. Here the train file mixes depths as level 1 does (133,000
     # tasks, 48,129 of one primitive) and hard EM keeps, in every batch, the half of the tasks that the best code explains
     # most closely (models/neo_em.py, keep_fraction). Compare with onestep_s_m24_hardem_pairs2_s42/43/44.
+    # keeping half the batch left every seed at about 35% on the four orientation primitives (2026-11-24 15:50); a
+    # smaller kept share as the second value of the sweep, chosen between by the label-free validation score
     for seed in (42, 43, 44):
-        config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "model.keep_fraction": 0.5}, data=suite("many_p24"))
-        config["data"]["type"] = "babytheorist_episodes"
-        config["data"]["train"] = [f"{DATA}/many_p24_pairs2_mix/lv1_train.h5"]
-        del config["data"]["train_max_depth"]
-        config["evals"][0]["tables"] = True
-        configs[f"onestep_s_m24_hardem_pairs2_mix_s{seed}"] = config
+        for tag, share in (("mix", 0.5), ("mix_keep03", 0.3)):
+            config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "model.keep_fraction": share}, data=suite("many_p24"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/many_p24_pairs2_mix/lv1_train.h5"]
+            del config["data"]["train_max_depth"]
+            config["evals"][0]["tables"] = True
+            configs[f"onestep_s_m24_hardem_pairs2_{tag}_s{seed}"] = config
     # waking after the exemplar split (scripts/babytheorist/split_by_exemplars.py, 2026-11-24): seed 43's mixed code was
     # split into four by the executor; train tasks went from 35% to 94% reproduced but the eval did not move. Two-pair
     # hard EM for 12,000 more steps from the split, and the same from the unsplit end as the control, learning rate 1e-4.
