@@ -741,6 +741,16 @@ def main() -> None:
         for block in config["evals"]:
             block["infer"] = {"max_steps": 4, "rollout": "hard"}
         configs[f"dream_mix_m24_{tag}"] = config
+    # the whole best at 52 primitives (2026-11-24 evening): dream training with verified real pairs on the 52-primitive
+    # two-pair hard EM model whose orientation family came out at 98% (seed 42, the form the validation score picks).
+    # Input grids and real pairs come from the single-pair train file of the same set; only the programmer learns.
+    config = one_step(42, steps=6000, codes=104, changes={**hard_em, "method.type": "neo_dream", "method.freeze": ["encoder", "decoder", "executor", "code"],
+                                                          "train.init_from": "runs/onestep_s_m52_hardem_pairs2_s42/ckpt/step-024000.pt"}, data=suite("many_p52_without4"))
+    del config["data"]["train_max_depth"]
+    config["method"]["real_share"] = 0.5
+    for block in config["evals"]:
+        block["infer"] = {"max_steps": 4, "rollout": "hard"}
+    configs["dream_mix_m52_hardem_pairs2_s42"] = config
     # the same at 32 primitives (64 codes), seed 42: does the split hold as the environment grows? 53,000 two-pair tasks,
     # in proportion to the 40,000 at 24 primitives. Single-pair reference: onestep_s_m32_wide_s42.
     for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em)):
