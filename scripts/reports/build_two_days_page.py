@@ -200,23 +200,28 @@ def chart_critic():
 
 def chart_vote():
     rows = {}
-    for f in ("runs/queue/critic_search_lv7_s45.json", "runs/queue/critic_vote_lv7_s45.json"):
-        for r in load(f):
-            if r["width"] == 16 and r["run"].endswith("s45"):
-                rows[r.get("rank", "policy")] = r["transfer_by_depth"]
+    for f in glob.glob(str(REPO / "runs/queue/critic_search_lv7_s4*.json")) + glob.glob(str(REPO / "runs/queue/critic_vote_lv7_s4*.json")):
+        for r in json.load(open(f)):
+            if r["width"] == 16:
+                rows[(r["run"][-3:], r.get("rank", "policy"))] = r["transfer_by_depth"]
     depths = list(range(2, 11))
-    c = Chart(x=(2, 10), y=(0.3, 1.0), right=150)
-    c.yaxis([.4, .6, .8, 1.0], label="transfer, 폭 16, 레벨 7, seed 45")
-    c.xaxis(depths, label="숨은 program의 길이")
-    lines = (("policy+critic1", "c5", "처음 통과한 program", False, 0),
-             ("policy+critic1+vote", "c1", "모두 투표", False, 0),
-             ("policy+critic1+vote_shortest", "c2", "가장 짧은 것만 투표", True, 0),
-             ("policy+critic1+vote_weighted", "c4", "짧을수록 큰 표", False, 0))
-    for key, cls, name, dashed, dy in lines:
-        if key in rows:
-            c.line([(d, rows[key][d - 1]) for d in depths], cls, name, dashed=dashed, label_dy=dy)
-    return figure(c.svg("answer voting"), "support를 모두 통과한 program이 여럿일 때 query 답을 고르는 방법. 남은 거리 예측기를 쓴 같은 탐색에서 고르는 단계만 다르다. "
-                  "모두 투표하면 길이 6 이상이 오르고 길이 2와 3이 조금 내려간다. 표의 무게를 program 길이가 하나 늘 때마다 반으로 줄이면 짧은 과제는 그대로 두고 긴 과제만 오른다. 세로축은 30%에서 시작한다.", 5)
+    lines = (("policy+critic1", "c5", "처음 통과한 program", False),
+             ("policy+critic1+vote", "c1", "모두 투표", False),
+             ("policy+critic1+vote_shortest", "c2", "가장 짧은 것만 투표", True),
+             ("policy+critic1+vote_weighted", "c4", "짧을수록 큰 표", False))
+    panels = []
+    for seed in ("s45", "s42"):
+        c = Chart(w=320, h=270, right=14, left=44, x=(2, 10), y=(0.3, 1.0))
+        c.yaxis([.4, .6, .8, 1.0], label=f"seed {seed[1:]}")
+        c.xaxis([2, 4, 6, 8, 10], label="숨은 길이")
+        for key, cls, name, dashed in lines:
+            if (seed, key) in rows:
+                c.line([(d, rows[(seed, key)][d - 1]) for d in depths], cls, name, dashed=dashed, end_label=False)
+        panels.append(c.svg(f"answer voting, seed {seed[1:]}"))
+    legend = legend_html([(name, cls) for _, cls, name, _ in lines], dashed=("가장 짧은 것만 투표",))
+    return figure(legend + f'<div class="pair">{panels[0]}{panels[1]}</div>',
+                  "support를 모두 통과한 program이 여럿일 때 query 답을 고르는 방법. 레벨 7, 폭 16, 남은 거리 예측기를 쓴 같은 탐색에서 고르는 단계만 다르다. "
+                  "모두 투표하면 긴 과제가 오르고 짧은 과제가 조금 내려간다. 표의 무게를 program 길이가 하나 늘 때마다 반으로 줄이면 짧은 과제는 그대로 두고 긴 과제만 오른다. 세로축은 30%에서 시작한다.", 5)
 
 
 def chart_m24():
