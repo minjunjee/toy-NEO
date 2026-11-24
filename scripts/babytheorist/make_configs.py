@@ -709,15 +709,20 @@ def main() -> None:
     # two-pair tasks up the size ladder (2026-11-24): 52 and 64 primitives with the four-cell moves left out of training as
     # in the ladder (80,000 and 100,000 tasks, in proportion to the trained primitives), the lab model and both forms of
     # hard EM, seed 42. Every code is executed in the E step, as at 24 and 32. Single-pair reference: ladder_lab_p52/p64.
+    # (seeds 43 and 44 of both hard EM forms were added at 15:40 on 2026-11-24: at seed 42 one form or the other solved
+    # the orientation family, chosen by the label-free validation score; does that hold seed by seed?)
     for tag, folder, primitives in (("m52", "many_p52", 52), ("m64", "many_p64", 64)):
         for name, changes in (("lab_pairs2", {**plain, "model.type": "neo_episode"}), ("hardem_pairs2", hard_em),
                               ("hardem_pairs2_anneal", {**hard_em, "model.train_top": 4, "model.temperature_start": 10.0, "model.temperature_end": 0.01,
                                                         "model.anneal_steps": 6000})):
-            config = one_step(42, steps=24000, codes=2 * primitives, changes=changes, data=suite(f"{folder}_without4"))
-            config["data"]["type"] = "babytheorist_episodes"
-            config["data"]["train"] = [f"{DATA}/{folder}_pairs2/lv1_train.h5"]
-            config["evals"][0]["tables"] = True
-            configs[f"onestep_s_{tag}_{name}_s42"] = config
+            for seed in (42, 43, 44):
+                if seed != 42 and name == "lab_pairs2":
+                    continue
+                config = one_step(seed, steps=24000, codes=2 * primitives, changes=changes, data=suite(f"{folder}_without4"))
+                config["data"]["type"] = "babytheorist_episodes"
+                config["data"]["train"] = [f"{DATA}/{folder}_pairs2/lv1_train.h5"]
+                config["evals"][0]["tables"] = True
+                configs[f"onestep_s_{tag}_{name}_s{seed}"] = config
     # dream training with verified real pairs on the 24-primitive models (2026-11-24): does a programmer whose codes are
     # clean (two-pair hard EM, seeds 42, 45, 46) plan further than one whose codes stayed mixed (seed 43) or the lab's
     # single-pair model? The input grids of the whole train file, no depth filter; only the programmer learns. The
