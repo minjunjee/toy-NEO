@@ -256,5 +256,7 @@ out = Path(__file__).resolve().parents[2] / "docs" / "figures"
 out.mkdir(parents=True, exist_ok=True)
 for ext in ("pdf", "svg"):
     fig.savefig(out / f"neo_architecture.{ext}")
+with plt.rc_context({"svg.fonttype": "path"}):  # text drawn as outlines: looks the same where the font is not installed
+    fig.savefig(out / "neo_architecture_outlined.svg")
 fig.savefig(out / "neo_architecture.png", dpi=300)
 print(out / "neo_architecture.pdf")
