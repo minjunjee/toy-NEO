@@ -699,6 +699,19 @@ def main() -> None:
             config["evals"][0]["tables"] = True
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
             configs[f"onestep_s_{tag}_hardem_pairs2_price_s{seed}"] = config
+    # growing the environment (2026-11-27, the user's direction of starting from known knowledge): the 24-primitive price
+    # model of each seed, every part copied and its 48 codes kept, 56 fresh codes added (scripts/babytheorist/grow_checkpoint.py),
+    # trained on the 52-primitive two-pair file with the same method, steps and evaluations as onestep_s_m52_hardem_pairs2_price
+    # of the same seed, which starts from nothing. The light codebook record every 200 steps gives each primitive's learning
+    # curve: do the 28 new primitives cost fewer examples, and do the 24 old ones stay?
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=104, changes={**price, "train.init_from": f"runs/grow_init/m24_price_s{seed}_to_m52.pt"},
+                          data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p52_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"grow_m24_to_m52_price_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
