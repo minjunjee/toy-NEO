@@ -177,8 +177,9 @@ def reachable_sooner(start: Shape, start_world: np.ndarray, target: bytes, funct
 
 
 class Generator:
-    def __init__(self, names: tuple[str, ...], seed, depths: dict[int, float] | None = None, without: tuple[str, ...] = ()) -> None:
+    def __init__(self, names: tuple[str, ...], seed, depths: dict[int, float] | None = None, without: tuple[str, ...] = (), start_steps: int = 0) -> None:
         self.names, self.functions = names, [function_of(n) for n in names]
+        self.start_steps = start_steps  # a scene's object first goes through 0 to start_steps random primitives
         self.depths = depths or DEPTH_PROBS
         self.allowed = [i for i, n in enumerate(names) if n not in without]  # programs are drawn from these; the search for shorter programs uses all
         self.rng = np.random.default_rng(seed)
@@ -192,7 +193,18 @@ class Generator:
                 shape = placed[1][0]
                 world = render(shape)
                 if world is not None:
-                    return shape, world
+                    return self.wander(shape, world) if self.start_steps else (shape, world)
+
+    def wander(self, shape: Shape, world: np.ndarray) -> tuple[Shape, np.ndarray]:
+        """The object after a random number (0 to start_steps) of random primitives, each changing the grid."""
+
+        for _ in range(int(self.rng.integers(self.start_steps + 1))):
+            for _ in range(50):
+                out = step(shape, self.functions[int(self.rng.integers(len(self.functions)))])
+                if out is not None and not np.array_equal(out[1], world):
+                    shape, world = out
+                    break
+        return shape, world
 
     def pair(self, program: list[int]) -> tuple[Shape, np.ndarray, np.ndarray] | None:
         """A fresh object on which the program runs and is the shortest explanation of its own result."""
@@ -241,8 +253,8 @@ class Generator:
 
 
 def work(job: tuple) -> dict:
-    names, seed, count, pairs, depths, without = job
-    generator = Generator(names, seed, depths, without)
+    names, seed, count, pairs, depths, without, start_steps = job
+    generator = Generator(names, seed, depths, without, start_steps)
     inputs, outputs, programs, attempts = [], [], [], 0
     while len(programs) < count:
         attempts += 1
@@ -261,13 +273,13 @@ def pair_hash(x: np.ndarray, y: np.ndarray) -> bytes:
 
 
 def generate(names: tuple[str, ...], count: int, pairs: int, seed: int, workers: int, exclude: set[bytes], depths: dict[int, float] | None = None,
-             without: tuple[str, ...] = ()) -> dict:
+             without: tuple[str, ...] = (), start_steps: int = 0) -> dict:
     chunk = max(50, min(2000, count // (workers * 4) or 50))
     inputs, outputs, programs, attempts, seen, next_seed = [], [], [], 0, set(exclude), 0
     with Pool(workers) as pool:
         while len(programs) < count:
             need = count - len(programs)
-            jobs = [(names, [seed, next_seed + i], chunk, pairs, depths, without) for i in range(max(workers, -(-need // chunk)))]
+            jobs = [(names, [seed, next_seed + i], chunk, pairs, depths, without, start_steps) for i in range(max(workers, -(-need // chunk)))]
             next_seed += len(jobs)
             for result in pool.imap_unordered(work, jobs):
                 attempts += result["attempts"]
@@ -312,6 +324,8 @@ def main() -> None:
     parser.add_argument("--train-pairs", type=int, default=1, help="pairs per train task, all from the same program on different objects")
     parser.add_argument("--train-only", action="store_true", help="write the train file only")
     parser.add_argument("--exclude-from", type=Path, help="an eval file whose pairs the train file must not contain")
+    parser.add_argument("--start-steps", type=int, default=0, help="train file only: each pair's object first goes through 0 to this many "
+                        "random primitives, so inputs include the intermediate states of longer programs (the eval file is unchanged)")
     args = parser.parse_args()
     names = SETS[args.primitives]
     depths = None
@@ -329,7 +343,7 @@ def main() -> None:
         with h5py.File(args.exclude_from, "r") as f:
             ins, outs = f["inputs"][:], f["outputs"][:]
         exclude = {pair_hash(ins[i, j].astype(np.int8), outs[i, j].astype(np.int8)) for i in range(len(ins)) for j in range(ins.shape[1])}
-    train = generate(names, args.n_train, args.train_pairs, args.seed, args.workers, exclude, depths, without)
+    train = generate(names, args.n_train, args.train_pairs, args.seed, args.workers, exclude, depths, without, args.start_steps)
     write(args.out / "lv1_train.h5", names, train, args.train_pairs)
     if args.train_only:
         return

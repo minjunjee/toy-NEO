@@ -712,6 +712,17 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"grow_m24_to_m52_price_s{seed}"] = config
+    # wider training states (2026-11-27): the executor reproduced its codes on fresh objects (99%) but less on objects that
+    # had gone through other primitives (79% after five) and on larger objects (63%), code_function_ladder.py. Here the train
+    # pairs' objects first go through 0 to 4 random primitives (generate_many_primitives.py --start-steps 4), so the
+    # intermediate states of longer programs are seen in training; larger objects stay unseen. Same method as the price runs.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=48, changes=price, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2_reach4/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_pairs2_price_reach4_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
