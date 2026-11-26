@@ -752,6 +752,18 @@ def main() -> None:
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 600, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
             configs[f"{name}_m24_large_s{seed}"] = config
+    # adaptation with replay (2026-11-27): the adapted seed-43 model forgot 5 points of the usual world in 600 steps. The same
+    # adaptation with the usual world's two-pair file mixed in (both files hold 40,000 tasks, so half the batch is old).
+    config = one_step(43, steps=6000, codes=48, changes={**hard_em, "train.init_from": "runs/onestep_s_m24_hardem_pairs2_price_s43/ckpt/step-024000.pt"},
+                      data=suite("many_p24"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/many_p24_pairs2_large/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+    config["data"]["evals"] = dict(sibling_evals)
+    config["evals"][0]["tables"] = True
+    config["evals"][0]["every"] = 600
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 200, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+    configs["adapt_replay_m24_large_s43"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
