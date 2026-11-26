@@ -326,6 +326,7 @@ def main() -> None:
     parser.add_argument("--train-pairs", type=int, default=1, help="pairs per train task, all from the same program on different objects")
     parser.add_argument("--train-only", action="store_true", help="write the train file only")
     parser.add_argument("--exclude-from", type=Path, help="an eval file whose pairs the train file must not contain")
+    parser.add_argument("--large", action="store_true", help="train file only: objects of 16 to 29 cells spanning up to 7 (a sibling world)")
     parser.add_argument("--start-steps", type=int, default=0, help="train file only: each pair's object first goes through 0 to this many "
                         "random primitives, so inputs include the intermediate states of longer programs (the eval file is unchanged)")
     args = parser.parse_args()
@@ -345,7 +346,7 @@ def main() -> None:
         with h5py.File(args.exclude_from, "r") as f:
             ins, outs = f["inputs"][:], f["outputs"][:]
         exclude = {pair_hash(ins[i, j].astype(np.int8), outs[i, j].astype(np.int8)) for i in range(len(ins)) for j in range(ins.shape[1])}
-    train = generate(names, args.n_train, args.train_pairs, args.seed, args.workers, exclude, depths, without, args.start_steps)
+    train = generate(names, args.n_train, args.train_pairs, args.seed, args.workers, exclude, depths, without, args.start_steps, args.large)
     write(args.out / "lv1_train.h5", names, train, args.train_pairs)
     if args.train_only:
         return

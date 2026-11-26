@@ -731,6 +731,27 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_price_s{seed}"] = config
+    # a sibling world (2026-11-27): the same 24 primitives on objects larger than any in training (16 to 29 cells, spanning up
+    # to 7). Models of the usual world solve 57% to 59% of its one-primitive tasks against 100% on usual objects. How fast
+    # does a model of the usual world adapt, against learning the large world from nothing? adapt: from the price model
+    # of each seed, every part, 6,000 steps of hard EM on the large two-pair file (codes are in place, no prices); scratch:
+    # the price method from nothing on the same file. Both record the large world every 200 steps; adapt also records
+    # the usual world (does it forget?).
+    sibling_evals = {"lv1": f"{DATA}/many_p24_large/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+    for seed in (42, 43, 44):
+        for name, steps, changes in (("adapt", 6000, {**hard_em, "train.init_from": f"runs/onestep_s_m24_hardem_pairs2_price_s{seed}/ckpt/step-024000.pt"}),
+                                     ("scratch", 24000, price)):
+            if name == "scratch" and seed != 43:
+                continue
+            config = one_step(seed, steps=steps, codes=48, changes=changes, data=suite("many_p24"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/many_p24_pairs2_large/lv1_train.h5"]
+            config["data"]["evals"] = dict(sibling_evals)
+            config["evals"][0]["tables"] = True
+            config["evals"][0]["every"] = 600
+            config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+            config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 600, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+            configs[f"{name}_m24_large_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
