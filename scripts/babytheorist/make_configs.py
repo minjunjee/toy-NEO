@@ -723,6 +723,14 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_pairs2_price_reach4_s{seed}"] = config
+    # the prices without the grouping of pairs (2026-11-27): the user asked whether two-pair tasks are a shortcut that a
+    # later setting will not give. Single-pair hard EM made codes into experts for particular inputs (66% on the other
+    # primitives, 21% on the orientation four). Same single-pair data as onestep_s_m24_hardem_s*, with the prices.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=48, changes=price, data=suite("many_p24"))
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_price_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
