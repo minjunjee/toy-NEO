@@ -764,6 +764,20 @@ def main() -> None:
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 200, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
     configs["adapt_replay_m24_large_s43"] = config
+    # how few examples (2026-11-27): the adapted seed-43 model reached 93% on the large world in 600 steps, but a step is 128
+    # tasks, so that is tens of thousands of tasks. The same adaptation with only the first 64, 256 or 1,024 tasks of the
+    # large train file (repeated), 2,000 steps; evaluation stays on held-out tasks.
+    for n in (64, 256, 1024):
+        config = one_step(43, steps=2000, codes=48, changes={**hard_em, "train.init_from": "runs/onestep_s_m24_hardem_pairs2_price_s43/ckpt/step-024000.pt"},
+                          data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2_large_n{n}/lv1_train.h5"]
+        config["data"]["evals"] = dict(sibling_evals)
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"adapt_n{n}_m24_large_s43"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
