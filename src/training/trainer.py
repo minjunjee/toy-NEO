@@ -99,6 +99,10 @@ def run_evals(model, data, blocks: list[dict], step: int, device: torch.device, 
                 )
     finally:
         set_rng_state(state)
+        if torch.cuda.is_available():
+            # evaluation shapes differ from training shapes; without this the cached blocks they needed stay reserved, and a
+            # run that trains in 7 GB holds 18 GB, which is what limits how many runs share a GPU
+            torch.cuda.empty_cache()
     return metrics
 
 

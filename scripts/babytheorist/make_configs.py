@@ -668,6 +668,16 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_pairs2_snap_s{seed}"] = config
+    # the E step limited to 16 candidate codes (2026-11-27): the programmer's 8 nearest and 8 drawn at random, instead of every
+    # code. Trying every code took 87% of the step at 24 primitives and 95% at 64, and grows with the codebook; with 16 the
+    # step costs the same at every size (0.057 s against 0.131 s and 0.317 s). Does the orientation family still split?
+    # Seeds 42, 43, 44, which ended at 96%, 35%, 37% when every code was tried.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "model.candidates": 16}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m24_hardem_pairs2_cand16_s{seed}"] = config
     # seeds 43 and 44 stayed at 35% with the four orientation primitives that swap width and height on one code, and their
     # dead-code bonus stayed near 0.1 nats where seed 42's reached its cap of 20. Two ways to explore harder early on
     # (2026-11-24): a rescue ten times stronger (0.5 nats a step, up to 200), and soft-to-hard annealing (temperature 10

@@ -74,7 +74,7 @@ def codebook_snapshot(model: nn.Module, data, cfg: dict, step: int, device: torc
     query_pred = model.decoder(model.executor(query_state, table[chosen][:, None])).argmax(dim=-1)
     solved = query_pred.eq(qy).flatten(1).all(dim=1)
     reproduces = torch.zeros(size, n, dtype=torch.bool, device=device)
-    chunk = max(1, 8192 // max(n, 1))
+    chunk = max(1, 2048 // max(n, 1))  # grids per executor call; larger calls only raise the peak memory
     for start in range(0, size, chunk):
         codes = torch.arange(start, min(size, start + chunk), device=device)
         k = len(codes)
