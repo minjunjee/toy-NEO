@@ -164,6 +164,34 @@ def main() -> None:
     fig.tight_layout()
     fig.savefig(f"{args.out}_curves.png", dpi=160)
     plt.close(fig)
+    # figure 3: only the four. Top: for each of them, the code the programmer picks most often, step by step (the lines
+    # lie on top of each other while the four share a code and part when they split; a dot's size is the share of the
+    # primitive's tasks on that code). Bottom: the share of each one's query answers the chosen code gets right.
+    fig, axes = plt.subplots(2, len(runs), figsize=(5.4 * len(runs), 6.4), squeeze=False, sharex=True, gridspec_kw={"height_ratios": [1.6, 1]})
+    for i, ((run, records), label) in enumerate(zip(runs, labels)):
+        x = [r["step"] for r in records]
+        used = sorted({top_code(r, n) for r in records for n in SWAP})
+        rank = {c: k for k, c in enumerate(used)}
+        ax = axes[0, i]
+        for j, (n, color) in enumerate(zip(SWAP, SWAP_COLORS)):
+            ys = [rank[top_code(r, n)] + (j - 1.5) * 0.08 for r in records]
+            share = [max(r["primitives"][n]["chosen"]) / max(r["primitives"][n]["tasks"], 1) for r in records]
+            ax.plot(x, ys, color=color, lw=1.0, alpha=0.8, label=n)
+            ax.scatter(x, ys, s=[4 + 22 * v for v in share], color=color, alpha=0.8)
+        ax.set_yticks(range(len(used)))
+        ax.set_yticklabels([f"code {c}" for c in used], fontsize=6)
+        ax.set_title(f"{label}: the code each of the four picks most", fontsize=9)
+        ax.legend(fontsize=7, frameon=False, loc="upper left", ncol=4)
+        ax = axes[1, i]
+        for n, color in zip(SWAP, SWAP_COLORS):
+            ax.plot(x, [r["primitives"][n]["transfer"] / max(r["primitives"][n]["tasks"], 1) for r in records], color=color, lw=1)
+        ax.set_ylim(0, 1)
+        ax.set_ylabel("query right with\nthe chosen code", fontsize=8)
+        ax.set_xlabel("training step", fontsize=8)
+        ax.set_xscale("log")
+    fig.tight_layout()
+    fig.savefig(f"{args.out}_four.png", dpi=160)
+    plt.close(fig)
     Path(f"{args.out}.json").write_text(json.dumps(summary) + "\n")
     print("wrote", f"{args.out}_assignment.png", f"{args.out}_curves.png")
 
