@@ -28,6 +28,7 @@ def main() -> None:
     parser.add_argument("--workers", type=int, default=32)
     parser.add_argument("--seed", type=int, default=4242)
     parser.add_argument("--exclude-from", type=Path, nargs="*", default=[])
+    parser.add_argument("--large", action="store_true", help="objects of 16 to 29 cells spanning up to 7, larger than any in training")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     parts = [part.split(":") for part in args.depths.split(",")]
@@ -39,7 +40,7 @@ def main() -> None:
             ins, outs = f["inputs"][:], f["outputs"][:]
         exclude |= {pair_hash(ins[i, j].astype(np.int8), outs[i, j].astype(np.int8)) for i in range(len(ins)) for j in range(ins.shape[1])}
     args.out.mkdir(parents=True, exist_ok=True)
-    data = generate(SETS[args.primitives], args.n_eval, 3, args.seed, args.workers, exclude, depths)
+    data = generate(SETS[args.primitives], args.n_eval, 3, args.seed, args.workers, exclude, depths, large=args.large)
     write(args.out / "lv1_eval.h5", SETS[args.primitives], data, 3)
 
 

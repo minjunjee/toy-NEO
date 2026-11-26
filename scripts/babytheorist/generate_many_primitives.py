@@ -177,14 +177,16 @@ def reachable_sooner(start: Shape, start_world: np.ndarray, target: bytes, funct
 
 
 class Generator:
-    def __init__(self, names: tuple[str, ...], seed, depths: dict[int, float] | None = None, without: tuple[str, ...] = (), start_steps: int = 0) -> None:
+    def __init__(self, names: tuple[str, ...], seed, depths: dict[int, float] | None = None, without: tuple[str, ...] = (), start_steps: int = 0,
+                 large: bool = False) -> None:
         self.names, self.functions = names, [function_of(n) for n in names]
         self.start_steps = start_steps  # a scene's object first goes through 0 to start_steps random primitives
         self.depths = depths or DEPTH_PROBS
         self.allowed = [i for i, n in enumerate(names) if n not in without]  # programs are drawn from these; the search for shorter programs uses all
         self.rng = np.random.default_rng(seed)
-        self.factory = ShapeFactory(generators=(solid, bordered, patterned), size_range=(4, 16), compactness=8.0, bordered_hollow_min_size=9,
-                                    bordered_hollow_random_inner_size=True, max_bbox_span=5)
+        # large: objects of 16 to 29 cells spanning up to 7 rows or columns, never drawn for training (a sibling world)
+        self.factory = ShapeFactory(generators=(solid, bordered, patterned), size_range=(16, 30) if large else (4, 16), compactness=8.0,
+                                    bordered_hollow_min_size=9, bordered_hollow_random_inner_size=True, max_bbox_span=7 if large else 5)
 
     def scene(self) -> tuple[Shape, np.ndarray]:
         while True:
@@ -253,8 +255,8 @@ class Generator:
 
 
 def work(job: tuple) -> dict:
-    names, seed, count, pairs, depths, without, start_steps = job
-    generator = Generator(names, seed, depths, without, start_steps)
+    names, seed, count, pairs, depths, without, start_steps, large = job
+    generator = Generator(names, seed, depths, without, start_steps, large)
     inputs, outputs, programs, attempts = [], [], [], 0
     while len(programs) < count:
         attempts += 1
@@ -273,13 +275,13 @@ def pair_hash(x: np.ndarray, y: np.ndarray) -> bytes:
 
 
 def generate(names: tuple[str, ...], count: int, pairs: int, seed: int, workers: int, exclude: set[bytes], depths: dict[int, float] | None = None,
-             without: tuple[str, ...] = (), start_steps: int = 0) -> dict:
+             without: tuple[str, ...] = (), start_steps: int = 0, large: bool = False) -> dict:
     chunk = max(50, min(2000, count // (workers * 4) or 50))
     inputs, outputs, programs, attempts, seen, next_seed = [], [], [], 0, set(exclude), 0
     with Pool(workers) as pool:
         while len(programs) < count:
             need = count - len(programs)
-            jobs = [(names, [seed, next_seed + i], chunk, pairs, depths, without, start_steps) for i in range(max(workers, -(-need // chunk)))]
+            jobs = [(names, [seed, next_seed + i], chunk, pairs, depths, without, start_steps, large) for i in range(max(workers, -(-need // chunk)))]
             next_seed += len(jobs)
             for result in pool.imap_unordered(work, jobs):
                 attempts += result["attempts"]
