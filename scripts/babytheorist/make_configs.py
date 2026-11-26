@@ -668,6 +668,28 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_pairs2_snap_s{seed}"] = config
+    # prices for spreading early (2026-11-27, models/neo_em.py price_weight): over-separate codes while the executor cannot
+    # yet tell similar primitives apart, then let hard EM's pull towards the winner join only the codes it runs the same
+    # way. Weight 2 nats held for 3,000 steps and falling to zero at 8,000. Seeds 42, 43, 44 (96%, 35%, 37% without), with
+    # the light codebook record every 200 steps.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "model.price_weight": 2.0, "model.price_hold": 3000, "model.price_off": 8000},
+                          data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_pairs2_price_s{seed}"] = config
+    # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
+    # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
+    # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
+    # follow the originals.
+    for seed in (42, 43):
+        config = one_step(seed, steps=24000, codes=48, changes={**hard_em, "train.ckpt_every": 200}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        configs[f"onestep_s_m24_hardem_pairs2_ckpt_s{seed}"] = config
     # the E step limited to 16 candidate codes (2026-11-27): the programmer's 8 nearest and 8 drawn at random, instead of every
     # code. Trying every code took 87% of the step at 24 primitives and 95% at 64, and grows with the codebook; with 16 the
     # step costs the same at every size (0.057 s against 0.131 s and 0.317 s). Does the orientation family still split?

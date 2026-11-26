@@ -37,6 +37,16 @@ Here every task's smallest E-step loss (over the codes tried) ranks it, and only
 the best code fits most closely enters the M step and the programmer's loss. A task that no single code can explain fits
 badly and is left out, without reading its depth.
 
+Prices for spreading early (`price_weight` > 0). Early in training the executor cannot tell similar primitives apart, so
+every code fits their tasks about equally and whichever code wins first keeps winning: hard EM settles which tasks share a
+code before the executor can execute the difference (seen in the 100-step codebook records of 2026-11-26). Here every code
+carries a price in the E step, `price_weight` nats times (its moving share of first places times the codebook size, minus
+one): a code used k times more than uniform costs (k - 1) times the weight, an unused one is a little cheaper. Tasks that
+fit many codes about equally then spread over them instead of piling onto one, so codes are over-separated early. The
+weight holds for `price_hold` steps and falls linearly to zero at `price_off`; after that hard EM's own pull towards the
+winning code works again, and by then it can only join codes that the executor runs the same way. This changes how
+tasks are assigned, not the losses the parts learn from. Off by default.
+
 No label is used. With two-pair tasks the grouping of pairs is used, never the program.
 """
 
@@ -54,7 +64,8 @@ from models.neo import NEO, NEOOutput
 class NEOEM(NEO):
     def __init__(self, *args, candidates: int = 0, train_top: int = 4, temperature_start: float = 10.0, temperature_end: float = 0.1,
                  anneal_steps: int = 10000, programmer_scale: float = 10.0, dead_share: float = 0.0, usage_decay: float = 0.99,
-                 bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, keep_fraction: float = 1.0, **kwargs) -> None:
+                 bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, keep_fraction: float = 1.0,
+                 price_weight: float = 0.0, price_hold: int = 3000, price_off: int = 8000, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.max_length != 1:
             raise ValueError("neo_em is a one-step model: max_length must be 1")
@@ -63,10 +74,16 @@ class NEOEM(NEO):
         self.programmer_scale = programmer_scale
         self.dead_share, self.usage_decay, self.bonus_step, self.bonus_cap, self.jitter = dead_share, usage_decay, bonus_step, bonus_cap, jitter
         self.keep_fraction = keep_fraction
+        self.price_weight, self.price_hold, self.price_off = price_weight, price_hold, price_off
         size = self.code.size
         self.register_buffer("usage", torch.full((size,), 1.0 / size), persistent=False)
         self.register_buffer("bonus", torch.zeros(size), persistent=False)
         self.last = {}
+
+    def price_scale(self, step: int) -> float:
+        if step <= self.price_hold:
+            return self.price_weight
+        return self.price_weight * max(0.0, 1.0 - (step - self.price_hold) / max(1, self.price_off - self.price_hold))
 
     def temperature(self, step: int) -> float:
         fraction = min(1.0, step / max(1, self.anneal_steps))
@@ -102,6 +119,8 @@ class NEOEM(NEO):
                 loss = loss + part.view(batch_size, m, -1).sum(dim=2)                              # summed over cells, nats
             if self.training:
                 loss = loss - self.bonus[tried] + self.jitter * torch.rand_like(loss)
+                if self.price_weight > 0:
+                    loss = loss + self.price_scale(step) * (self.usage * size - 1.0)[tried]
             temperature = self.temperature(step) if self.training else self.temperature_end
             weights = torch.softmax(-loss / temperature, dim=1)                                     # (B, m)
             fit = loss.min(dim=1).values                                                           # how well the best code explains the task
@@ -135,6 +154,7 @@ class NEOEM(NEO):
                      "em_entropy": -(responsibility.clamp_min(1e-9).log() * responsibility).sum(dim=1).mean(),
                      "em_programmer_agrees": (similarity.argmax(dim=1) == top.indices[:, 0]).float().mean(),
                      "em_dead": (self.usage < max(self.dead_share, 0.1) / size).float().sum(), "em_bonus_max": self.bonus.max(),
+                     "em_price": self.price_scale(step) if self.price_weight > 0 else 0.0, "em_usage_max": self.usage.max() * size,
                      "em_fit_kept": fit[kept].float().mean(), "em_fit_dropped": fit[~kept].float().mean() if (~kept).any() else fit.new_zeros(())}
         return NEOOutput([best], torch.ones(batch_size, dtype=torch.long, device=x.device), torch.zeros((), device=x.device),
                          [recon + programmer_loss], [top.indices[:, 0]], 0.0, auto_logits, observations, y)
