@@ -1,0 +1,14 @@
+[
+ {
+  "run": "onestep_s_m52_hardem_pairs2_s42",
+  "both_pairs": 0.31075
+ },
+ {
+  "run": "onestep_s_m52_hardem_pairs2_anneal_s42",
+  "both_pairs": 0.28925
+ },
+ {
+  "run": "onestep_s_m52_lab_pairs2_s42",
+  "both_pairs": 0.16575
+ }
+]

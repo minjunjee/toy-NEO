@@ -1,0 +1,26 @@
+[
+ {
+  "run": "onestep_s_m64_hardem_pairs2_s42",
+  "both_pairs": 0.25725
+ },
+ {
+  "run": "onestep_s_m64_hardem_pairs2_s43",
+  "both_pairs": 0.305
+ },
+ {
+  "run": "onestep_s_m64_hardem_pairs2_s44",
+  "both_pairs": 0.26375
+ },
+ {
+  "run": "onestep_s_m64_hardem_pairs2_anneal_s42",
+  "both_pairs": 0.314
+ },
+ {
+  "run": "onestep_s_m64_hardem_pairs2_anneal_s43",
+  "both_pairs": 0.28625
+ },
+ {
+  "run": "onestep_s_m64_hardem_pairs2_anneal_s44",
+  "both_pairs": 0.27075
+ }
+]

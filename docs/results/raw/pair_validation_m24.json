@@ -1,0 +1,42 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s42",
+  "both_pairs": 0.364
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s43",
+  "both_pairs": 0.3035
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s44",
+  "both_pairs": 0.246
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s45",
+  "both_pairs": 0.34725
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s46",
+  "both_pairs": 0.33275
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_anneal_s42",
+  "both_pairs": 0.315
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_anneal_s43",
+  "both_pairs": 0.3395
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_anneal_s44",
+  "both_pairs": 0.321
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_anneal_s45",
+  "both_pairs": 0.32975
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_anneal_s46",
+  "both_pairs": 0.31275
+ }
+]

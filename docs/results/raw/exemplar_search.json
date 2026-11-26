@@ -1,0 +1,578 @@
+[
+ {
+  "run": "s43_before",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 4.0,
+  "tasks": 4000,
+  "transfer": 0.296999990940094,
+  "transfer_by_depth": [
+   0.8665207624435425,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.296999990940094,
+  "transfer_unverified_by_depth": [
+   0.8665207624435425,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.28600001335144043,
+  "found_s1_by_depth": [
+   0.8344274163246155,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.2737500071525574,
+  "found_all_by_depth": [
+   0.7986871004104614,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.04283216968178749,
+  "s1_rejected_by_depth": [
+   0.04283216968178749,
+   null,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   null,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.021917808800935745,
+  "query_wrong_verified_by_depth": [
+   0.021917808800935745,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "s43_before",
+  "step": 24000,
+  "split": "lv1",
+  "width": 4,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 6.5,
+  "tasks": 4000,
+  "transfer": 0.29875001311302185,
+  "transfer_by_depth": [
+   0.8716265559196472,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.29875001311302185,
+  "transfer_unverified_by_depth": [
+   0.8716265559196472,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.29124999046325684,
+  "found_s1_by_depth": [
+   0.8497447371482849,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.28224998712539673,
+  "found_all_by_depth": [
+   0.8234865069389343,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.045493561774492264,
+  "s1_rejected_by_depth": [
+   0.045493561774492264,
+   null,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.3207547068595886,
+  "rescued_by_depth": [
+   0.3207547068595886,
+   null,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.02568644843995571,
+  "query_wrong_verified_by_depth": [
+   0.02568644843995571,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "s43_before",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 42.6,
+  "tasks": 4000,
+  "transfer": 0.2992500066757202,
+  "transfer_by_depth": [
+   0.8730853199958801,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.29899999499320984,
+  "transfer_unverified_by_depth": [
+   0.8723559379577637,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.2917500138282776,
+  "found_s1_by_depth": [
+   0.8504741191864014,
+   0.00047438329784199595,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.28299999237060547,
+  "found_all_by_depth": [
+   0.8256747126579285,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.04627249389886856,
+  "s1_rejected_by_depth": [
+   0.04545454680919647,
+   1.0,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.35185185074806213,
+  "rescued_by_depth": [
+   0.35849055647850037,
+   0.0,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.025618374347686768,
+  "query_wrong_verified_by_depth": [
+   0.025618374347686768,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "s43_exemplars",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 4.0,
+  "tasks": 4000,
+  "transfer": 0.2985000014305115,
+  "transfer_by_depth": [
+   0.8708971738815308,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.2985000014305115,
+  "transfer_unverified_by_depth": [
+   0.8708971738815308,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.2847500145435333,
+  "found_s1_by_depth": [
+   0.8307804465293884,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.27175000309944153,
+  "found_all_by_depth": [
+   0.7928519248962402,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.04565408080816269,
+  "s1_rejected_by_depth": [
+   0.04565408080816269,
+   null,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   null,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.02391904406249523,
+  "query_wrong_verified_by_depth": [
+   0.02391904406249523,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "s43_exemplars",
+  "step": 24000,
+  "split": "lv1",
+  "width": 4,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 6.5,
+  "tasks": 4000,
+  "transfer": 0.29750001430511475,
+  "transfer_by_depth": [
+   0.8679795861244202,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.29750001430511475,
+  "transfer_unverified_by_depth": [
+   0.8679795861244202,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.2915000021457672,
+  "found_s1_by_depth": [
+   0.8504741191864014,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.28025001287460327,
+  "found_all_by_depth": [
+   0.8176513314247131,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.05574614182114601,
+  "s1_rejected_by_depth": [
+   0.05574614182114601,
+   null,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.3076923191547394,
+  "rescued_by_depth": [
+   0.3076923191547394,
+   null,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.027653880417346954,
+  "query_wrong_verified_by_depth": [
+   0.027653880417346954,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "s43_exemplars",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 1,
+  "seconds": 42.5,
+  "tasks": 4000,
+  "transfer": 0.29774999618530273,
+  "transfer_by_depth": [
+   0.8687089681625366,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "transfer_unverified": 0.29774999618530273,
+  "transfer_unverified_by_depth": [
+   0.8687089681625366,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_s1": 0.29249998927116394,
+  "found_s1_by_depth": [
+   0.853391706943512,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "found_all": 0.28125,
+  "found_all_by_depth": [
+   0.8205689191818237,
+   0.0,
+   0.0,
+   0.0,
+   null
+  ],
+  "s1_rejected": 0.0555555559694767,
+  "s1_rejected_by_depth": [
+   0.0555555559694767,
+   null,
+   null,
+   null,
+   null
+  ],
+  "rescued": 0.3076923191547394,
+  "rescued_by_depth": [
+   0.3076923191547394,
+   null,
+   null,
+   null,
+   null
+  ],
+  "query_wrong_verified": 0.02755555510520935,
+  "query_wrong_verified_by_depth": [
+   0.02755555510520935,
+   null,
+   null,
+   null,
+   null
+  ],
+  "tasks_by_depth": [
+   1371,
+   2108,
+   382,
+   139,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1371
+   ],
+   [
+    0,
+    2108
+   ],
+   [
+    0,
+    382
+   ],
+   [
+    0,
+    139
+   ],
+   [
+    0,
+    0
+   ]
+  ]
+ }
+]

@@ -1,0 +1,124 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 200,
+  "assignment": {
+   "two_pair_purity": 0.29,
+   "two_pair_shuffled": 0.299,
+   "one_pair_purity": 0.322,
+   "one_pair_shuffled": 0.321,
+   "codes": {
+    "37": 302,
+    "36": 186,
+    "1": 46,
+    "39": 15,
+    "28": 12,
+    "10": 11
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "rot270": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "transpose": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "anti_transpose": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   }
+  },
+  "gradient": {
+   "within_task": -0.375,
+   "between_tasks": 0.006,
+   "same_primitive": 0.016,
+   "different_primitive": 0.013,
+   "shared_kmeans_purity": 0.298,
+   "shared_kmeans_shuffled": 0.275
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.27,
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.243
+   },
+   "hidden": {
+    "kmeans_purity": 0.292,
+    "kmeans_shuffled": 0.286,
+    "linear_probe": 0.245
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 400,
+  "assignment": {
+   "two_pair_purity": 0.34,
+   "two_pair_shuffled": 0.341,
+   "one_pair_purity": 0.368,
+   "one_pair_shuffled": 0.35,
+   "codes": {
+    "10": 121,
+    "13": 87,
+    "9": 72,
+    "35": 59,
+    "1": 41,
+    "26": 31
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "rot270": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "transpose": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   },
+   "anti_transpose": {
+    "code": 0,
+    "own": 0.0,
+    "others": 0.0
+   }
+  },
+  "gradient": {
+   "within_task": -0.452,
+   "between_tasks": 0.016,
+   "same_primitive": 0.037,
+   "different_primitive": 0.011,
+   "shared_kmeans_purity": 0.273,
+   "shared_kmeans_shuffled": 0.283
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.282,
+    "kmeans_shuffled": 0.276,
+    "linear_probe": 0.237
+   },
+   "hidden": {
+    "kmeans_purity": 0.283,
+    "kmeans_shuffled": 0.284,
+    "linear_probe": 0.238
+   }
+  },
+  "nucleus": []
+ }
+]
