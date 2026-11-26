@@ -506,6 +506,8 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
         if block["type"] == "babytheorist_observe":
             assert results[f"{prefix}/total"] == 6 and 0.0 <= results[f"{prefix}/transfer_consistent"] <= 1.0
             assert sum(results[f"{prefix}/tasks_depth{d}"] for d in (1, 2, 3, 4, 5)) == 6
+        elif block["type"] == "codebook_snapshot":
+            assert 0.0 <= results[f"{prefix}/transfer"] <= 1.0 and len(results[f"{prefix}/codes"]) == config["model"]["code"]["size"]
         else:
             assert f"{prefix}/exact" in results
 

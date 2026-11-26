@@ -76,3 +76,4 @@ def import_all() -> None:
     import evals.self_explain_exact  # noqa: F401
     import evals.transfer_exact  # noqa: F401
     import evals.babytheorist  # noqa: F401
+    import evals.codebook_snapshot  # noqa: F401

@@ -658,6 +658,16 @@ def main() -> None:
             config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
             config["evals"][0]["tables"] = True
             configs[f"onestep_s_m24_{name}_s{seed}"] = config
+    # the codebook as it settles (2026-11-26): seed 42, whose four orientation primitives that swap width and height split
+    # into codes of their own (96%), and seed 43, where they stayed on one code (35%), rerun with a light record every 100
+    # steps (evals/codebook_snapshot.py). Nothing else changes; evaluations run on saved random state, so training does not.
+    for seed in (42, 43):
+        config = one_step(seed, steps=24000, codes=48, changes=hard_em, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_pairs2_snap_s{seed}"] = config
     # seeds 43 and 44 stayed at 35% with the four orientation primitives that swap width and height on one code, and their
     # dead-code bonus stayed near 0.1 nats where seed 42's reached its cap of 20. Two ways to explore harder early on
     # (2026-11-24): a rescue ten times stronger (0.5 nats a step, up to 200), and soft-to-hard annealing (temperature 10
