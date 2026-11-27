@@ -817,6 +817,17 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_pairs2_pricefit_s{seed}"] = config
+    # growth with fit prices (2026-11-27 11:45): grown seed 42 left multi-cell moves of 2 to 6 cells mixed on shared codes
+    # (new primitives 75% to 77%) while the run from nothing separated them. The same growth with prices that stay on a code
+    # as long as it fails its tasks (price_fit), no schedule.
+    for seed in (42,):
+        config = one_step(seed, steps=24000, codes=104, changes={**price, "model.price_fit": True, "model.price_hold": 24000, "model.price_off": 24001,
+                                                                "train.init_from": f"runs/grow_init/m24_price_s{seed}_to_m52.pt"}, data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p52_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"grow_m24_to_m52_pricefit_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
