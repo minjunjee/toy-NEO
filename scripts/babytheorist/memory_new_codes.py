@@ -56,7 +56,8 @@ def main() -> None:
     parser.add_argument("--shots", type=int, nargs="+", default=[4, 16, 64])
     parser.add_argument("--fit-steps", type=int, default=300)
     parser.add_argument("--lr", type=float, default=0.05)
-    parser.add_argument("--init", choices=("zero", "nearest"), default="zero", help="start the new code from zero or from the existing code that fits best")
+    parser.add_argument("--init", choices=("zero", "nearest"), default="zero", help="start the new code from zero or from the existing codes that fit best")
+    parser.add_argument("--starts", type=int, default=1, help="with --init nearest: how many of the best-fitting existing codes to start from (zero is always one more)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -87,22 +88,28 @@ def main() -> None:
             y = torch.cat([ty[:k, p] for p in range(ty.shape[1])]).to(device)
             with torch.no_grad():
                 state = model.encoder(x)
-            if args.init == "nearest":  # start from the existing code that best reproduces the fitting pairs
-                with torch.no_grad():
-                    losses = []
-                    for c in range(table.shape[0]):
-                        logits = model.decoder(model.executor(state, table[c].expand(len(x), -1)[:, None]))
-                        losses.append(float(F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1))))
-                    start = table[min(range(len(losses)), key=losses.__getitem__)].clone()
-            else:
-                start = torch.zeros(table.shape[1], device=device)
-            vector = start.clone().requires_grad_(True)
-            opt = torch.optim.Adam([vector], lr=args.lr)
-            for _ in range(args.fit_steps):
-                opt.zero_grad()
-                logits = model.decoder(model.executor(state, vector.expand(len(x), -1)[:, None]))
-                F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1)).backward()
-                opt.step()
+            # starting points: zero, or the existing codes that best reproduce the fitting pairs; each start is fitted and
+            # the result with the lowest loss on the fitting pairs is kept (chosen without the held-out tasks)
+            with torch.no_grad():
+                losses = []
+                for c in range(table.shape[0]):
+                    logits = model.decoder(model.executor(state, table[c].expand(len(x), -1)[:, None]))
+                    losses.append(float(F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1))))
+            order = sorted(range(len(losses)), key=losses.__getitem__)
+            starts = [table[c].clone() for c in order[:args.starts]] if args.init == "nearest" else []
+            starts.append(torch.zeros(table.shape[1], device=device))
+            best_loss, vector = float("inf"), None
+            for start_vector in starts:
+                candidate = start_vector.clone().requires_grad_(True)
+                opt = torch.optim.Adam([candidate], lr=args.lr)
+                for _ in range(args.fit_steps):
+                    opt.zero_grad()
+                    logits = model.decoder(model.executor(state, candidate.expand(len(x), -1)[:, None]))
+                    loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1))
+                    loss.backward()
+                    opt.step()
+                if float(loss) < best_loss:
+                    best_loss, vector = float(loss), candidate.detach()
             with torch.no_grad():
                 fit = float(model.decoder(model.executor(state, vector.expand(len(x), -1)[:, None])).argmax(-1).eq(y).flatten(1).all(dim=1).float().mean())
                 held = float(model.decoder(model.executor(qstate, vector.expand(len(qx), -1)[:, None])).argmax(-1).eq(qy).flatten(1).all(dim=1).float().mean())
