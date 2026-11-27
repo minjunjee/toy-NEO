@@ -117,6 +117,65 @@
    "new_codes": 150
   }
  },
+ "same, wider-state model": {
+  "all new primitives": {
+   "accuracy": [
+    0.286,
+    0.5,
+    0.571,
+    0.482,
+    0.527,
+    0.558
+   ],
+   "tasks": [
+    28,
+    28,
+    28,
+    56,
+    112,
+    197
+   ],
+   "new_codes": 156
+  },
+  "computable by the executor": {
+   "accuracy": [
+    0.333,
+    0.733,
+    0.8,
+    0.767,
+    0.7,
+    0.725
+   ],
+   "tasks": [
+    15,
+    15,
+    15,
+    30,
+    60,
+    102
+   ],
+   "new_codes": 156
+  },
+  "needing a new computation": {
+   "accuracy": [
+    0.111,
+    0.222,
+    0.222,
+    0.167,
+    0.306,
+    0.254
+   ],
+   "tasks": [
+    9,
+    9,
+    9,
+    18,
+    36,
+    63
+   ],
+   "new_codes": 156
+  }
+ },
  "offline": {
   "all new primitives": {
    "k1": 0.153,
