@@ -853,6 +853,15 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"adapt_reach4_n{n}_replay_m24_large_s43"] = config
+    # wider training states at 52 primitives (2026-11-27 12:50): the ladder falls faster as the environment grows (true code
+    # after five primitives: 80% at 24, 63% at 52), and wider states made it flat at 24 (97%). Seed 42, the price method,
+    # the 52-primitive two-pair file whose objects first go through 0 to 4 random primitives (4-cell moves left out as before).
+    config = one_step(42, steps=24000, codes=104, changes=price, data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/many_p52_pairs2_reach4/lv1_train.h5"]
+    config["evals"][0]["tables"] = True
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    configs["onestep_s_m52_hardem_pairs2_price_reach4_s42"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
