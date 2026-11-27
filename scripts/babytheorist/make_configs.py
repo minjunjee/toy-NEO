@@ -840,6 +840,19 @@ def main() -> None:
         for block in config["evals"]:
             block["infer"] = {"max_steps": 4, "rollout": "hard"}
         configs[f"dream_mix_m24_reach4_s{seed}"] = config
+    # few-example adaptation from the wider-state model (2026-11-27 12:05): its executor already reproduces its codes on large
+    # objects at 86%. 256 large tasks with half of each batch replaying its own training file, and 64 tasks the same way.
+    for n in (256, 64):
+        config = one_step(43, steps=2000, codes=48, changes={**hard_em, "train.init_from": "runs/onestep_s_m24_hardem_pairs2_price_reach4_s43/ckpt/step-024000.pt"},
+                          data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2_large_n{n}_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2_reach4/lv1_train.h5"]
+        config["data"]["evals"] = dict(sibling_evals)
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"adapt_reach4_n{n}_replay_m24_large_s43"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
