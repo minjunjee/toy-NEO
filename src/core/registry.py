@@ -45,6 +45,7 @@ def import_all() -> None:
     import data.babytheorist  # noqa: F401
     import data.babytheorist_labeled  # noqa: F401
     import data.babytheorist_episodes  # noqa: F401
+    import data.arc_tasks  # noqa: F401
     import components.codes  # noqa: F401
     import components.codes_growable  # noqa: F401
     import components.codes_restart  # noqa: F401
@@ -66,14 +67,17 @@ def import_all() -> None:
     import models.neo_oracle  # noqa: F401
     import models.neo_em  # noqa: F401
     import models.neo_episode  # noqa: F401
+    import models.neo_arc  # noqa: F401
     import models.vae  # noqa: F401
     import methods.neo  # noqa: F401
     import methods.neo_warm  # noqa: F401
     import methods.neo_compose  # noqa: F401
     import methods.neo_em  # noqa: F401
     import methods.neo_dream  # noqa: F401
+    import methods.neo_arc  # noqa: F401
     import methods.vae_pretrain  # noqa: F401
     import evals.self_explain_exact  # noqa: F401
     import evals.transfer_exact  # noqa: F401
     import evals.babytheorist  # noqa: F401
     import evals.codebook_snapshot  # noqa: F401
+    import evals.arc  # noqa: F401
