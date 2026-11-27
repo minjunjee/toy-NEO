@@ -1,0 +1,782 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 7.6,
+  "tasks": 2000,
+  "transfer": 0.4544999897480011,
+  "transfer_by_depth": [
+   0.5744485259056091,
+   0.3114035129547119,
+   null
+  ],
+  "transfer_unverified": 0.4544999897480011,
+  "transfer_unverified_by_depth": [
+   0.5744485259056091,
+   0.3114035129547119,
+   null
+  ],
+  "found_s1": 0.5264999866485596,
+  "found_s1_by_depth": [
+   0.6158088445663452,
+   0.41995614767074585,
+   null
+  ],
+  "found_all": 0.32850000262260437,
+  "found_all_by_depth": [
+   0.42463234066963196,
+   0.21381579339504242,
+   null
+  ],
+  "s1_rejected": 0.3760683834552765,
+  "s1_rejected_by_depth": [
+   0.3104477524757385,
+   0.4908616244792938,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   0.0,
+   null
+  ],
+  "query_wrong_verified": 0.2876712381839752,
+  "query_wrong_verified_by_depth": [
+   0.268398255109787,
+   0.3333333432674408,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    997,
+    55,
+    36
+   ],
+   [
+    0,
+    153,
+    600,
+    159
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 396.5,
+  "tasks": 2000,
+  "transfer": 0.4584999978542328,
+  "transfer_by_depth": [
+   0.529411792755127,
+   0.3739035129547119,
+   null
+  ],
+  "transfer_unverified": 0.45750001072883606,
+  "transfer_unverified_by_depth": [
+   0.5284926295280457,
+   0.37280702590942383,
+   null
+  ],
+  "found_s1": 0.6075000166893005,
+  "found_s1_by_depth": [
+   0.6654411554336548,
+   0.5383771657943726,
+   null
+  ],
+  "found_all": 0.39399999380111694,
+  "found_all_by_depth": [
+   0.46599265933036804,
+   0.30811402201652527,
+   null
+  ],
+  "s1_rejected": 0.39176955819129944,
+  "s1_rejected_by_depth": [
+   0.3328729271888733,
+   0.47861507534980774,
+   null
+  ],
+  "rescued": 0.10294117778539658,
+  "rescued_by_depth": [
+   0.09958506375551224,
+   0.10638298094272614,
+   null
+  ],
+  "query_wrong_verified": 0.31091371178627014,
+  "query_wrong_verified_by_depth": [
+   0.2800788879394531,
+   0.3665480315685272,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    820,
+    162,
+    106
+   ],
+   [
+    0,
+    9,
+    644,
+    259
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 7.0,
+  "tasks": 2000,
+  "transfer": 0.45350000262260437,
+  "transfer_by_depth": [
+   0.5863970518112183,
+   0.29495614767074585,
+   null
+  ],
+  "transfer_unverified": 0.45350000262260437,
+  "transfer_unverified_by_depth": [
+   0.5863970518112183,
+   0.29495614767074585,
+   null
+  ],
+  "found_s1": 0.5220000147819519,
+  "found_s1_by_depth": [
+   0.6066176295280457,
+   0.42105263471603394,
+   null
+  ],
+  "found_all": 0.3240000009536743,
+  "found_all_by_depth": [
+   0.4126838147640228,
+   0.21820175647735596,
+   null
+  ],
+  "s1_rejected": 0.37931033968925476,
+  "s1_rejected_by_depth": [
+   0.31969696283340454,
+   0.4817708432674408,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   0.0,
+   null
+  ],
+  "query_wrong_verified": 0.2854938209056854,
+  "query_wrong_verified_by_depth": [
+   0.262806236743927,
+   0.3366834223270416,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1031,
+    46,
+    11
+   ],
+   [
+    0,
+    217,
+    569,
+    126
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 397.3,
+  "tasks": 2000,
+  "transfer": 0.476500004529953,
+  "transfer_by_depth": [
+   0.5477941036224365,
+   0.39144736528396606,
+   null
+  ],
+  "transfer_unverified": 0.4754999876022339,
+  "transfer_unverified_by_depth": [
+   0.5477941036224365,
+   0.3892543911933899,
+   null
+  ],
+  "found_s1": 0.5845000147819519,
+  "found_s1_by_depth": [
+   0.6369485259056091,
+   0.5219298005104065,
+   null
+  ],
+  "found_all": 0.37599998712539673,
+  "found_all_by_depth": [
+   0.4365808963775635,
+   0.3037280738353729,
+   null
+  ],
+  "s1_rejected": 0.38922154903411865,
+  "s1_rejected_by_depth": [
+   0.3419913351535797,
+   0.45798319578170776,
+   null
+  ],
+  "rescued": 0.08351648598909378,
+  "rescued_by_depth": [
+   0.08016877621412277,
+   0.08715596050024033,
+   null
+  ],
+  "query_wrong_verified": 0.30452126264572144,
+  "query_wrong_verified_by_depth": [
+   0.2778947353363037,
+   0.3501805067062378,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    844,
+    135,
+    109
+   ],
+   [
+    0,
+    28,
+    674,
+    210
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_lab_pairs2_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 6.8,
+  "tasks": 2000,
+  "transfer": 0.2694999873638153,
+  "transfer_by_depth": [
+   0.38694852590560913,
+   0.12938596308231354,
+   null
+  ],
+  "transfer_unverified": 0.2694999873638153,
+  "transfer_unverified_by_depth": [
+   0.38694852590560913,
+   0.12938596308231354,
+   null
+  ],
+  "found_s1": 0.31200000643730164,
+  "found_s1_by_depth": [
+   0.40625,
+   0.19956140220165253,
+   null
+  ],
+  "found_all": 0.16850000619888306,
+  "found_all_by_depth": [
+   0.23713235557079315,
+   0.08662280440330505,
+   null
+  ],
+  "s1_rejected": 0.45993590354919434,
+  "s1_rejected_by_depth": [
+   0.4162895977497101,
+   0.5659340620040894,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   0.0,
+   null
+  ],
+  "query_wrong_verified": 0.4035608172416687,
+  "query_wrong_verified_by_depth": [
+   0.3720930218696594,
+   0.5063291192054749,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    978,
+    68,
+    42
+   ],
+   [
+    0,
+    212,
+    540,
+    160
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_lab_pairs2_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 392.9,
+  "tasks": 2000,
+  "transfer": 0.2574999928474426,
+  "transfer_by_depth": [
+   0.3391544222831726,
+   0.1600877195596695,
+   null
+  ],
+  "transfer_unverified": 0.25699999928474426,
+  "transfer_unverified_by_depth": [
+   0.3382352888584137,
+   0.1600877195596695,
+   null
+  ],
+  "found_s1": 0.3720000088214874,
+  "found_s1_by_depth": [
+   0.4522058963775635,
+   0.2763157784938812,
+   null
+  ],
+  "found_all": 0.19499999284744263,
+  "found_all_by_depth": [
+   0.2564338147640228,
+   0.12171052396297455,
+   null
+  ],
+  "s1_rejected": 0.5053763389587402,
+  "s1_rejected_by_depth": [
+   0.45325204730033875,
+   0.6071428656578064,
+   null
+  ],
+  "rescued": 0.058510638773441315,
+  "rescued_by_depth": [
+   0.044843047857284546,
+   0.0784313753247261,
+   null
+  ],
+  "query_wrong_verified": 0.41025641560554504,
+  "query_wrong_verified_by_depth": [
+   0.379928320646286,
+   0.4864864945411682,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    726,
+    210,
+    152
+   ],
+   [
+    0,
+    11,
+    533,
+    368
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_wide_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 6.9,
+  "tasks": 2000,
+  "transfer": 0.25949999690055847,
+  "transfer_by_depth": [
+   0.3639705777168274,
+   0.13486842811107635,
+   null
+  ],
+  "transfer_unverified": 0.25949999690055847,
+  "transfer_unverified_by_depth": [
+   0.3639705777168274,
+   0.13486842811107635,
+   null
+  ],
+  "found_s1": 0.3434999883174896,
+  "found_s1_by_depth": [
+   0.4264705777168274,
+   0.24451754987239838,
+   null
+  ],
+  "found_all": 0.1784999966621399,
+  "found_all_by_depth": [
+   0.24172794818878174,
+   0.10307017713785172,
+   null
+  ],
+  "s1_rejected": 0.4803493320941925,
+  "s1_rejected_by_depth": [
+   0.43318966031074524,
+   0.5784753561019897,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   0.0,
+   null
+  ],
+  "query_wrong_verified": 0.4005602300167084,
+  "query_wrong_verified_by_depth": [
+   0.36882129311561584,
+   0.4893617033958435,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    994,
+    65,
+    29
+   ],
+   [
+    0,
+    203,
+    523,
+    186
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "onestep_s_m24_wide_s42",
+  "step": 24000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 395.4,
+  "tasks": 2000,
+  "transfer": 0.24799999594688416,
+  "transfer_by_depth": [
+   0.328125,
+   0.1524122804403305,
+   null
+  ],
+  "transfer_unverified": 0.24650000035762787,
+  "transfer_unverified_by_depth": [
+   0.3272058963775635,
+   0.15021929144859314,
+   null
+  ],
+  "found_s1": 0.4050000011920929,
+  "found_s1_by_depth": [
+   0.4852941036224365,
+   0.30921053886413574,
+   null
+  ],
+  "found_all": 0.210999995470047,
+  "found_all_by_depth": [
+   0.27389705181121826,
+   0.13596491515636444,
+   null
+  ],
+  "s1_rejected": 0.5246913433074951,
+  "s1_rejected_by_depth": [
+   0.4829545319080353,
+   0.6028369069099426,
+   null
+  ],
+  "rescued": 0.08705881983041763,
+  "rescued_by_depth": [
+   0.09803921729326248,
+   0.07058823853731155,
+   null
+  ],
+  "query_wrong_verified": 0.4241706132888794,
+  "query_wrong_verified_by_depth": [
+   0.3959731459617615,
+   0.49193549156188965,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    724,
+    196,
+    168
+   ],
+   [
+    0,
+    40,
+    511,
+    361
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "dream_mix_m24_hardem_pairs2_s42",
+  "step": 6000,
+  "split": "lv1",
+  "width": 1,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 7.1,
+  "tasks": 2000,
+  "transfer": 0.48500001430511475,
+  "transfer_by_depth": [
+   0.5891544222831726,
+   0.3607456088066101,
+   null
+  ],
+  "transfer_unverified": 0.48500001430511475,
+  "transfer_unverified_by_depth": [
+   0.5891544222831726,
+   0.3607456088066101,
+   null
+  ],
+  "found_s1": 0.5429999828338623,
+  "found_s1_by_depth": [
+   0.6130514740943909,
+   0.4594298303127289,
+   null
+  ],
+  "found_all": 0.34299999475479126,
+  "found_all_by_depth": [
+   0.41819852590560913,
+   0.25328946113586426,
+   null
+  ],
+  "s1_rejected": 0.3683241307735443,
+  "s1_rejected_by_depth": [
+   0.3178410828113556,
+   0.448687344789505,
+   null
+  ],
+  "rescued": 0.0,
+  "rescued_by_depth": [
+   0.0,
+   0.0,
+   null
+  ],
+  "query_wrong_verified": 0.2930029034614563,
+  "query_wrong_verified_by_depth": [
+   0.26813188195228577,
+   0.3419913351535797,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    1008,
+    54,
+    26
+   ],
+   [
+    0,
+    124,
+    639,
+    149
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ },
+ {
+  "run": "dream_mix_m24_hardem_pairs2_s42",
+  "step": 6000,
+  "split": "lv1",
+  "width": 16,
+  "rank": "policy",
+  "tau": 0.1,
+  "max_steps": 3,
+  "seconds": 405.9,
+  "tasks": 2000,
+  "transfer": 0.4740000069141388,
+  "transfer_by_depth": [
+   0.5358455777168274,
+   0.40021929144859314,
+   null
+  ],
+  "transfer_unverified": 0.47450000047683716,
+  "transfer_unverified_by_depth": [
+   0.5367646813392639,
+   0.40021929144859314,
+   null
+  ],
+  "found_s1": 0.6025000214576721,
+  "found_s1_by_depth": [
+   0.6498161554336548,
+   0.5460526347160339,
+   null
+  ],
+  "found_all": 0.38850000500679016,
+  "found_all_by_depth": [
+   0.4430147111415863,
+   0.32346490025520325,
+   null
+  ],
+  "s1_rejected": 0.3908713757991791,
+  "s1_rejected_by_depth": [
+   0.3479490876197815,
+   0.4518072307109833,
+   null
+  ],
+  "rescued": 0.09129511564970016,
+  "rescued_by_depth": [
+   0.08536585420370102,
+   0.09777777642011642,
+   null
+  ],
+  "query_wrong_verified": 0.3101673126220703,
+  "query_wrong_verified_by_depth": [
+   0.2780083119869232,
+   0.3627118766307831,
+   null
+  ],
+  "tasks_by_depth": [
+   1088,
+   912,
+   0
+  ],
+  "chosen_length_by_depth": [
+   [
+    0,
+    819,
+    164,
+    105
+   ],
+   [
+    0,
+    13,
+    656,
+    243
+   ],
+   [
+    0,
+    0,
+    0,
+    0
+   ]
+  ]
+ }
+]

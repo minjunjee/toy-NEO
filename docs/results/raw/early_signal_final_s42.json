@@ -1,0 +1,88 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_s42",
+  "step": 24000,
+  "assignment": {
+   "two_pair_purity": 0.89,
+   "two_pair_shuffled": 0.293,
+   "one_pair_purity": 0.883,
+   "one_pair_shuffled": 0.29,
+   "codes": {
+    "33": 187,
+    "47": 149,
+    "5": 131,
+    "35": 126,
+    "4": 2,
+    "45": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 5,
+    "own": 1.0,
+    "others": 0.12
+   },
+   "rot270": {
+    "code": 47,
+    "own": 1.0,
+    "others": 0.116
+   },
+   "transpose": {
+    "code": 33,
+    "own": 1.0,
+    "others": 0.14
+   },
+   "anti_transpose": {
+    "code": 35,
+    "own": 1.0,
+    "others": 0.129
+   }
+  },
+  "gradient": {
+   "within_task": 0.47,
+   "between_tasks": 0.466,
+   "same_primitive": 0.454,
+   "different_primitive": 0.506,
+   "shared_kmeans_purity": 0.843,
+   "shared_kmeans_shuffled": 0.29
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.887,
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.887
+   },
+   "hidden": {
+    "kmeans_purity": 0.872,
+    "kmeans_shuffled": 0.287,
+    "linear_probe": 0.892
+   }
+  },
+  "nucleus": [
+   {
+    "code": 5,
+    "primitive": "rot90",
+    "tasks": 131,
+    "share": 0.95
+   },
+   {
+    "code": 33,
+    "primitive": "transpose",
+    "tasks": 187,
+    "share": 0.79
+   },
+   {
+    "code": 35,
+    "primitive": "anti_transpose",
+    "tasks": 126,
+    "share": 0.97
+   },
+   {
+    "code": 47,
+    "primitive": "rot270",
+    "tasks": 149,
+    "share": 0.89
+   }
+  ]
+ }
+]

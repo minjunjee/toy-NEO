@@ -1,0 +1,3215 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "skip": 0,
+  "reuse_refit": 3,
+  "accept": 0.75,
+  "fit_steps": 300,
+  "refit_steps": 100,
+  "tasks": 400,
+  "new_codes": 125,
+  "new_primitives_seen": 0,
+  "windows": [
+   {
+    "tasks": "1-100",
+    "known": 0.5,
+    "new": null
+   },
+   {
+    "tasks": "101-200",
+    "known": 0.49,
+    "new": null
+   },
+   {
+    "tasks": "201-300",
+    "known": 0.49,
+    "new": null
+   },
+   {
+    "tasks": "301-400",
+    "known": 0.44,
+    "new": null
+   }
+  ],
+  "codes_served": [
+   {
+    "flip_h": 4
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "to_left": 3
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "shift_down": 8
+   },
+   {
+    "to_bottom": 2
+   },
+   {
+    "to_left": 2
+   },
+   {
+    "translate_left": 5
+   },
+   {
+    "to_top": 4
+   },
+   {
+    "shift_up": 12
+   },
+   {
+    "to_right": 4
+   },
+   {
+    "translate_down": 3
+   },
+   {
+    "to_right": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "translate_right": 4
+   },
+   {
+    "flip_v": 7
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "add_border": 6
+   },
+   {
+    "shift_right": 9
+   },
+   {
+    "translate_right": 1,
+    "to_right": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot180": 2
+   },
+   {
+    "to_left": 2
+   },
+   {
+    "translate_left": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "translate_up": 3
+   },
+   {
+    "shift_left": 13
+   },
+   {
+    "to_top": 4
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "hollow": 2
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "add_border": 1
+   },
+   {
+    "to_right": 1
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "rot270": 2
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "translate_left": 2
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "to_right": 2
+   },
+   {
+    "to_top": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "to_top": 2
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "to_bottom": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "to_right": 1
+   },
+   {
+    "to_left": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "add_border": 1
+   },
+   {
+    "hollow": 4
+   },
+   {
+    "translate_down": 2
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "translate_right": 1
+   },
+   {
+    "to_top": 1
+   },
+   {
+    "to_right": 1
+   },
+   {
+    "add_border": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "to_top": 1
+   },
+   {
+    "flip_v": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "add_border": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "translate_up": 2
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "translate_up": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "to_top": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "rot270": 1
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "rot270": 2
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "transpose": 1
+   },
+   {
+    "to_bottom": 2
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "to_left": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "translate_left": 1
+   },
+   {
+    "flip_v": 2
+   },
+   {
+    "to_right": 1
+   },
+   {
+    "translate_up": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "rot90": 1
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "rot180": 1
+   },
+   {
+    "flip_h": 1
+   },
+   {
+    "flip_v": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "anti_transpose": 1
+   },
+   {
+    "rot270": 1
+   }
+  ],
+  "log": [
+   {
+    "t": 0,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 1,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 2,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 3,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 4,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 5,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 6,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 7,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 8,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 9,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 10,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 11,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 12,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 13,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 14,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 15,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 16,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 17,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 18,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 19,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 20,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 21,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 22,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 23,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 24,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 25,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 26,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 27,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 28,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 29,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 30,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 31,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 32,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 33,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 34,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 35,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 36,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 37,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 38,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 39,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 40,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 41,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 42,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 43,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 44,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 45,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 46,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 47,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 48,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 49,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 50,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 51,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 52,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 53,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 54,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 55,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 56,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 57,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 58,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 59,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 60,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 61,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 62,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 63,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 64,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 65,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 66,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 67,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 68,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 69,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 70,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 71,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 72,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 73,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 74,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 75,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 76,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 77,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 78,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 79,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 80,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 81,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 82,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 83,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 84,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 85,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 86,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 87,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 88,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 89,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 90,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 91,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 92,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 93,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 94,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 95,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 96,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 97,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 98,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 99,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 100,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 101,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 102,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 103,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 104,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 105,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 106,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 107,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 108,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 109,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 110,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 111,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 112,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 113,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 114,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 115,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 116,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 117,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 118,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 119,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 120,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 121,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 122,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 123,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 124,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 125,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 126,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 127,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 128,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 129,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 130,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 131,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 132,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 133,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 134,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 135,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 136,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 137,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 138,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 139,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 140,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 141,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 142,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 143,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 144,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 145,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 146,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 147,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 148,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 149,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 150,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 151,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 152,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 153,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 154,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 155,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 156,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 157,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 158,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 159,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 160,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 161,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 162,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 163,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 164,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 165,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 166,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 167,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 168,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 169,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 170,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 171,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 172,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 173,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 174,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 175,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 176,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 177,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 178,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 179,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 180,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 181,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 182,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 183,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 184,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 185,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 186,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 187,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 188,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 189,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 190,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 191,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 192,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 193,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 194,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 195,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 196,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 197,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 198,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 199,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 200,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 201,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 202,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 203,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 204,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 205,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 206,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 207,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 208,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 209,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 210,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 211,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 212,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 213,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 214,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 215,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 216,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 217,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 218,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 219,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 220,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 221,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 222,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 223,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 224,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 225,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 226,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 227,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 228,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 229,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 230,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 231,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 232,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 233,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 234,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 235,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 236,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 237,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 238,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 239,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 240,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 241,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 242,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 243,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 244,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 245,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 246,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 247,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 248,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 249,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 250,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 251,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 252,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 253,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 254,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 255,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 256,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 257,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 258,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 259,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 260,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 261,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 262,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 263,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 264,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 265,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 266,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 267,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 268,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 269,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 270,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 271,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 272,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 273,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 274,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 275,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 276,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 277,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 278,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 279,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 280,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 281,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 282,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 283,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 284,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 285,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 286,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 287,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 288,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 289,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 290,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 291,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 292,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 293,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 294,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 295,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 296,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 297,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 298,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 299,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 300,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 301,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 302,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 303,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 304,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 305,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 306,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 307,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 308,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 309,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 310,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 311,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 312,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 313,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 314,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 315,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 316,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 317,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 318,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 319,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 320,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 321,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 322,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 323,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 324,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 325,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 326,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 327,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 328,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 329,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 330,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 331,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 332,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 333,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 334,
+    "primitive": "to_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 335,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 336,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 337,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 338,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 339,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 340,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 341,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 342,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 343,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 344,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 345,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 346,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 347,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 348,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 349,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 350,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 351,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "allocated",
+    "right": true
+   },
+   {
+    "t": 352,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 353,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 354,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 355,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 356,
+    "primitive": "translate_down",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 357,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 358,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 359,
+    "primitive": "translate_up",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 360,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 361,
+    "primitive": "to_top",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 362,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 363,
+    "primitive": "rot90",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 364,
+    "primitive": "translate_left",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 365,
+    "primitive": "transpose",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 366,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 367,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 368,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 369,
+    "primitive": "shift_left",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 370,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 371,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 372,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 373,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 374,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 375,
+    "primitive": "rot180",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 376,
+    "primitive": "shift_up",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 377,
+    "primitive": "to_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 378,
+    "primitive": "shift_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 379,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 380,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 381,
+    "primitive": "add_border",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 382,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "refit new",
+    "right": true
+   },
+   {
+    "t": 383,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 384,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 385,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "reused new",
+    "right": false
+   },
+   {
+    "t": 386,
+    "primitive": "color_plus3",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 387,
+    "primitive": "hollow",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 388,
+    "primitive": "prev_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 389,
+    "primitive": "flip_v",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 390,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 391,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 392,
+    "primitive": "translate_right",
+    "known": true,
+    "kind": "own",
+    "right": false
+   },
+   {
+    "t": 393,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 394,
+    "primitive": "flip_h",
+    "known": true,
+    "kind": "own",
+    "right": true
+   },
+   {
+    "t": 395,
+    "primitive": "to_bottom",
+    "known": true,
+    "kind": "refit new",
+    "right": false
+   },
+   {
+    "t": 396,
+    "primitive": "anti_transpose",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 397,
+    "primitive": "shift_down",
+    "known": true,
+    "kind": "reused new",
+    "right": true
+   },
+   {
+    "t": 398,
+    "primitive": "rot270",
+    "known": true,
+    "kind": "allocated",
+    "right": false
+   },
+   {
+    "t": 399,
+    "primitive": "next_color",
+    "known": true,
+    "kind": "own",
+    "right": true
+   }
+  ]
+ }
+]

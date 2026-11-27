@@ -1,122 +1,617 @@
 [
  {
   "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
-  "step": 200,
+  "step": 4200,
   "assignment": {
-   "two_pair_purity": 0.29,
-   "two_pair_shuffled": 0.299,
-   "one_pair_purity": 0.322,
-   "one_pair_shuffled": 0.321,
+   "two_pair_purity": 0.327,
+   "two_pair_shuffled": 0.294,
+   "one_pair_purity": 0.345,
+   "one_pair_shuffled": 0.296,
    "codes": {
-    "37": 302,
-    "36": 186,
-    "1": 46,
-    "39": 15,
-    "28": 12,
-    "10": 11
+    "39": 208,
+    "26": 172,
+    "29": 116,
+    "30": 97,
+    "33": 3,
+    "46": 1
    }
   },
   "executor": {
    "rot90": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 39,
+    "own": 0.107,
+    "others": 0.069
    },
    "rot270": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 39,
+    "own": 0.08,
+    "others": 0.078
    },
    "transpose": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 29,
+    "own": 0.06,
+    "others": 0.06
    },
    "anti_transpose": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 30,
+    "own": 0.08,
+    "others": 0.044
    }
   },
   "gradient": {
-   "within_task": -0.375,
-   "between_tasks": 0.006,
-   "same_primitive": 0.016,
-   "different_primitive": 0.013,
-   "shared_kmeans_purity": 0.298,
-   "shared_kmeans_shuffled": 0.275
+   "within_task": -0.032,
+   "between_tasks": 0.034,
+   "same_primitive": 0.035,
+   "different_primitive": 0.008,
+   "shared_kmeans_purity": 0.327,
+   "shared_kmeans_shuffled": 0.289
   },
   "programmer": {
    "action": {
-    "kmeans_purity": 0.27,
+    "kmeans_purity": 0.282,
     "kmeans_shuffled": 0.285,
-    "linear_probe": 0.243
+    "linear_probe": 0.33
    },
    "hidden": {
     "kmeans_purity": 0.292,
-    "kmeans_shuffled": 0.286,
-    "linear_probe": 0.245
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.407
    }
   },
   "nucleus": []
  },
  {
   "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
-  "step": 400,
+  "step": 4400,
   "assignment": {
    "two_pair_purity": 0.34,
-   "two_pair_shuffled": 0.341,
-   "one_pair_purity": 0.368,
-   "one_pair_shuffled": 0.35,
+   "two_pair_shuffled": 0.291,
+   "one_pair_purity": 0.335,
+   "one_pair_shuffled": 0.294,
    "codes": {
-    "10": 121,
-    "13": 87,
-    "9": 72,
-    "35": 59,
-    "1": 41,
-    "26": 31
+    "39": 239,
+    "26": 170,
+    "29": 108,
+    "30": 76,
+    "33": 3,
+    "46": 2
    }
   },
   "executor": {
    "rot90": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 26,
+    "own": 0.08,
+    "others": 0.047
    },
    "rot270": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 39,
+    "own": 0.087,
+    "others": 0.058
    },
    "transpose": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 29,
+    "own": 0.047,
+    "others": 0.049
    },
    "anti_transpose": {
-    "code": 0,
-    "own": 0.0,
-    "others": 0.0
+    "code": 30,
+    "own": 0.08,
+    "others": 0.042
    }
   },
   "gradient": {
-   "within_task": -0.452,
-   "between_tasks": 0.016,
-   "same_primitive": 0.037,
-   "different_primitive": 0.011,
-   "shared_kmeans_purity": 0.273,
-   "shared_kmeans_shuffled": 0.283
+   "within_task": -0.054,
+   "between_tasks": 0.026,
+   "same_primitive": 0.025,
+   "different_primitive": 0.012,
+   "shared_kmeans_purity": 0.312,
+   "shared_kmeans_shuffled": 0.288
   },
   "programmer": {
    "action": {
-    "kmeans_purity": 0.282,
-    "kmeans_shuffled": 0.276,
-    "linear_probe": 0.237
+    "kmeans_purity": 0.313,
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.353
+   },
+   "hidden": {
+    "kmeans_purity": 0.275,
+    "kmeans_shuffled": 0.287,
+    "linear_probe": 0.403
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 4600,
+  "assignment": {
+   "two_pair_purity": 0.343,
+   "two_pair_shuffled": 0.291,
+   "one_pair_purity": 0.34,
+   "one_pair_shuffled": 0.294,
+   "codes": {
+    "39": 203,
+    "26": 133,
+    "30": 131,
+    "29": 126,
+    "33": 2,
+    "46": 1
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.087,
+    "others": 0.08
+   },
+   "rot270": {
+    "code": 39,
+    "own": 0.1,
+    "others": 0.076
+   },
+   "transpose": {
+    "code": 39,
+    "own": 0.08,
+    "others": 0.082
+   },
+   "anti_transpose": {
+    "code": 26,
+    "own": 0.06,
+    "others": 0.062
+   }
+  },
+  "gradient": {
+   "within_task": -0.029,
+   "between_tasks": 0.011,
+   "same_primitive": 0.019,
+   "different_primitive": 0.009,
+   "shared_kmeans_purity": 0.313,
+   "shared_kmeans_shuffled": 0.288
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.277,
+    "kmeans_shuffled": 0.281,
+    "linear_probe": 0.333
+   },
+   "hidden": {
+    "kmeans_purity": 0.278,
+    "kmeans_shuffled": 0.288,
+    "linear_probe": 0.427
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 4800,
+  "assignment": {
+   "two_pair_purity": 0.357,
+   "two_pair_shuffled": 0.292,
+   "one_pair_purity": 0.352,
+   "one_pair_shuffled": 0.292,
+   "codes": {
+    "39": 223,
+    "29": 142,
+    "26": 131,
+    "30": 95,
+    "12": 3,
+    "33": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.133,
+    "others": 0.08
+   },
+   "rot270": {
+    "code": 39,
+    "own": 0.1,
+    "others": 0.091
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.067,
+    "others": 0.073
+   },
+   "anti_transpose": {
+    "code": 39,
+    "own": 0.08,
+    "others": 0.098
+   }
+  },
+  "gradient": {
+   "within_task": 0.039,
+   "between_tasks": 0.042,
+   "same_primitive": 0.049,
+   "different_primitive": 0.033,
+   "shared_kmeans_purity": 0.323,
+   "shared_kmeans_shuffled": 0.286
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.295,
+    "kmeans_shuffled": 0.278,
+    "linear_probe": 0.362
+   },
+   "hidden": {
+    "kmeans_purity": 0.28,
+    "kmeans_shuffled": 0.286,
+    "linear_probe": 0.417
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 5000,
+  "assignment": {
+   "two_pair_purity": 0.345,
+   "two_pair_shuffled": 0.289,
+   "one_pair_purity": 0.347,
+   "one_pair_shuffled": 0.294,
+   "codes": {
+    "39": 233,
+    "29": 122,
+    "30": 121,
+    "26": 116,
+    "33": 3,
+    "46": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.14,
+    "others": 0.084
+   },
+   "rot270": {
+    "code": 39,
+    "own": 0.113,
+    "others": 0.093
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.067,
+    "others": 0.089
+   },
+   "anti_transpose": {
+    "code": 39,
+    "own": 0.087,
+    "others": 0.102
+   }
+  },
+  "gradient": {
+   "within_task": -0.002,
+   "between_tasks": 0.048,
+   "same_primitive": 0.043,
+   "different_primitive": 0.034,
+   "shared_kmeans_purity": 0.317,
+   "shared_kmeans_shuffled": 0.286
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.312,
+    "kmeans_shuffled": 0.286,
+    "linear_probe": 0.38
+   },
+   "hidden": {
+    "kmeans_purity": 0.277,
+    "kmeans_shuffled": 0.284,
+    "linear_probe": 0.45
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 5200,
+  "assignment": {
+   "two_pair_purity": 0.378,
+   "two_pair_shuffled": 0.293,
+   "one_pair_purity": 0.365,
+   "one_pair_shuffled": 0.295,
+   "codes": {
+    "39": 175,
+    "29": 150,
+    "26": 146,
+    "30": 121,
+    "33": 2,
+    "5": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.12,
+    "others": 0.084
+   },
+   "rot270": {
+    "code": 26,
+    "own": 0.107,
+    "others": 0.091
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.1,
+    "others": 0.093
+   },
+   "anti_transpose": {
+    "code": 26,
+    "own": 0.087,
+    "others": 0.098
+   }
+  },
+  "gradient": {
+   "within_task": -0.038,
+   "between_tasks": -0.011,
+   "same_primitive": 0.019,
+   "different_primitive": 0.001,
+   "shared_kmeans_purity": 0.305,
+   "shared_kmeans_shuffled": 0.287
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.325,
+    "kmeans_shuffled": 0.287,
+    "linear_probe": 0.363
    },
    "hidden": {
     "kmeans_purity": 0.283,
-    "kmeans_shuffled": 0.284,
-    "linear_probe": 0.238
+    "kmeans_shuffled": 0.283,
+    "linear_probe": 0.397
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 5400,
+  "assignment": {
+   "two_pair_purity": 0.388,
+   "two_pair_shuffled": 0.29,
+   "one_pair_purity": 0.353,
+   "one_pair_shuffled": 0.296,
+   "codes": {
+    "39": 228,
+    "26": 126,
+    "29": 122,
+    "30": 117,
+    "17": 2,
+    "5": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 26,
+    "own": 0.147,
+    "others": 0.1
+   },
+   "rot270": {
+    "code": 26,
+    "own": 0.133,
+    "others": 0.104
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.127,
+    "others": 0.113
+   },
+   "anti_transpose": {
+    "code": 26,
+    "own": 0.113,
+    "others": 0.111
+   }
+  },
+  "gradient": {
+   "within_task": 0.034,
+   "between_tasks": 0.045,
+   "same_primitive": 0.043,
+   "different_primitive": 0.027,
+   "shared_kmeans_purity": 0.325,
+   "shared_kmeans_shuffled": 0.287
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.358,
+    "kmeans_shuffled": 0.286,
+    "linear_probe": 0.378
+   },
+   "hidden": {
+    "kmeans_purity": 0.29,
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.415
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 5600,
+  "assignment": {
+   "two_pair_purity": 0.405,
+   "two_pair_shuffled": 0.291,
+   "one_pair_purity": 0.375,
+   "one_pair_shuffled": 0.295,
+   "codes": {
+    "39": 215,
+    "30": 142,
+    "26": 124,
+    "29": 111,
+    "5": 3,
+    "33": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.133,
+    "others": 0.109
+   },
+   "rot270": {
+    "code": 26,
+    "own": 0.113,
+    "others": 0.069
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.113,
+    "others": 0.091
+   },
+   "anti_transpose": {
+    "code": 39,
+    "own": 0.12,
+    "others": 0.113
+   }
+  },
+  "gradient": {
+   "within_task": -0.052,
+   "between_tasks": 0.031,
+   "same_primitive": 0.026,
+   "different_primitive": 0.019,
+   "shared_kmeans_purity": 0.295,
+   "shared_kmeans_shuffled": 0.285
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.358,
+    "kmeans_shuffled": 0.281,
+    "linear_probe": 0.362
+   },
+   "hidden": {
+    "kmeans_purity": 0.288,
+    "kmeans_shuffled": 0.282,
+    "linear_probe": 0.433
+   }
+  },
+  "nucleus": []
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 5800,
+  "assignment": {
+   "two_pair_purity": 0.423,
+   "two_pair_shuffled": 0.293,
+   "one_pair_purity": 0.395,
+   "one_pair_shuffled": 0.291,
+   "codes": {
+    "39": 196,
+    "30": 149,
+    "29": 130,
+    "26": 117,
+    "33": 2,
+    "5": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.16,
+    "others": 0.1
+   },
+   "rot270": {
+    "code": 26,
+    "own": 0.127,
+    "others": 0.076
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.127,
+    "others": 0.093
+   },
+   "anti_transpose": {
+    "code": 39,
+    "own": 0.127,
+    "others": 0.111
+   }
+  },
+  "gradient": {
+   "within_task": -0.018,
+   "between_tasks": 0.005,
+   "same_primitive": 0.026,
+   "different_primitive": 0.016,
+   "shared_kmeans_purity": 0.305,
+   "shared_kmeans_shuffled": 0.288
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.387,
+    "kmeans_shuffled": 0.283,
+    "linear_probe": 0.427
+   },
+   "hidden": {
+    "kmeans_purity": 0.282,
+    "kmeans_shuffled": 0.282,
+    "linear_probe": 0.443
+   }
+  },
+  "nucleus": [
+   {
+    "code": 29,
+    "primitive": "transpose",
+    "tasks": 130,
+    "share": 0.6
+   }
+  ]
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_ckpt_s43",
+  "step": 6000,
+  "assignment": {
+   "two_pair_purity": 0.415,
+   "two_pair_shuffled": 0.291,
+   "one_pair_purity": 0.422,
+   "one_pair_shuffled": 0.296,
+   "codes": {
+    "39": 200,
+    "26": 143,
+    "30": 133,
+    "29": 117,
+    "33": 2,
+    "5": 2
+   }
+  },
+  "executor": {
+   "rot90": {
+    "code": 39,
+    "own": 0.16,
+    "others": 0.118
+   },
+   "rot270": {
+    "code": 39,
+    "own": 0.133,
+    "others": 0.127
+   },
+   "transpose": {
+    "code": 29,
+    "own": 0.14,
+    "others": 0.102
+   },
+   "anti_transpose": {
+    "code": 39,
+    "own": 0.113,
+    "others": 0.133
+   }
+  },
+  "gradient": {
+   "within_task": -0.001,
+   "between_tasks": 0.043,
+   "same_primitive": 0.026,
+   "different_primitive": 0.02,
+   "shared_kmeans_purity": 0.307,
+   "shared_kmeans_shuffled": 0.287
+  },
+  "programmer": {
+   "action": {
+    "kmeans_purity": 0.365,
+    "kmeans_shuffled": 0.283,
+    "linear_probe": 0.405
+   },
+   "hidden": {
+    "kmeans_purity": 0.317,
+    "kmeans_shuffled": 0.285,
+    "linear_probe": 0.442
    }
   },
   "nucleus": []

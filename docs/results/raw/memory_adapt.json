@@ -1,0 +1,458 @@
+[
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 36,
+  "fit_steps": 300,
+  "lr": 0.05,
+  "decay": 0.001,
+  "correction_norm_mean": 1.015,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.467,
+     "verified": 0.507,
+     "better_of_two": 0.634
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.162,
+     "verified": 0.204,
+     "better_of_two": 0.326
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.328,
+    "verified": 0.369,
+    "better_of_two": 0.493
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.663,
+     "verified": 0.93,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.351,
+     "verified": 0.637,
+     "better_of_two": 0.737
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.416,
+    "verified": 0.66,
+    "better_of_two": 0.736
+   }
+  }
+ },
+ {
+  "memory_reproduced_original": 0.631,
+  "memory_reproduced_corrected": 0.662,
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 36,
+  "fit_steps": 300,
+  "lr": 0.05,
+  "decay": 0.001,
+  "correction_norm_mean": 1.015,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.467,
+     "verified": 0.585,
+     "better_of_two": 0.634
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.162,
+     "verified": 0.307,
+     "better_of_two": 0.326
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.328,
+    "verified": 0.459,
+    "better_of_two": 0.493
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.663,
+     "verified": 0.996,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.351,
+     "verified": 0.732,
+     "better_of_two": 0.737
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.416,
+    "verified": 0.733,
+    "better_of_two": 0.736
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "where": "cond",
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 36,
+  "fit_steps": 300,
+  "lr": 0.02,
+  "decay": 0.001,
+  "memory_reproduced_original": 0.631,
+  "memory_reproduced_corrected": 0.697,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.456,
+     "verified": 0.587,
+     "better_of_two": 0.633
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.161,
+     "verified": 0.308,
+     "better_of_two": 0.327
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.322,
+    "verified": 0.46,
+    "better_of_two": 0.493
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.653,
+     "verified": 0.996,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.36,
+     "verified": 0.733,
+     "better_of_two": 0.734
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.418,
+    "verified": 0.734,
+    "better_of_two": 0.735
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "where": "mod",
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 36,
+  "fit_steps": 300,
+  "lr": 0.02,
+  "decay": 0.001,
+  "memory_reproduced_original": 0.631,
+  "memory_reproduced_corrected": 1.0,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.527,
+     "verified": 0.591,
+     "better_of_two": 0.649
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.221,
+     "verified": 0.309,
+     "better_of_two": 0.349
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.388,
+    "verified": 0.463,
+    "better_of_two": 0.512
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.76,
+     "verified": 0.996,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.497,
+     "verified": 0.734,
+     "better_of_two": 0.736
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.527,
+    "verified": 0.734,
+    "better_of_two": 0.736
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "where": "mod",
+  "shared": true,
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 48,
+  "fit_steps": 400,
+  "lr": 0.02,
+  "decay": 0.001,
+  "memory_reproduced_original": 0.631,
+  "memory_reproduced_corrected": 0.654,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.414,
+     "verified": 0.581,
+     "better_of_two": 0.622
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.162,
+     "verified": 0.307,
+     "better_of_two": 0.325
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.299,
+    "verified": 0.456,
+    "better_of_two": 0.486
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.633,
+     "verified": 0.996,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.338,
+     "verified": 0.732,
+     "better_of_two": 0.733
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.4,
+    "verified": 0.733,
+    "better_of_two": 0.734
+   }
+  }
+ },
+ {
+  "run": "onestep_s_m24_hardem_pairs2_price_s43",
+  "where": "cond",
+  "shared": true,
+  "memory": "data/babytheorist/many_p24_pairs2_large_n256/lv1_train.h5",
+  "memory_tasks": 256,
+  "codes_with_memory": 48,
+  "fit_steps": 400,
+  "lr": 0.02,
+  "decay": 0.001,
+  "memory_reproduced_original": 0.631,
+  "memory_reproduced_corrected": 0.562,
+  "new_world": {
+   "by_length": {
+    "1": {
+     "tasks": 1088,
+     "original": 0.581,
+     "corrected": 0.513,
+     "verified": 0.584,
+     "better_of_two": 0.614
+    },
+    "2": {
+     "tasks": 912,
+     "original": 0.307,
+     "corrected": 0.207,
+     "verified": 0.304,
+     "better_of_two": 0.325
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.456,
+    "corrected": 0.373,
+    "verified": 0.456,
+    "better_of_two": 0.482
+   }
+  },
+  "old_world": {
+   "by_length": {
+    "1": {
+     "tasks": 703,
+     "original": 0.996,
+     "corrected": 0.881,
+     "verified": 0.996,
+     "better_of_two": 0.997
+    },
+    "2": {
+     "tasks": 1046,
+     "original": 0.732,
+     "corrected": 0.586,
+     "verified": 0.731,
+     "better_of_two": 0.734
+    },
+    "3": {
+     "tasks": 186,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    },
+    "4": {
+     "tasks": 65,
+     "original": 0.0,
+     "corrected": 0.0,
+     "verified": 0.0,
+     "better_of_two": 0.0
+    }
+   },
+   "all": {
+    "tasks": 2000,
+    "original": 0.733,
+    "corrected": 0.616,
+    "verified": 0.733,
+    "better_of_two": 0.735
+   }
+  }
+ }
+]

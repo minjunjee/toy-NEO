@@ -65,6 +65,9 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--source", type=Path, default=Path("docs/project-overview.md"))
     parser.add_argument("--out", type=Path, default=Path("docs/project-overview.html"))
+    parser.add_argument("--artifact", type=Path, help="also write the page in the form a claude.ai artifact takes: no document wrapper, a short "
+                        "title (--artifact-title), dark colours that follow the viewer's theme choice as well as the system's")
+    parser.add_argument("--artifact-title", default="")
     args = parser.parse_args()
     text = args.source.read_text()
     md = markdown.Markdown(extensions=["tables", "fenced_code", "toc", "sane_lists"], extension_configs={"toc": {"permalink": False}})
@@ -91,6 +94,26 @@ def main() -> None:
 """
     args.out.write_text(page)
     print(f"{args.out}: {len(page) // 1024} KB")
+    if args.artifact:
+        dark = re.search(r"@media \(prefers-color-scheme: dark\) \{ :root \{ ([^}]+) \} \}", CSS).group(1)
+        css = CSS.replace(re.search(r"@media \(prefers-color-scheme: dark\) \{ :root \{ [^}]+ \} \}", CSS).group(0),
+                          "@media (prefers-color-scheme: dark) { :root:not([data-theme=\"light\"]) { " + dark + " color-scheme: dark } }\n"
+                          ":root[data-theme=\"dark\"] { " + dark + " color-scheme: dark }")
+        css = css.replace("padding: 40px max(16px, env(safe-area-inset-left, 0px)) 80px;",
+                          "padding-block: 40px 80px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));")
+        short = args.artifact_title or title
+        piece = f"""<title>{short}</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700&display=swap">
+<style>{css}</style>
+<div class="wrap"><nav>{''.join(links)}</nav><main>
+<p class="meta">{stamp}</p>
+{body}
+</main></div>
+"""
+        args.artifact.parent.mkdir(parents=True, exist_ok=True)
+        args.artifact.write_text(piece)
+        print(f"{args.artifact}: {len(piece) // 1024} KB")
 
 
 if __name__ == "__main__":
