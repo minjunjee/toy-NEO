@@ -80,8 +80,8 @@ def main() -> None:
         rows = [i for i, s in enumerate(suites) if len(s) == 1]
         order = np.random.default_rng(args.seed).permutation(rows)[: args.tasks]
         order = order.tolist()
-        xs = torch.tensor(f["inputs"][order], dtype=torch.long, device=device)
-        ys = torch.tensor(f["outputs"][order], dtype=torch.long, device=device)
+        xs = torch.tensor(f["inputs"][:][order], dtype=torch.long, device=device)   # h5py wants increasing indices; read all, then pick
+        ys = torch.tensor(f["outputs"][:][order], dtype=torch.long, device=device)
         names = [suites[i][0]["primitive"] for i in order]
     new_codes, memory = [], []   # new code vectors and, for each, its memory (support inputs, outputs) and the primitives it served
     log = []
