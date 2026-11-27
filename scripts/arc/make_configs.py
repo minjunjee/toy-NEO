@@ -117,6 +117,10 @@ def main() -> None:
     grown = "runs/arc16_programmer_s0/ckpt/grown_evaluation.pt"
     configs["arc16_sleep_given_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210)
     configs["arc16_sleep_given_all_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210, table_share=1.0)
+    # joint sleeps of the larger proxy model, the first stage before per-task sleeps (a joint sleep first lifted 33.3% to 37.6% on the small model)
+    deep = "runs/arc16_programmer_deep_s0/ckpt/step-020000.pt"
+    configs["arc16_deep_sleep_s0"] = sleep(configs["arc16_programmer_deep_s0"], deep, new, steps=4000, lr=3.0e-4)
+    configs["arc16_deep_sleep_long_s0"] = sleep(configs["arc16_programmer_deep_s0"], deep, new, steps=12000, lr=3.0e-4)
     # the full canvas: all 400 tasks at 30x30, the best of the first proxy batch (wider and deeper executor, code of 256 dims).
     # The heavy frozen evaluation is run apart (scripts/arc/evaluate.py); the run itself ends with a light one.
     configs["arc30_programmer_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), evals_every=10000, ckpt_every=25000, final_fit=30, final_votes=1, workers=8)
