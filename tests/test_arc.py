@@ -151,6 +151,29 @@ def test_a_pair_is_predicted_from_the_other_pairs_and_the_table_is_used_only_in_
     assert len(model(batch).logits_by_loop) == 3
 
 
+def test_a_code_of_several_vectors_is_read_as_tokens_and_handled_as_one_flat_vector() -> None:
+    import_all()
+    from models.neo_arc import NEOArc
+
+    torch.manual_seed(0)
+    part = {"d_model": 32, "num_heads": 4, "d_ff": 64, "num_layers": 2, "dropout": 0.0}
+    model = NEOArc(encoder={"type": "token_embed", "vocab": 11, "d_model": 16}, decoder={"type": "linear_head", "d_model": 16, "vocab": 11, "spatial": [6, 6]},
+                   programmer={"type": "token_pair_queries", "state_dim": 16, "action_dim": 8, "grid_dim": 6, "num_queries": 3, **part},
+                   executor={"type": "token_context_transformer", "state_dim": 16, "cond_dim": 8, "grid_dim": 6, "num_code_tokens": 3, **part},
+                   code_dim=24, code_tokens=3).eval()
+    x, y = torch.randint(0, 11, (4, 6, 6)), torch.randint(0, 11, (4, 6, 6))
+    own = model.pair_codes(x, y)
+    assert own.shape == (4, 24)
+    out = model({"inputs": x[None], "outputs": y[None], "task": torch.tensor([-1]), "variant": torch.tensor([0])})
+    others = (own.sum(dim=0, keepdim=True) - own) / 3
+    assert torch.allclose(model.execute(x, others), out.logits_by_loop[0], atol=1e-5)
+    changed = others.clone()
+    changed[:, 16:] += 1.0                                      # the third vector of the code alone changes the prediction
+    assert not torch.allclose(model.execute(x, changed), out.logits_by_loop[0], atol=1e-4)
+    state = model.encoder(x)
+    assert model.executor(state, others.view(4, 3, 8)).shape == state.shape
+
+
 def test_fitting_a_code_lowers_the_loss_on_the_pairs_and_leaves_the_weights_alone(tmp_path: Path) -> None:
     import_all()
     from evals.arc import fit_codes
@@ -201,5 +224,5 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
             assert all(0.0 <= results[f"{prefix}/{key}"] <= 1.0 for key in ("fit1", "fit2", "fit2_vote1", "fit2_vote2", "zero_vote2", "fit_demo_tasks"))
         elif b.get("fit_steps"):
             assert 0.0 <= results[f"{prefix}/fit2"] <= 1.0
-        if config["model"]["tasks"]:
-            assert 0.0 <= results[f"{prefix}/table"] <= 1.0
+        if config["model"]["tasks"] and b.get("table"):
+            assert 0.0 <= results[f"{prefix}/table"] <= 1.0 and results[f"{prefix}/table"] == results[f"{prefix}/given"]

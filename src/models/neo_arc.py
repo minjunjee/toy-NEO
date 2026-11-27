@@ -17,6 +17,10 @@ tie has two sides: the table code is pulled to the mean of the programmer's code
 to the table code with weight `tie_programmer` (0: the table only follows, and holds the average code of its variant).
 The table is never used on a task outside the training set (task index -1): there the code comes from the pairs alone.
 
+A code of several vectors (`code_tokens` > 1). The programmer writes `code_tokens` vectors and the executor reads them
+as separate tokens (parts in components/code_tokens.py). Everywhere else the code is still one flat vector of `code_dim`
+numbers: the mean over pairs, the table and the fitting at test time work on it unchanged.
+
 Refinement (`loops` > 1). The executor is applied `loops` times with the same weights and the same code; from the second
 time on its input is the input state plus its previous output, detached, and every output is trained to decode to the
 answer. One pass is the plain model.
@@ -44,14 +48,16 @@ class NEOArcOutput:
 
 class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
-                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0) -> None:
+                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
         self.programmer = build(PROGRAMMERS, programmer)
         self.executor = build(EXECUTORS, executor)
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
-        self.tie_programmer = tie_programmer
+        self.tie_programmer, self.code_tokens = tie_programmer, code_tokens
+        if code_dim % code_tokens:
+            raise ValueError("code_dim must be a multiple of code_tokens")
         self.table = nn.Embedding(tasks * variants, code_dim) if tasks else None
         if self.table is not None:
             nn.init.normal_(self.table.weight, std=table_std * code_dim**-0.5)
@@ -59,14 +65,14 @@ class NEOArc(nn.Module):
     def pair_codes(self, inputs: Tensor, outputs: Tensor) -> Tensor:
         """(M,S,S), (M,S,S) -> (M,D): the code the programmer writes for each pair."""
 
-        return self.programmer(self.encoder(inputs), self.encoder(outputs))[:, 0].float()
+        return self.programmer(self.encoder(inputs), self.encoder(outputs)).flatten(1).float()
 
     def run(self, state: Tensor, code: Tensor, loops: int | None = None) -> list[Tensor]:
         """state (M,L,d), code (M,D) -> logits after each pass of the executor."""
 
         logits, carry = [], None
         for _ in range(loops or self.loops):
-            carry = self.executor(state if carry is None else state + carry.detach(), code[:, None, :])
+            carry = self.executor(state if carry is None else state + carry.detach(), code.view(len(code), self.code_tokens, -1))
             logits.append(self.decoder(carry))
         return logits
 
@@ -81,7 +87,7 @@ class NEOArc(nn.Module):
         mask = batch.get("mask")
         there = torch.ones(b, n, 1, device=x.device) if mask is None else mask.float()[..., None]      # pairs the episode really has
         state_x, state_y = self.encoder(x.flatten(0, 1)), self.encoder(y.flatten(0, 1))
-        own = self.programmer(state_x, state_y)[:, 0].float().view(b, n, -1) * there
+        own = self.programmer(state_x, state_y).flatten(1).float().view(b, n, -1) * there
         count = there.sum(dim=1, keepdim=True)
         code = (own.sum(dim=1, keepdim=True) - own) / (count - 1).clamp(min=1)         # the mean of the other pairs' codes
         from_table = torch.zeros(b, dtype=torch.bool, device=x.device)

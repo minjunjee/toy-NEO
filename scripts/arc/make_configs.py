@@ -24,13 +24,18 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
         executor: tuple[int, int] = (256, 6), programmer: tuple[int, int] = (256, 4), color_perms: int = 8, symmetries: int = 8,
         lr: float = 3.0e-4, tie_weight: float = 1.0, table_share: float = 0.5, table_lr_scale: float = 1.0, pad_weight: float = 1.0,
         tie_programmer: float | None = None, evals_every: int | None = None, final_fit: int = 100, final_votes: int = 8, workers: int = 4,
-        init_from: str | None = None, ckpt_every: int | None = None, plain_share: float = 0.0) -> dict:
+        init_from: str | None = None, ckpt_every: int | None = None, plain_share: float = 0.0, code_tokens: int = 1) -> dict:
     """NEO on re-ARC episodes at one canvas size. `batch` counts episodes; an episode is `pairs` pairs of one task variant."""
 
     every = evals_every or max(steps // 10, 1)
     files = {"heldout": f"{DATA}/rearc_heldout_{size}.npz", "evaluation": f"{DATA}/arc_evaluation_{size}.npz", "training": f"{DATA}/arc_training_{size}.npz"}
     width = lambda d, layers: {"d_model": d, "num_heads": 8, "d_ff": 4 * d, "num_layers": layers, "dropout": 0.0}  # noqa: E731
     evals = [{"type": "arc_tasks", "name": "during", "every": every, "split": split, "batch_size": 256, "table": table} for split in files]
+    reader = {"type": "token_pair_transformer", "state_dim": 128, "action_dim": code_dim, "grid_dim": size, "layer_norm_eps": 1.0e-6, **width(*programmer)}
+    runner = {"type": "adaln_transformer", "state_dim": 128, "cond_dim": code_dim, "grid_dim": size, **width(*executor)}
+    if code_tokens > 1:                # the code is several vectors that the executor reads as tokens
+        reader = {**reader, "type": "token_pair_queries", "action_dim": code_dim // code_tokens, "num_queries": code_tokens}
+        runner = {**runner, "type": "token_context_transformer", "cond_dim": code_dim // code_tokens, "num_code_tokens": code_tokens}
     evals += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, "table": table, "fit_steps": final_fit,
                "fit_lr": 0.05, "fit_report": [10, 30], "votes": final_votes} for split in files]
     return {
@@ -38,10 +43,9 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
                  **({"plain_share": plain_share} if plain_share else {})},
         "model": {"type": "neo_arc", "encoder": {"type": "token_embed", "vocab": 11, "d_model": 128},
                   "decoder": {"type": "linear_head", "d_model": 128, "vocab": 11, "layer_norm_eps": 1.0e-6, "spatial": [size, size]},
-                  "programmer": {"type": "token_pair_transformer", "state_dim": 128, "action_dim": code_dim, "grid_dim": size, "layer_norm_eps": 1.0e-6, **width(*programmer)},
-                  "executor": {"type": "adaln_transformer", "state_dim": 128, "cond_dim": code_dim, "grid_dim": size, **width(*executor)},
+                  "programmer": reader, "executor": runner,
                   "code_dim": code_dim, "tasks": TASKS[size] if table else 0, "variants": color_perms * symmetries, "table_share": table_share, "loops": loops,
-                  **({} if tie_programmer is None else {"tie_programmer": tie_programmer})},
+                  **({} if tie_programmer is None else {"tie_programmer": tie_programmer}), **({"code_tokens": code_tokens} if code_tokens > 1 else {})},
         "method": {"type": "neo_arc", "lr": lr, "weight_decay": 0.01, "warmup_ratio": 0.02, "min_lr_ratio": 0.1, "grad_clip": 1.0, "total_steps": steps,
                    "tie_weight": tie_weight, "table_lr_scale": table_lr_scale, "pad_weight": pad_weight},
         "evals": evals,
@@ -106,6 +110,9 @@ def main() -> None:
     configs["arc16_code256_reader_s0"] = run(**wide, programmer=(384, 6))
     configs["arc16_code256_pairs6_s0"] = run(**wide, pairs=6)
     configs["arc16_code256_half_plain_s0"] = run(**wide, plain_share=0.5)
+    # the code as 16 vectors of 64 numbers that the executor reads by attention; against one vector of 1024 (arc16_code1024_s0)
+    configs["arc16_tokens16_s0"] = run(size=16, steps=20000, code_dim=1024, code_tokens=16)
+    configs["arc16_tokens16_deep_s0"] = run(size=16, steps=20000, code_dim=1024, code_tokens=16, executor=(384, 8))
     # sleeps in which every evaluation task and view owns a code in the table (210 evaluation tasks fit the 16x16 canvas)
     grown = "runs/arc16_programmer_s0/ckpt/grown_evaluation.pt"
     configs["arc16_sleep_given_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210)

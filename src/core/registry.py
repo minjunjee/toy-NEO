@@ -58,6 +58,7 @@ def import_all() -> None:
     import components.executors_lora  # noqa: F401
     import components.programmers  # noqa: F401
     import components.programmer_pair  # noqa: F401
+    import components.code_tokens  # noqa: F401
     import models.neo  # noqa: F401
     import models.neo_visible_state  # noqa: F401
     import models.neo_repeat  # noqa: F401
