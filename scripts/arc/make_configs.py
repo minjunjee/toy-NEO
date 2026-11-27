@@ -23,7 +23,8 @@ class Flow(yaml.SafeDumper):
 def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, code_dim: int = 64, table: bool = False, loops: int = 1,
         executor: tuple[int, int] = (256, 6), programmer: tuple[int, int] = (256, 4), color_perms: int = 8, symmetries: int = 8,
         lr: float = 3.0e-4, tie_weight: float = 1.0, table_share: float = 0.5, table_lr_scale: float = 1.0, pad_weight: float = 1.0,
-        evals_every: int | None = None, final_fit: int = 100, final_votes: int = 8, workers: int = 4, init_from: str | None = None) -> dict:
+        tie_programmer: float | None = None, evals_every: int | None = None, final_fit: int = 100, final_votes: int = 8, workers: int = 4,
+        init_from: str | None = None, ckpt_every: int | None = None) -> dict:
     """NEO on re-ARC episodes at one canvas size. `batch` counts episodes; an episode is `pairs` pairs of one task variant."""
 
     every = evals_every or max(steps // 10, 1)
@@ -38,11 +39,12 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
                   "decoder": {"type": "linear_head", "d_model": 128, "vocab": 11, "layer_norm_eps": 1.0e-6, "spatial": [size, size]},
                   "programmer": {"type": "token_pair_transformer", "state_dim": 128, "action_dim": code_dim, "grid_dim": size, "layer_norm_eps": 1.0e-6, **width(*programmer)},
                   "executor": {"type": "adaln_transformer", "state_dim": 128, "cond_dim": code_dim, "grid_dim": size, **width(*executor)},
-                  "code_dim": code_dim, "tasks": TASKS[size] if table else 0, "variants": color_perms * symmetries, "table_share": table_share, "loops": loops},
+                  "code_dim": code_dim, "tasks": TASKS[size] if table else 0, "variants": color_perms * symmetries, "table_share": table_share, "loops": loops,
+                  **({} if tie_programmer is None else {"tie_programmer": tie_programmer})},
         "method": {"type": "neo_arc", "lr": lr, "weight_decay": 0.01, "warmup_ratio": 0.02, "min_lr_ratio": 0.1, "grad_clip": 1.0, "total_steps": steps,
                    "tie_weight": tie_weight, "table_lr_scale": table_lr_scale, "pad_weight": pad_weight},
         "evals": evals,
-        "train": {"steps": steps, "batch_size": batch, "seed": seed, "precision": "bf16", "ckpt_every": steps, "log_every": 50, "num_workers": workers,
+        "train": {"steps": steps, "batch_size": batch, "seed": seed, "precision": "bf16", "ckpt_every": ckpt_every or steps, "log_every": 50, "num_workers": workers,
                   "init_from": init_from, "wandb_project": "toy-neo", "wandb_mode": "disabled", "compile": "parts"},
     }
 
@@ -79,6 +81,15 @@ def main() -> None:
     configs["arc16_programmer_code256_s0"] = run(**proxy, code_dim=256)
     configs["arc16_programmer_plain_views_s0"] = run(**proxy, color_perms=1, symmetries=1)
     configs["arc16_programmer_deep_s0"] = run(**proxy, executor=(384, 8))
+    # second batch: the table only follows the programmer's codes; three times the steps; sleeps on the evaluation tasks' pairs
+    configs["arc16_table_follows_s0"] = run(**proxy, table=True, tie_programmer=0.0)
+    configs["arc16_programmer_60k_s0"] = run(size=16, steps=60000)
+    configs["arc16_programmer_lr1e3_s0"] = run(**proxy, lr=1.0e-3)
+    configs["arc16_programmer_colors512_s0"] = run(**proxy, color_perms=512)
+    start, new = "runs/arc16_programmer_s0/ckpt/step-020000.pt", f"{DATA}/sleep_evaluation_16.npz"
+    configs["arc16_sleep_replay_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000)
+    configs["arc16_sleep_alone_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, new_share=1.0)
+    configs["arc16_sleep_replay_lr3_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, lr=3.0e-4)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(f"{len(configs)} configs in {OUT}")
