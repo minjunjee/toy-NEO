@@ -984,6 +984,21 @@ def main() -> None:
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 250, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
     configs["sleep2_dream_by_use_m24_to_m52_s43"] = config
+    # a few old examples with the dreams (2026-11-27 22:45): drawing the dreams by use raised the old world only from 86% to
+    # 89%. The two concepts the programmer confuses are told apart only by old-world tasks. The second sleep again with the
+    # uniform dreams and 240 tasks of the 24-primitive train file (drawn at random, about ten a primitive, repeated to 8,000
+    # rows, a tenth of the batch on average) beside the memory.
+    config = one_step(43, steps=1000, codes=104, changes={**hard_em, "train.init_from": "runs/sleep_dream_m24_to_m52_s43/ckpt/step-002000.pt", "train.ckpt_every": 1000},
+                      data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/memory_round2_dream_s43_rep/lv1_train.h5", f"{DATA}/dream_replay2_s43/lv1_train.h5", f"{DATA}/many_p24_pairs2_n240_rep/lv1_train.h5"]
+    config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed1600/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+    config["evals"][0]["tables"] = True
+    config["evals"][0]["every"] = 500
+    config["evals"][1]["every"] = 1000
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 250, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+    configs["sleep2_dream_few_old_m24_to_m52_s43"] = config
     # prices in the sleep (2026-11-27 21:45): after three sleeps seeds 42 and 44 still solved none or few of the tasks of
     # scale2, mirror_right and stretch_w. Their codebook records show two of these new primitives on one code (seed 42:
     # scale2 and mirror_right; seed 44: mirror_right and stretch_w), the mixing of the morning inside the sleep, which

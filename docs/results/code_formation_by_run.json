@@ -13241,7 +13241,7 @@
   ]
  },
  "onestep_s_m52_hardem_pairs2_price_reach4_s42": {
-  "done": false,
+  "done": true,
   "evaluations": [
    {
     "step": 2400,
@@ -13349,6 +13349,96 @@
      "flip_v": 1.0,
      "transpose": 1.0,
      "anti_transpose": 0.938
+    }
+   },
+   {
+    "step": 16800,
+    "full": false,
+    "orientation": 0.9786096256684492,
+    "swap": 0.9772727272727273,
+    "others": 0.9907407407407406,
+    "nmi_orientation": 0.7050179894661034,
+    "nmi_all": 0.9351447836266406,
+    "per_primitive": {
+     "rot90": 1.0,
+     "rot180": 1.0,
+     "rot270": 0.909,
+     "flip_h": 1.0,
+     "flip_v": 0.941,
+     "transpose": 1.0,
+     "anti_transpose": 1.0
+    }
+   },
+   {
+    "step": 19200,
+    "full": false,
+    "orientation": 0.987012987012987,
+    "swap": 0.9772727272727273,
+    "others": 0.9944444444444445,
+    "nmi_orientation": 0.7196165588756931,
+    "nmi_all": 0.9378399647391814,
+    "per_primitive": {
+     "rot90": 1.0,
+     "rot180": 1.0,
+     "rot270": 0.909,
+     "flip_h": 1.0,
+     "flip_v": 1.0,
+     "transpose": 1.0,
+     "anti_transpose": 1.0
+    }
+   },
+   {
+    "step": 21600,
+    "full": false,
+    "orientation": 0.9727272727272727,
+    "swap": 0.9772727272727273,
+    "others": 0.9932098765432098,
+    "nmi_orientation": 0.7315743281818031,
+    "nmi_all": 0.9347930352764809,
+    "per_primitive": {
+     "rot90": 1.0,
+     "rot180": 0.9,
+     "rot270": 0.909,
+     "flip_h": 1.0,
+     "flip_v": 1.0,
+     "transpose": 1.0,
+     "anti_transpose": 1.0
+    }
+   },
+   {
+    "step": 24000,
+    "full": false,
+    "orientation": 0.987012987012987,
+    "swap": 0.9772727272727273,
+    "others": 0.9913580246913581,
+    "nmi_orientation": 0.7545065134629375,
+    "nmi_all": 0.9409016031918613,
+    "per_primitive": {
+     "rot90": 1.0,
+     "rot180": 1.0,
+     "rot270": 0.909,
+     "flip_h": 1.0,
+     "flip_v": 1.0,
+     "transpose": 1.0,
+     "anti_transpose": 1.0
+    }
+   },
+   {
+    "step": 24000,
+    "full": true,
+    "orientation": 0.9695278496240345,
+    "swap": 0.9676786974231568,
+    "others": 0.9901374457333693,
+    "nmi_orientation": 0.6988129687621671,
+    "nmi_all": 0.9263885323512461,
+    "per_primitive": {
+     "rot90": 0.978,
+     "rot180": 0.979,
+     "rot270": 0.953,
+     "flip_h": 0.975,
+     "flip_v": 0.962,
+     "transpose": 0.947,
+     "anti_transpose": 0.992
     }
    }
   ]
