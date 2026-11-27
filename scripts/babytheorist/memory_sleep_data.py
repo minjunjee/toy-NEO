@@ -28,11 +28,24 @@ def main() -> None:
     parser.add_argument("--train-out", type=Path, required=True)
     parser.add_argument("--eval-out", type=Path)
     parser.add_argument("--rows", type=int, default=40000)
+    parser.add_argument("--hold-out", type=float, default=0.0, help="leave this share of the memory tasks out of the train file (drawn at random, "
+                        "--hold-seed) and write their eval rows to <train-out>.held.json: tasks the sleep does not train on, for asking which codes "
+                        "learned a transformation and which learned their memory tasks by heart")
+    parser.add_argument("--hold-seed", type=int, default=0)
     args = parser.parse_args()
     loaded = [torch.load(path, map_location="cpu", weights_only=False) for path in args.memory]
     assert len({m["eval"] for m in loaded}) == 1, "the memories must come from the same eval file"
     saved = {"eval": loaded[0]["eval"], "rows": sorted({r for m in loaded for r in m["rows"]})}
     rows = sorted({r for m in loaded for code in m["memory_rows"] for r in code})
+    if args.hold_out > 0:
+        import json
+
+        order = np.random.default_rng(args.hold_seed).permutation(len(rows))
+        held = sorted(rows[i] for i in order[: int(round(args.hold_out * len(rows)))])
+        rows = sorted(set(rows) - set(held))
+        args.train_out.parent.mkdir(parents=True, exist_ok=True)
+        Path(str(args.train_out) + ".held.json").write_text(json.dumps({"eval": saved["eval"], "rows": [int(r) for r in held]}) + "\n")
+        print(f"{len(held)} memory tasks held out of the train file")
     with h5py.File(saved["eval"], "r") as f:
         data = {k: f[k][:] for k in f.keys()}
     reps = int(np.ceil(args.rows / len(rows)))

@@ -37,6 +37,8 @@ def main() -> None:
     parser.add_argument("--memory", type=Path, nargs="+", required=True, help="saved memories of the wakes so far (their streams' grids are pooled)")
     parser.add_argument("--rows", type=int, default=40000)
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--by-use", action="store_true", help="draw each code in proportion to how often it was the code that answered a task of the "
+                        "stream (the first code in the programmer's order that reproduces both supports), plus one, instead of uniformly")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -50,7 +52,26 @@ def main() -> None:
         seen = np.concatenate([f["inputs"][:][rows], f["outputs"][:][rows]]).reshape(-1, *f["inputs"].shape[2:])
         grid_size = f["grid_sizes"][0]
     rng = np.random.default_rng(args.seed)
-    codes = rng.integers(0, table.shape[0], size=args.rows)
+    weights = np.ones(table.shape[0])
+    if args.by_use:
+        with h5py.File(saved["eval"], "r") as f:
+            xs = torch.tensor(f["inputs"][:][rows][:, :2], dtype=torch.long, device=device)
+            ys = torch.tensor(f["outputs"][:][rows][:, :2], dtype=torch.long, device=device)
+        k = table.shape[0]
+        for start in range(0, len(rows), 16):
+            x, y = xs[start: start + 16], ys[start: start + 16]
+            n = len(x)
+            state = model.encoder(x.flatten(0, 1))                                              # n * 2 states
+            out = model.decoder(model.executor(state.repeat_interleave(k, dim=0), table.repeat(2 * n, 1)[:, None])).argmax(dim=-1)
+            ok = out.view(n, 2, k, -1).eq(y.flatten(2)[:, :, None]).all(dim=3).all(dim=1)      # n, k
+            action = model.programmer(model.encoder(x[:, 0]), model.encoder(y[:, 0]))
+            rank = (torch.nn.functional.normalize(action.flatten(1), dim=-1) @ table.T).argsort(dim=1, descending=True)
+            for i in range(n):
+                good = [c for c in rank[i].tolist() if bool(ok[i, c])]
+                if good:
+                    weights[good[0]] += 1
+        print(f"codes that answered a task of the stream: {int((weights > 1).sum())} of {k}; the most used holds {weights.max() / weights.sum():.3f} of the dreams")
+    codes = rng.choice(table.shape[0], size=args.rows, p=weights / weights.sum())
     picks = rng.integers(0, len(seen), size=(args.rows, 2))
     inputs = seen[picks]                                           # rows, 2, H, W
     outputs = np.zeros_like(inputs)

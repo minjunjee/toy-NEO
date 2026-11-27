@@ -967,6 +967,23 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"{tag}_dream_m24_to_m52_s43"] = config
+    # dreams by use (2026-11-27 22:35): after the second dream-only sleep the old world fell from 97% to 86%. Each code still
+    # did what it did (the translate code alone solves 99% of translate tasks), but the programmer named 4-cell and 3-cell
+    # shift codes for them: in the 52-primitive stream the objects of a task share their size, so a move by the object's own
+    # size and a move by k cells cannot be told apart there, and uniform dreams over 104 codes gave each old code 1/104 of
+    # the replay where the old world's file gave its primitive 1/24. The second sleep again, its dreams drawn by how often
+    # each code answered a task while awake (memory_dream_replay.py --by-use).
+    config = one_step(43, steps=1000, codes=104, changes={**hard_em, "train.init_from": "runs/sleep_dream_m24_to_m52_s43/ckpt/step-002000.pt", "train.ckpt_every": 1000},
+                      data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/memory_round2_dream_s43_rep/lv1_train.h5", f"{DATA}/dream_replay2_by_use_s43/lv1_train.h5"]
+    config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed1600/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+    config["evals"][0]["tables"] = True
+    config["evals"][0]["every"] = 500
+    config["evals"][1]["every"] = 1000
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 250, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+    configs["sleep2_dream_by_use_m24_to_m52_s43"] = config
     # prices in the sleep (2026-11-27 21:45): after three sleeps seeds 42 and 44 still solved none or few of the tasks of
     # scale2, mirror_right and stretch_w. Their codebook records show two of these new primitives on one code (seed 42:
     # scale2 and mirror_right; seed 44: mirror_right and stretch_w), the mixing of the morning inside the sleep, which
@@ -986,6 +1003,21 @@ def main() -> None:
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
             configs[f"sleep4_{tag}_memory_m24_to_m52_s{seed}"] = config
+    # a part of the memory kept out of the sleep (2026-11-27 22:15): the mixed code of seed 42 reproduced its memory tasks'
+    # training pairs at 100% and unseen tasks at 0% to 2%, so prices from fit on training tasks never fired. The fourth
+    # sleep again without prices, on four fifths of the memory; the held-out fifth is then used to ask, per code, whether
+    # it reproduces memory tasks it did not train on (scripts/babytheorist/memory_held_out_fit.py). No label is read.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=1000, codes=104, changes={**hard_em, "train.init_from": f"runs/sleep3_memory_m24_to_m52_s{seed}/ckpt/step-001000.pt", "train.ckpt_every": 1000},
+                          data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/memory_round4_hold_s{seed}_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed3200/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"][1]["every"] = 1000
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 500, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"sleep4_holdout_memory_m24_to_m52_s{seed}"] = config
     # the control for what the fast memory chose (2026-11-27 17:15): the same sleep from fresh rows on 435 tasks drawn at
     # random from the 52-primitive two-pair train file (seed 0, repeated to 40,000 rows), instead of the 435 tasks the
     # memory kept because no code of the frozen model reproduced them.
