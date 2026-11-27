@@ -139,6 +139,11 @@ def main() -> None:
     # (two voted guesses) at the same score on the training tasks. arc30_programmer_s0 was stopped at 4,500 steps for it.
     configs["arc30_colors512_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), color_perms=512, evals_every=10000, ckpt_every=25000,
                                         final_fit=30, final_votes=1, workers=8)
+    # the 30x30 run grown with a map: its 50,000-step checkpoint loads into the parts with a map (the map's reading starts at zero, so the
+    # model starts as that checkpoint) and trains on. On the proxy the map lifted unseen examples of training tasks from 43.8% to 50.3% and
+    # the per-task sleep on evaluation tasks from 29.5% to 36.2%.
+    configs["arc30_map_from50k_s0"] = run(size=30, steps=120000, code_dim=256, map_dim=32, executor=(384, 8), color_perms=512, evals_every=10000, ckpt_every=20000,
+                                          final_fit=30, final_votes=1, workers=8, init_from="runs/arc30_colors512_s0/ckpt/step-050000.pt")
     # a joint sleep of the 30x30 run on all 400 evaluation tasks, from its checkpoints: the first stage before per-task sleeps.
     # Light evaluations inside the run; the answers come from scripts/arc/sleep_per_task.py afterwards.
     for at in (25, 50, 100, 200):
