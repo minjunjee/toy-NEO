@@ -59,6 +59,7 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--votes", type=int, default=64)
+    parser.add_argument("--colors", type=int, default=8, help="colour permutations used for the views (the first of the run's own)")
     parser.add_argument("--fit-steps", type=int, default=0)
     parser.add_argument("--fit-lr", type=float, default=0.05)
     parser.add_argument("--max-tasks", type=int)
@@ -77,7 +78,7 @@ def main() -> None:
     method = build(METHODS, config["method"])
     file = data.eval_tasks(args.split)
     tasks = len(file["names"]) if args.max_tasks is None else min(args.max_tasks, len(file["names"]))
-    views = [(s, c) for c in range(len(data.tables)) for s in range(data.symmetries)]
+    views = [(s, c) for c in range(min(args.colors, len(data.tables))) for s in range(data.symmetries)]
     trained = {key: value.clone() for key, value in model.state_dict().items()}
     tensor = lambda a: torch.from_numpy(np.ascontiguousarray(a)).long().to(device)  # noqa: E731
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
