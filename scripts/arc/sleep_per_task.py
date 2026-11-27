@@ -63,6 +63,7 @@ def main() -> None:
     parser.add_argument("--fit-steps", type=int, default=0)
     parser.add_argument("--fit-lr", type=float, default=0.05)
     parser.add_argument("--max-tasks", type=int)
+    parser.add_argument("--every", type=int, default=1, help="use every k-th task only, for quick comparisons of settings")
     parser.add_argument("--shard", default="0/1")
     parser.add_argument("--merge", type=int, help="combine this many shard files written under --out")
     parser.add_argument("--seed", type=int, default=0)
@@ -83,8 +84,9 @@ def main() -> None:
     tensor = lambda a: torch.from_numpy(np.ascontiguousarray(a)).long().to(device)  # noqa: E731
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     per_task = []
-    for t in range(tasks):
-        if t % shards != shard:
+    chosen = [t for t in range(tasks) if t % args.every == 0]
+    for place, t in enumerate(chosen):
+        if place % shards != shard:
             continue
         started = time.monotonic()
         demo_x, demo_y = file["demo_inputs"][file["demo_task"] == t], file["demo_outputs"][file["demo_task"] == t]
@@ -139,7 +141,7 @@ def main() -> None:
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
-              "fit_steps": args.fit_steps, "shard": args.shard, "per_task": per_task}
+              "fit_steps": args.fit_steps, "every": args.every, "shard": args.shard, "per_task": per_task}
     target = args.out if shards == 1 else args.out.with_suffix(f".shard{shard}.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, indent=1) + "\n")
