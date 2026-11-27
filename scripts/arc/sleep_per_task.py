@@ -4,7 +4,10 @@ seen through the views (symmetries and colour permutations), answer its tests, t
 
 Training on a task. A batch is `--batch` views of the task drawn at random; in each, every demonstration pair is
 predicted from the mean of the programmer's codes of the other pairs, as in the run's own training. Nothing is replayed:
-the weights are dropped after the task, so nothing can be forgotten.
+the weights are dropped after the task, so nothing can be forgotten. `--code` changes where the code comes from: `all`
+uses the programmer's reading of all the pairs of the view, the predicted one included (what is used when answering);
+`free` gives every view a code vector of its own, started from that reading and trained together with the weights, and
+answers with it; `both` adds the losses of `others` and `all`.
 
 Answering. For each of the first `--votes` views the code is the mean of the programmer's codes of all the demonstration
 pairs (optionally moved by `--fit-steps` steps of Adam on them), the test inputs are executed under it, the predictions
@@ -62,6 +65,10 @@ def main() -> None:
     parser.add_argument("--max-pairs", type=int, default=64, help="at most this many pairs in a training step: tasks with many demonstration pairs use fewer views per step")
     parser.add_argument("--lr", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.0)
+    parser.add_argument("--code", choices=("others", "all", "free", "both"), default="others",
+                        help="where a pair's code comes from while training on the task: the programmer's reading of the other pairs (as in pretraining), its "
+                             "reading of all the pairs, a free vector per view started from that reading and trained with the weights, or the first two together")
+    parser.add_argument("--code-lr", type=float, default=0.01, help="learning rate of the free codes")
     parser.add_argument("--votes", type=int, default=64)
     parser.add_argument("--colors", type=int, default=8, help="colour permutations used for the views (the first of the run's own)")
     parser.add_argument("--fit-steps", type=int, default=0)
@@ -102,16 +109,36 @@ def main() -> None:
         seen_x = tensor(np.stack([view(demo_x, s, data.tables[c]) for s, c in views]))          # (V,n,S,S)
         seen_y = tensor(np.stack([view(demo_y, s, data.tables[c]) for s, c in views]))
         model.load_state_dict(trained)
+        free = None
+        if args.code == "free":          # one code of its own for every view, started from what the trained programmer reads in all the pairs
+            model.eval()
+            pairs = len(demo_x)
+            free = torch.cat([read_codes(model, seen_x[i: i + 16].flatten(0, 1), seen_y[i: i + 16].flatten(0, 1), args.eval_batch).view(-1, pairs, model.code_dim).mean(dim=1)
+                              for i in range(0, len(views), 16)]).requires_grad_(True)
         if args.steps:
             model.train()
-            optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+            groups = [{"params": list(model.parameters()), "lr": args.lr, "weight_decay": args.weight_decay}]
+            if free is not None:
+                groups.append({"params": [free], "lr": args.code_lr, "weight_decay": 0.0})
+            optimizer = torch.optim.AdamW(groups)
             size = max(2, min(args.batch, args.max_pairs // len(demo_x)))
             for k in range(args.steps):
                 pick = torch.randint(0, len(views), (size,), generator=generator).to(device)
                 batch = {"inputs": seen_x[pick], "outputs": seen_y[pick], "task": torch.full((size,), -1, device=device), "variant": pick}
                 optimizer.zero_grad(set_to_none=True)
                 with autocast(device):
-                    loss = method.compute_loss(model, batch, k).total
+                    loss = torch.zeros((), device=device)
+                    if args.code in ("others", "both"):       # every pair from the programmer's code of the other pairs, as in the run's own training
+                        loss = loss + method.compute_loss(model, batch, k).total
+                    if args.code in ("free", "all", "both"):  # every pair from one code for the whole view
+                        x, y = batch["inputs"].flatten(0, 1), batch["outputs"].flatten(0, 1)
+                        state = model.encoder(x)
+                        if args.code == "free":
+                            whole = free[pick]
+                        else:                                 # the programmer's code of all the pairs, the predicted pair included: what is used to answer
+                            whole = model.programmer(state, model.encoder(y)).flatten(1).float().view(size, len(demo_x), -1).mean(dim=1)
+                        logits = model.run(state, whole.repeat_interleave(len(demo_x), dim=0))[-1]
+                        loss = loss + torch.nn.functional.cross_entropy(logits.float().flatten(0, 2), y.flatten())
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
@@ -121,11 +148,12 @@ def main() -> None:
         vx, vy = seen_x[:v].flatten(0, 1), seen_y[:v].flatten(0, 1)
         owner = torch.arange(v, device=device).repeat_interleave(n)
         own = read_codes(model, vx, vy, args.eval_batch).view(v, n, -1)
-        code = own.mean(dim=1)
+        code = own.mean(dim=1) if free is None else free.detach()[:v]
         # checks that need no answers, on the first view: demonstration pairs reproduced from the other pairs' code, and from all pairs' code
         others = (own[0].sum(dim=0, keepdim=True) - own[0]) / max(n - 1, 1)
         demo_others = float(predict(model, seen_x[0], others, args.eval_batch).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
         demo_all = float(predict(model, seen_x[0], code[:1].expand(n, -1), args.eval_batch).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
+        del own
         if args.fit_steps:
             code = fit_codes(model, vx, vy, owner, code, args.fit_steps, args.fit_lr, args.eval_batch)
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
@@ -172,7 +200,7 @@ def main() -> None:
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
-              "fit_steps": args.fit_steps, "every": args.every, "shard": args.shard, "per_task": per_task}
+              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "shard": args.shard, "per_task": per_task}
     target = args.out if shards == 1 else args.out.with_suffix(f".shard{shard}.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, indent=1) + "\n")
