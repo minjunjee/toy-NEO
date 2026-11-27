@@ -19,6 +19,7 @@ weights unchanged. Test answers are read only to score.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import sys
 import time
@@ -126,13 +127,16 @@ def main() -> None:
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
         q = len(test_x)
         guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), 256).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
-        first, one, two, misses = [], [], [], []
+        first, one, two, misses, ballots = [], [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
             back = [undo(guess[i, j], s, data.tables[c]) for i, (s, c) in enumerate(used)]
             back = [None if b is None else b.tobytes() for b in back]
-            counts = Counter(b for b in back if b is not None).most_common(2)
+            tally = Counter(b for b in back if b is not None)
+            counts = tally.most_common(2)
             top = [grid for grid, _ in counts]
+            # the five most frequent guesses as (digest of the grid, number of views, is it the answer), so runs can be voted together later
+            ballots.append([[hashlib.md5(grid).hexdigest()[:16], int(count), grid == answer] for grid, count in tally.most_common(5)])
             first.append(back[0] == answer)
             one.append(bool(top) and top[0] == answer)
             two.append(answer in top)
@@ -146,7 +150,7 @@ def main() -> None:
         if device.type == "cuda":
             torch.cuda.synchronize()
         per_task.append({"index": t, "name": str(file["names"][t]), "pairs": int(n), "tests": int(q), "first_view": float(np.mean(first)),
-                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses,
+                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses, "ballots": ballots,
                          "demo_from_others": demo_others, "demo_from_all": demo_all})
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
