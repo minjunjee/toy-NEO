@@ -129,6 +129,8 @@ def main() -> None:
     configs["arc16_given_plain_s0"] = run(size=16, steps=20000, code_dim=256, table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02, table_lr_scale=10.0, color_perms=1, symmetries=1)
     configs["arc16_given_plain_deep_s0"] = run(size=16, steps=20000, code_dim=256, table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02, table_lr_scale=10.0, color_perms=1, symmetries=1,
                                                executor=(384, 8))
+    # the same given codes with the 64 views: every task and view owns a code
+    configs["arc16_given_views_s0"] = run(size=16, steps=20000, code_dim=256, table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02, table_lr_scale=10.0)
     # sleeps in which every evaluation task and view owns a code in the table (210 evaluation tasks fit the 16x16 canvas)
     grown = "runs/arc16_programmer_s0/ckpt/grown_evaluation.pt"
     configs["arc16_sleep_given_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210)
