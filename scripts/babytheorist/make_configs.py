@@ -828,6 +828,18 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"grow_m24_to_m52_pricefit_s{seed}"] = config
+    # dream training on the wider-state models (2026-11-27 12:00): their executor reproduces its codes on states after five
+    # primitives at 95% to 98% (79% before), so the long-program ceiling at 24 primitives, set by the executor, should
+    # rise. The same dream training with verified real pairs as dream_mix_m24_*, from each wider-state run.
+    for seed in (42, 43, 44):
+        config = one_step(seed, steps=6000, codes=48, changes={**hard_em, "method.type": "neo_dream", "method.freeze": ["encoder", "decoder", "executor", "code"],
+                                                              "train.init_from": f"runs/onestep_s_m24_hardem_pairs2_price_reach4_s{seed}/ckpt/step-024000.pt"},
+                          data=suite("many_p24"))
+        del config["data"]["train_max_depth"]
+        config["method"]["real_share"] = 0.5
+        for block in config["evals"]:
+            block["infer"] = {"max_steps": 4, "rollout": "hard"}
+        configs[f"dream_mix_m24_reach4_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
