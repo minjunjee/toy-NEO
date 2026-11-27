@@ -783,7 +783,8 @@ def main() -> None:
     # only the executor learns; everything learns ten times slower; half of each batch replays the usual world. 256 tasks.
     for tag, changes, train in (("execonly", {"method.freeze": ["encoder", "decoder", "programmer", "code"]}, [f"{DATA}/many_p24_pairs2_large_n256/lv1_train.h5"]),
                                 ("lowlr", {"method.lr": 3.0e-5}, [f"{DATA}/many_p24_pairs2_large_n256/lv1_train.h5"]),
-                                ("replay", {}, [f"{DATA}/many_p24_pairs2_large_n256_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"])):
+                                ("replay", {}, [f"{DATA}/many_p24_pairs2_large_n256_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]),
+                                ("replay1024", {}, [f"{DATA}/many_p24_pairs2_large_n1024_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"])):
         config = one_step(43, steps=2000, codes=48, changes={**hard_em, "train.init_from": "runs/onestep_s_m24_hardem_pairs2_price_s43/ckpt/step-024000.pt", **changes},
                           data=suite("many_p24"))
         config["data"]["type"] = "babytheorist_episodes"
@@ -793,7 +794,7 @@ def main() -> None:
         config["evals"][0]["every"] = 500
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
-        configs[f"adapt_n256_{tag}_m24_large_s43"] = config
+        configs["adapt_n1024_replay_m24_large_s43" if tag == "replay1024" else f"adapt_n256_{tag}_m24_large_s43"] = config
     # longer prices (2026-11-27 11:10): seeds 45 and 46 ended at 51% and 53% with prices (83% and 71% without). Only transpose
     # got a code of its own; when the prices ended at 8,000 steps their executor still got the four 25% to 61% right, where
     # seed 43's got 77% to 90%. Prices that end before the executor can tell the four apart let hard EM join the codes again.
