@@ -44,6 +44,8 @@ def main() -> None:
         for ax, (split, way, _) in zip(axes, PANELS):
             points = [(0, before.get(f"final/{split}/{way}"))] + [(row["step"], row.get(f"during/{split}/{way}")) for row in evals if f"during/{split}/zero" in row]
             points = [(s, v) for s, v in points if v is not None]
+            if not points:
+                continue
             ax.plot([p[0] for p in points], [100 * p[1] for p in points], marker="o", ms=3, color=f"C{index}", label=label)
             line[f"{split} {way}"] = f"{100 * points[0][1]:.1f} to {100 * points[-1][1]:.1f}"
         final = next((row for row in reversed(evals) if any(k.startswith("final/") for k in row)), None)
