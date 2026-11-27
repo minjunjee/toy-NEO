@@ -47,6 +47,13 @@ weight holds for `price_hold` steps and falls linearly to zero at `price_off`; a
 winning code works again, and by then it can only join codes that the executor runs the same way. This changes how
 tasks are assigned, not the losses the parts learn from. Off by default.
 
+Prices that fade with fit (`price_fit` true). A fixed schedule can end before the executor tells similar primitives
+apart (seeds 45 and 46 of 2026-11-27), and then hard EM joins half-split codes again. With `price_fit`, each code also
+keeps a moving average (decay `price_fit_decay`) of how often the executor, run with that code, reproduces both pairs of
+the tasks it wins exactly, and its price is multiplied by one minus that rate. A code that reproduces its tasks costs
+nothing however much it is used; a code that keeps failing on its tasks, as a mixed code does, keeps its price and keeps
+pushing them away. Combined with the schedule (set `price_hold` past the end of training to rely on fit alone).
+
 No label is used. With two-pair tasks the grouping of pairs is used, never the program.
 """
 
@@ -65,7 +72,8 @@ class NEOEM(NEO):
     def __init__(self, *args, candidates: int = 0, train_top: int = 4, temperature_start: float = 10.0, temperature_end: float = 0.1,
                  anneal_steps: int = 10000, programmer_scale: float = 10.0, dead_share: float = 0.0, usage_decay: float = 0.99,
                  bonus_step: float = 0.05, bonus_cap: float = 20.0, jitter: float = 1.0e-3, keep_fraction: float = 1.0,
-                 price_weight: float = 0.0, price_hold: int = 3000, price_off: int = 8000, **kwargs) -> None:
+                 price_weight: float = 0.0, price_hold: int = 3000, price_off: int = 8000, price_fit: bool = False, price_fit_decay: float = 0.99,
+                 **kwargs) -> None:
         super().__init__(*args, **kwargs)
         if self.max_length != 1:
             raise ValueError("neo_em is a one-step model: max_length must be 1")
@@ -75,10 +83,19 @@ class NEOEM(NEO):
         self.dead_share, self.usage_decay, self.bonus_step, self.bonus_cap, self.jitter = dead_share, usage_decay, bonus_step, bonus_cap, jitter
         self.keep_fraction = keep_fraction
         self.price_weight, self.price_hold, self.price_off = price_weight, price_hold, price_off
+        self.price_fit, self.price_fit_decay = price_fit, price_fit_decay
         size = self.code.size
         self.register_buffer("usage", torch.full((size,), 1.0 / size), persistent=False)
         self.register_buffer("bonus", torch.zeros(size), persistent=False)
+        self.register_buffer("fit", torch.zeros(size), persistent=False)  # moving rate of exact reproduction of the tasks a code wins
         self.last = {}
+
+    def prices(self, step: int) -> torch.Tensor:
+        """Each code's price in nats for the E step: the weight of the schedule times (share of first places times the
+        codebook size, minus one), times one minus the code's fit when `price_fit`."""
+
+        price = self.price_scale(step) * (self.usage * self.code.size - 1.0)
+        return price * (1.0 - self.fit) if self.price_fit else price
 
     def price_scale(self, step: int) -> float:
         if step <= self.price_hold:
@@ -120,7 +137,7 @@ class NEOEM(NEO):
             if self.training:
                 loss = loss - self.bonus[tried] + self.jitter * torch.rand_like(loss)
                 if self.price_weight > 0:
-                    loss = loss + self.price_scale(step) * (self.usage * size - 1.0)[tried]
+                    loss = loss + self.prices(step)[tried]
             temperature = self.temperature(step) if self.training else self.temperature_end
             weights = torch.softmax(-loss / temperature, dim=1)                                     # (B, m)
             fit = loss.min(dim=1).values                                                           # how well the best code explains the task
@@ -133,8 +150,11 @@ class NEOEM(NEO):
         share = top.values / top.values.sum(dim=1, keepdim=True)
         k = top.indices.shape[1]
         recon = 0
+        exact = torch.ones(batch_size, dtype=torch.bool, device=x.device)
         for i, (source, goal) in enumerate(pairs):
             decoded = self.decoder(self.executor(source.repeat_interleave(k, dim=0), table[top.indices.flatten()][:, None].to(source.dtype)))
+            with torch.no_grad():
+                exact &= decoded.view(batch_size, k, *decoded.shape[1:])[:, 0].argmax(dim=-1).eq(goal).flatten(1).all(dim=1)
             part = F.cross_entropy(decoded.reshape(-1, decoded.shape[-1]).float(), goal.repeat_interleave(k, dim=0).reshape(-1).long(), reduction="none")
             recon = recon + (part.view(batch_size, k, -1).mean(dim=2) * share).sum(dim=1) / len(pairs)   # per task
             if i == 0:
@@ -150,11 +170,17 @@ class NEOEM(NEO):
                 self.usage.mul_(self.usage_decay).add_((1 - self.usage_decay) * firsts)
                 dead = self.usage < self.dead_share / size
                 self.bonus.copy_(torch.where(dead, (self.bonus + self.bonus_step).clamp(max=self.bonus_cap), torch.zeros_like(self.bonus)))
+                if self.price_fit:
+                    won = top.indices[kept, 0]
+                    count = torch.bincount(won, minlength=size).float()
+                    rate = torch.bincount(won, weights=exact[kept].float(), minlength=size) / count.clamp(min=1)
+                    seen = count > 0
+                    self.fit.copy_(torch.where(seen, self.price_fit_decay * self.fit + (1 - self.price_fit_decay) * rate, self.fit))
         self.last = {"em_recon": recon.mean().detach(), "em_programmer": programmer_loss.mean().detach(), "em_temperature": temperature,
                      "em_entropy": -(responsibility.clamp_min(1e-9).log() * responsibility).sum(dim=1).mean(),
                      "em_programmer_agrees": (similarity.argmax(dim=1) == top.indices[:, 0]).float().mean(),
                      "em_dead": (self.usage < max(self.dead_share, 0.1) / size).float().sum(), "em_bonus_max": self.bonus.max(),
-                     "em_price": self.price_scale(step) if self.price_weight > 0 else 0.0, "em_usage_max": self.usage.max() * size,
+                     "em_price": self.price_scale(step) if self.price_weight > 0 else 0.0, "em_usage_max": self.usage.max() * size, "em_fit_mean": self.fit.mean(),
                      "em_fit_kept": fit[kept].float().mean(), "em_fit_dropped": fit[~kept].float().mean() if (~kept).any() else fit.new_zeros(())}
         return NEOOutput([best], torch.ones(batch_size, dtype=torch.long, device=x.device), torch.zeros((), device=x.device),
                          [recon + programmer_loss], [top.indices[:, 0]], 0.0, auto_logits, observations, y)

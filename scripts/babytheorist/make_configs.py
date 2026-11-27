@@ -805,6 +805,17 @@ def main() -> None:
         config["evals"][0]["tables"] = True
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         configs[f"onestep_s_m24_hardem_pairs2_pricelong_s{seed}"] = config
+    # prices that fade with fit (2026-11-27 11:30, models/neo_em.py price_fit): a code's price is multiplied by one minus
+    # how often it reproduces the tasks it wins, so a mixed code stays priced until the executor separates it and a clean
+    # code costs nothing. No schedule: the weight holds to the end. Same seeds as the longer prices.
+    for seed in (43, 45, 46):
+        config = one_step(seed, steps=24000, codes=48, changes={**price, "model.price_fit": True, "model.price_hold": 24000, "model.price_off": 24001},
+                          data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_pairs2_pricefit_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs

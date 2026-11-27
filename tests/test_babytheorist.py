@@ -419,6 +419,32 @@ def test_hard_em_prices_push_tasks_off_an_overused_code_and_fade() -> None:
     assert not (out.code_indices_by_length[0] == 0).any()
 
 
+def test_hard_em_fit_prices_spare_codes_that_reproduce_their_tasks() -> None:
+    from core.registry import MODELS
+
+    import_all()
+    torch.manual_seed(0)
+    spec = {
+        "encoder": {"type": "token_embed", "vocab": 10, "d_model": 32}, "decoder": {"type": "linear_head", "d_model": 32, "vocab": 10, "layer_norm_eps": 1.0e-6, "spatial": [6, 6]},
+        "programmer": {"type": "token_pair_transformer", "state_dim": 32, "d_model": 32, "action_dim": 8, "num_heads": 4, "d_ff": 64, "num_layers": 1, "grid_dim": 6, "dropout": 0.0, "layer_norm_eps": 1.0e-6},
+        "code": {"type": "vq", "size": 5, "dim": 8, "num_tokens": 1, "commitment": 0.25, "stochastic": False, "commitment_grad": True},
+        "executor": {"type": "adaln_transformer", "state_dim": 32, "cond_dim": 8, "d_model": 32, "num_layers": 1, "num_heads": 4, "d_ff": 64, "dropout": 0.0, "grid_dim": 6},
+        "max_length": 1, "length_coefficient": 0.95,
+    }
+    model = MODELS["neo_em"](**spec, train_top=1, temperature_start=0.01, temperature_end=0.01, price_weight=2.0, price_hold=100, price_off=200, price_fit=True)
+    x, y = torch.randint(0, 10, (4, 6, 6)), torch.randint(0, 10, (4, 6, 6))
+    # an overused code that reproduces its tasks costs nothing; the same code failing its tasks is priced and loses them
+    model.usage.copy_(torch.tensor([0.96, 0.01, 0.01, 0.01, 0.01]))
+    model.fit.copy_(torch.tensor([1.0, 0.0, 0.0, 0.0, 0.0]))
+    assert model.prices(0)[0] == 0.0 and (model.prices(0)[1:] < 0).all()
+    model.fit.copy_(torch.tensor([0.0, 1.0, 1.0, 1.0, 1.0]))
+    assert model.prices(0)[0] > 0 and (model.prices(0)[1:] == 0).all()
+    out = model({"x": x, "y": y}, step=0)
+    assert not (out.code_indices_by_length[0] == 0).any()
+    # the fit of the codes that won tasks moves towards their exact rate (0 here: random targets are not reproduced)
+    assert float(model.fit[out.code_indices_by_length[0]].max()) < 1.0
+
+
 def test_dream_trains_only_the_programmer_on_codes_it_uses() -> None:
     from core.registry import METHODS, MODELS
 
