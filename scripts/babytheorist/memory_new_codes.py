@@ -59,6 +59,7 @@ def main() -> None:
     parser.add_argument("--lr", type=float, default=0.05)
     parser.add_argument("--init", choices=("zero", "nearest"), default="zero", help="start the new code from zero or from the existing codes that fit best")
     parser.add_argument("--starts", type=int, default=1, help="with --init nearest: how many of the best-fitting existing codes to start from (zero is always one more)")
+    parser.add_argument("--unit", action="store_true", help="fit the new code as a vector of length 1, as the codebook gives its codes")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -99,7 +100,7 @@ def main() -> None:
             order = sorted(range(len(losses)), key=losses.__getitem__)
             starts = [table[c].clone() for c in order[:args.starts]] if args.init == "nearest" else []
             starts.append(torch.zeros(table.shape[1], device=device))
-            vector = fit_codes(model, state, y, starts, args.fit_steps, args.lr)   # all starts in one batch, lowest loss kept
+            vector = fit_codes(model, state, y, starts, args.fit_steps, args.lr, unit=args.unit)   # all starts in one batch, lowest loss kept
             with torch.no_grad():
                 fit = float(model.decoder(model.executor(state, vector.expand(len(x), -1)[:, None])).argmax(-1).eq(y).flatten(1).all(dim=1).float().mean())
                 held = float(model.decoder(model.executor(qstate, vector.expand(len(qx), -1)[:, None])).argmax(-1).eq(qy).flatten(1).all(dim=1).float().mean())
@@ -109,7 +110,7 @@ def main() -> None:
     summary = {f"k{k}": round(sum(e[f"k{k}"]["held_out"] for e in results.values()) / len(results), 3) for k in args.shots}
     summary["best_existing_code"] = round(sum(e["best_existing_code"] for e in results.values()) / len(results), 3)
     report = json.loads(args.out.read_text()) if args.out.exists() else []
-    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "init": args.init, "starts": args.starts, "summary": summary, "primitives": results})
+    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "init": args.init, "starts": args.starts, "unit": args.unit, "summary": summary, "primitives": results})
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1) + "\n")
     print("mean over new primitives:", summary, flush=True)

@@ -890,6 +890,19 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"sleep_{tag}_m24_to_m52_s43"] = config
+    # the round of waking, sleeping and waking again at two more seeds (2026-11-27 18:40): the 24-primitive price models of
+    # seeds 42 and 44 meet the same 800 tasks, and sleep from the fast memory's codes as rows, as sleep_memory_m24_to_m52_s43.
+    for seed in (42, 44):
+        config = one_step(seed, steps=2000, codes=104, changes={**hard_em, "train.init_from": f"runs/grow_init/m24_price_s{seed}_to_m52_sleep_memory.pt"},
+                          data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/memory_refit_s{seed}_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"sleep_memory_m24_to_m52_s{seed}"] = config
     # the control for what the fast memory chose (2026-11-27 17:15): the same sleep from fresh rows on 435 tasks drawn at
     # random from the 52-primitive two-pair train file (seed 0, repeated to 40,000 rows), instead of the 435 tasks the
     # memory kept because no code of the frozen model reproduced them.
@@ -916,6 +929,36 @@ def main() -> None:
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
     configs["sleep_fresh2400_m24_to_m52_s43"] = config
+    # a second round of waking and sleeping (2026-11-27 18:20): the model after the first sleep (fresh rows) met tasks 801 to
+    # 1,600 of the same stream and solved 79% of the new primitives' tasks (38% to 63% before the sleep) with 43 new codes
+    # (150 before). The second sleep continues from that model on the memory of both wakes (the first wake's 435 tasks and
+    # those the slept model's codes did not reproduce in the second), half of each batch replaying the 24-primitive file,
+    # 1,000 steps (the first sleep stopped rising after 500), scored on the eval file without the 1,600 stream rows.
+    config = one_step(43, steps=1000, codes=104, changes={**hard_em, "train.init_from": "runs/sleep_fresh_m24_to_m52_s43/ckpt/step-002000.pt", "train.ckpt_every": 1000},
+                      data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/memory_round2_s43_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+    config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed1600/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+    config["evals"][0]["tables"] = True
+    config["evals"][0]["every"] = 500
+    config["evals"][1]["every"] = 1000
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+    configs["sleep2_fresh_m24_to_m52_s43"] = config
+    # a third round (2026-11-27 19:05): after the second sleep the model solved 86% of the new primitives' tasks in tasks
+    # 1,601 to 2,400 (79% after the first sleep, 51% before any) with 25 new codes. The third sleep continues from the second
+    # on the memory of all three wakes, 1,000 steps, scored on the eval file without the 2,400 stream rows.
+    config = one_step(43, steps=1000, codes=104, changes={**hard_em, "train.init_from": "runs/sleep2_fresh_m24_to_m52_s43/ckpt/step-001000.pt", "train.ckpt_every": 1000},
+                      data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/memory_round3_s43_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+    config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed2400/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+    config["evals"][0]["tables"] = True
+    config["evals"][0]["every"] = 500
+    config["evals"][1]["every"] = 1000
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+    configs["sleep3_fresh_m24_to_m52_s43"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs

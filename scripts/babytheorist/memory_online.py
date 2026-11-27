@@ -44,20 +44,23 @@ from support_search import code_table  # noqa: E402
 from training.evaluate import load_run  # noqa: E402
 
 
-def fit(model, state, y, starts: list[torch.Tensor], steps: int, lr: float) -> torch.Tensor:
+def fit(model, state, y, starts: list[torch.Tensor], steps: int, lr: float, unit: bool = False) -> torch.Tensor:
     """Fit code vectors from several starting points at once (one batch, one Adam per row, so the rows do not interact);
-    return the row with the lowest reproduction loss at the last step."""
+    return the row with the lowest reproduction loss at the last step. With `unit`, the executor always gets the vector
+    scaled to length 1, as the codebook gives its codes, and the returned vector has length 1."""
     v = torch.stack(starts).clone().requires_grad_(True)
     s, n = v.shape[0], state.shape[0]
     big_state, big_y = state.repeat(s, *([1] * (state.dim() - 1))), y.repeat(s, *([1] * (y.dim() - 1)))
     opt = torch.optim.Adam([v], lr=lr)
     for _ in range(steps):
         opt.zero_grad()
-        logits = model.decoder(model.executor(big_state, v.repeat_interleave(n, dim=0)[:, None]))
+        code = F.normalize(v, dim=-1) if unit else v
+        logits = model.decoder(model.executor(big_state, code.repeat_interleave(n, dim=0)[:, None]))
         per = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), big_y.reshape(-1), reduction="none").view(s, -1).mean(dim=1)
         per.sum().backward()
         opt.step()
-    return v.detach()[int(per.argmin())]
+    best = v.detach()[int(per.argmin())]
+    return F.normalize(best, dim=-1) if unit else best
 
 
 def reproduced_tasks(model, state, y, vector: torch.Tensor) -> torch.Tensor:
@@ -81,6 +84,7 @@ def main() -> None:
     parser.add_argument("--reuse-refit", type=int, default=0, help="before allocating, refit up to this many new codes (lowest loss on the task first) "
                         "on their memory plus the task, and keep the first that reproduces the task and --accept of its memory")
     parser.add_argument("--accept", type=float, default=0.75)
+    parser.add_argument("--skip", type=int, default=0, help="leave out this many tasks at the start of the fixed order (a later part of the same stream)")
     parser.add_argument("--save-memory", type=Path, help="save the new code vectors and, for each, the eval rows of its memory tasks (for a sleep that consolidates them)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -94,7 +98,7 @@ def main() -> None:
     with h5py.File(args.eval, "r") as f:
         suites = [json.loads(t) for t in f["transformation_suites"][:]]
         rows = [i for i, s in enumerate(suites) if len(s) == 1]
-        order = np.random.default_rng(args.seed).permutation(rows)[: args.tasks]
+        order = np.random.default_rng(args.seed).permutation(rows)[args.skip: args.skip + args.tasks]
         order = order.tolist()
         xs = torch.tensor(f["inputs"][:][order], dtype=torch.long, device=device)   # h5py wants increasing indices; read all, then pick
         ys = torch.tensor(f["outputs"][:][order], dtype=torch.long, device=device)
@@ -175,7 +179,7 @@ def main() -> None:
     served = [dict(m["served"].most_common(3)) for m in memory]
     new_prims = sorted({n for n in names if n not in known})
     report = json.loads(args.out.read_text()) if args.out.exists() else []
-    report.append({"run": args.run.name, "reuse_refit": args.reuse_refit, "accept": args.accept, "fit_steps": args.fit_steps,
+    report.append({"run": args.run.name, "skip": args.skip, "reuse_refit": args.reuse_refit, "accept": args.accept, "fit_steps": args.fit_steps,
                    "refit_steps": args.refit_steps, "tasks": len(log), "new_codes": len(new_codes), "new_primitives_seen": len(new_prims),
                    "windows": windows, "codes_served": served, "log": log})
     args.out.parent.mkdir(parents=True, exist_ok=True)

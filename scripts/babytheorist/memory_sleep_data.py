@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Files for a sleep that consolidates an online fast memory (memory_online.py --save-memory) into the weights.
 
-From the saved memory: the tasks of the stream that no code of the frozen model reproduced (the tasks that went into the
+From the saved memory (or several, from successive parts of one stream): the tasks of the stream that no code of the frozen model reproduced (the tasks that went into the
 new codes' memory) become a two-pair train file, their two support pairs only, repeated to `--rows` rows so that, mixed
 with a replay file of the same size, half of each batch is memory and half is the old world. The eval file of the stream
 is copied without the stream's rows, so the consolidated model is scored on tasks it never saw. No label is read to pick
@@ -24,13 +24,15 @@ import torch
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--memory", type=Path, required=True)
+    parser.add_argument("--memory", type=Path, nargs="+", required=True, help="one saved memory, or several of the same eval file (their tasks are joined)")
     parser.add_argument("--train-out", type=Path, required=True)
     parser.add_argument("--eval-out", type=Path)
     parser.add_argument("--rows", type=int, default=40000)
     args = parser.parse_args()
-    saved = torch.load(args.memory, map_location="cpu", weights_only=False)
-    rows = sorted({r for m in saved["memory_rows"] for r in m})
+    loaded = [torch.load(path, map_location="cpu", weights_only=False) for path in args.memory]
+    assert len({m["eval"] for m in loaded}) == 1, "the memories must come from the same eval file"
+    saved = {"eval": loaded[0]["eval"], "rows": sorted({r for m in loaded for r in m["rows"]})}
+    rows = sorted({r for m in loaded for code in m["memory_rows"] for r in code})
     with h5py.File(saved["eval"], "r") as f:
         data = {k: f[k][:] for k in f.keys()}
     reps = int(np.ceil(args.rows / len(rows)))
