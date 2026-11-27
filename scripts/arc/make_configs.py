@@ -50,23 +50,30 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
     }
 
 
-def sleep(base: dict, start: str, new: str, steps: int, lr: float = 1.0e-4, new_share: float = 0.5, every: int | None = None, fit: int = 30, votes: int = 8) -> dict:
+def sleep(base: dict, start: str, new: str, steps: int, lr: float = 1.0e-4, new_share: float = 0.5, every: int | None = None, fit: int = 30, votes: int = 8,
+          given: int = 0, table_share: float = 0.5, tie_weight: float = 0.0, table_lr_scale: float = 10.0) -> dict:
     """A sleep of a trained run: all parts train on the demonstration pairs of new tasks (`new`, written by
-    scripts/arc/sleep_data.py) mixed with replayed episodes of the run's own train file. New tasks have no name: their
-    code comes from their pairs alone."""
+    scripts/arc/sleep_data.py) mixed with replayed episodes of the run's own train file. By default new tasks have no
+    name: their code comes from their pairs alone. With `given` (the number of new tasks) every new task and view owns a
+    code in the table, started from what the frozen model reads (`start` is then a checkpoint from scripts/arc/grow_table.py),
+    and `table_share` of the new episodes are executed with it; the replayed tasks are then the ones without a name."""
 
     config = {key: dict(value) if isinstance(value, dict) else value for key, value in base.items()}
     old = base["data"]["train"]
     config["data"] = {**base["data"], "train": [new, old] if new_share < 1 else [new], "shares": [new_share, 1 - new_share] if new_share < 1 else [1.0],
-                      "named": [False, True] if new_share < 1 else [False]}
+                      "named": [bool(given), not given] if new_share < 1 else [bool(given)]}
     config["method"] = {**base["method"], "lr": lr, "total_steps": steps, "warmup_ratio": 0.05}
+    if given:
+        config["model"] = {**base["model"], "tasks": given, "table_share": table_share}
+        config["method"] = {**config["method"], "tie_weight": tie_weight, "table_lr_scale": table_lr_scale}
     every = every or max(steps // 8, 1)
     splits = base["data"]["evals"]
-    table = bool(base["model"]["tasks"])
-    config["evals"] = [{"type": "arc_tasks", "name": "during", "every": every, "split": split, "batch_size": 256, "table": table,
+    table = lambda split: {"table": True, "table_tasks": "same"} if given and split == "evaluation" else {"table": bool(base["model"]["tasks"]) and not given}  # noqa: E731
+    config["evals"] = [{"type": "arc_tasks", "name": "during", "every": every, "split": split, "batch_size": 256, **table(split),
                         **({"fit_steps": fit, "fit_lr": 0.05} if split == "evaluation" and fit else {})} for split in splits]
-    config["evals"] += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, "table": table, "fit_steps": 100,
-                         "fit_lr": 0.05, "fit_report": [10, 30], "votes": votes} for split in splits]
+    many = lambda split: bool(given) and split == "evaluation"  # noqa: E731  every view of the table is voted, with a shorter fit
+    config["evals"] += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, **table(split), "fit_steps": 30 if many(split) else 100,
+                         "fit_lr": 0.05, "fit_report": [10] if many(split) else [10, 30], "votes": base["model"]["variants"] if many(split) else votes} for split in splits]
     config["train"] = {**base["train"], "steps": steps, "ckpt_every": steps, "init_from": start}
     return config
 
@@ -99,6 +106,10 @@ def main() -> None:
     configs["arc16_code256_reader_s0"] = run(**wide, programmer=(384, 6))
     configs["arc16_code256_pairs6_s0"] = run(**wide, pairs=6)
     configs["arc16_code256_half_plain_s0"] = run(**wide, plain_share=0.5)
+    # sleeps in which every evaluation task and view owns a code in the table (210 evaluation tasks fit the 16x16 canvas)
+    grown = "runs/arc16_programmer_s0/ckpt/grown_evaluation.pt"
+    configs["arc16_sleep_given_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210)
+    configs["arc16_sleep_given_all_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210, table_share=1.0)
     # the full canvas: all 400 tasks at 30x30, the best of the first proxy batch (wider and deeper executor, code of 256 dims).
     # The heavy frozen evaluation is run apart (scripts/arc/evaluate.py); the run itself ends with a light one.
     configs["arc30_programmer_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), evals_every=10000, ckpt_every=25000, final_fit=30, final_votes=1, workers=8)

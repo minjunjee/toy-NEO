@@ -11,7 +11,10 @@ What is measured, from the cheapest way of naming the task's code to the dearest
   *_vote1/2   the same done for `votes` views of the task (symmetries of the square and the colour permutations the
               training set used), each prediction mapped back, and the most frequent grid taken (vote1) or the two most
               frequent (vote2: solved when either is right). Predictions whose non-pad cells are not a rectangle are dropped.
-  table       for tasks of the training set (`table: true`): executed with the code the table holds for the task
+  given       for tasks that own codes in the model's table (`table: true`): executed with the code the table holds for
+              the task and the view, and voted over views like the others. The tasks are matched to the table by the
+              file's `train_index`, or one to one with `table_tasks: same` (a table grown for these very tasks). Scores
+              of this way are means over the tasks that own codes; `table` is the same number under its older name.
 Checks that need no answers:
   verify_pairs, verify_tasks   demonstration pairs reproduced from the mean code of the task's other pairs, and tasks
               where all of them are
@@ -129,12 +132,23 @@ def arc_tasks(model, data, cfg: dict, step: int, device: torch.device) -> dict:
     tensor = lambda a: torch.from_numpy(np.ascontiguousarray(a)).long().to(device)  # noqa: E731
     tests_of = np.bincount(test_task, minlength=tasks)
 
-    def score(solved: np.ndarray) -> float:
-        return float((np.bincount(test_task, weights=solved.astype(float), minlength=tasks) / tests_of).mean())
+    def per_task(solved) -> np.ndarray:
+        return np.bincount(test_task, weights=np.asarray(solved, dtype=float), minlength=tasks) / tests_of
 
     symmetries, tables = data.symmetries, data.tables
     views = [(s, c) for c in range(len(tables)) for s in range(symmetries)][:votes]
     ways = ["zero"] + [f"fit{k}" for k in fit_report]
+    index = None                                   # the table's task for each evaluated task, -1 when it owns no codes
+    if cfg.get("table") and getattr(model, "table", None) is not None:
+        if cfg.get("table_tasks") == "same":
+            index = np.arange(tasks)
+        elif "train_index" in file:
+            index = file["train_index"][:tasks].astype(np.int64)
+        if index is not None:
+            index = np.where((index >= 0) & (index < model.tasks), index, -1)
+            index = index if (index >= 0).any() else None
+    if index is not None:
+        ways.append("given")
     guesses: dict[str, list[list[bytes | None]]] = {way: [[] for _ in range(len(test_x))] for way in ways}   # way -> test -> view -> grid
     result: dict = {"tasks": tasks, "tests": int(len(test_x))}
     detail: dict = {}
@@ -160,6 +174,9 @@ def arc_tasks(model, data, cfg: dict, step: int, device: torch.device) -> dict:
             torch.cuda.synchronize()
         zero_seconds = time.monotonic() - started
         keep("zero", zero, symmetry, table)
+        if index is not None and number < model.variants:          # the view's number is its variant index in the table
+            row = torch.from_numpy(np.maximum(index[test_task], 0) * model.variants + number).to(device)
+            keep("given", predict(model, vt, model.table.weight[row].float(), batch_size), symmetry, table)
         if first:
             result["seconds_per_task_zero"] = zero_seconds / tasks
             count = torch.zeros(tasks, device=device).index_add_(0, d_task, torch.ones(len(d_task), device=device))
@@ -182,27 +199,21 @@ def arc_tasks(model, data, cfg: dict, step: int, device: torch.device) -> dict:
                 detail["fit_demo"] = fit_demo.cpu().tolist()
 
     answers = [grid.tobytes() for grid in test_y.astype(np.uint8)]
+    known = None if index is None else index >= 0
     for way in ways:
-        solved = np.array([g[0] == a for g, a in zip(guesses[way], answers)])
-        result[way] = score(solved)
-        detail[way] = (np.bincount(test_task, weights=solved.astype(float), minlength=tasks) / tests_of).tolist()
+        among = known if way == "given" else np.ones(tasks, dtype=bool)
+        first_view = per_task([g[0] == a for g, a in zip(guesses[way], answers)])
+        result[way] = float(first_view[among].mean())
+        detail[way] = first_view.tolist()
         if votes > 1:
             top = [[grid for grid, _ in Counter(x for x in g if x is not None).most_common(2)] for g in guesses[way]]
-            result[f"{way}_vote1"] = score(np.array([bool(t) and t[0] == a for t, a in zip(top, answers)]))
-            result[f"{way}_vote2"] = score(np.array([a in t for t, a in zip(top, answers)]))
-            if way == ways[-1]:
-                detail["vote2"] = (np.bincount(test_task, weights=np.array([a in t for t, a in zip(top, answers)], dtype=float), minlength=tasks) / tests_of).tolist()
-
-    if cfg.get("table") and getattr(model, "table", None) is not None and "train_index" in file:
-        index = file["train_index"][:tasks].astype(np.int64)
-        known = (index >= 0) & (index < model.tasks)
-        if known.any():
-            row = torch.from_numpy(index[test_task] * model.variants).to(device).clamp(min=0)
-            given = predict(model, tensor(test_x), model.table.weight[row].float(), batch_size).eq(tensor(test_y)).flatten(1).all(dim=1).cpu().numpy()
-            per_task = np.bincount(test_task, weights=given.astype(float), minlength=tasks) / tests_of
-            result["table"] = float(per_task[known].mean())
-            for way in ("zero", ways[-1]):
-                result[f"{way}_known"] = float(np.asarray(detail[way])[known].mean())
+            one, two = per_task([bool(t) and t[0] == a for t, a in zip(top, answers)]), per_task([a in t for t, a in zip(top, answers)])
+            result[f"{way}_vote1"], result[f"{way}_vote2"] = float(one[among].mean()), float(two[among].mean())
+            detail[f"{way}_vote2"] = two.tolist()
+    if known is not None:
+        result["table"] = result["given"]
+        for way in ("zero", ways[-2]):
+            result[f"{way}_known"] = float(np.asarray(detail[way])[known].mean())
     if cfg.get("detail"):
         result["detail"] = {"names": [str(n) for n in file["names"][:tasks]], **detail}
     return result
