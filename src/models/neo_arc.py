@@ -14,7 +14,9 @@ With probability `table_share` an episode is executed with its table code instea
 learns the transformations from a code that does not depend on how well the programmer reads yet; and a tie term pulls the
 programmer's codes and the table code of the same variant together, so the table lives where the programmer writes. The
 tie has two sides: the table code is pulled to the mean of the programmer's codes, and the programmer's codes are pulled
-to the table code with weight `tie_programmer` (0: the table only follows, and holds the average code of its variant).
+to the table code with weight `tie_programmer` (0: the table only follows, and holds the average code of its variant);
+the table's side has weight `tie_table` (0 with `table_share` 1: the executor learns from the table codes alone, which
+are free, and the programmer only learns to imitate them, taking nothing from and giving nothing to the executor).
 The table is never used on a task outside the training set (task index -1): there the code comes from the pairs alone.
 
 A code of several vectors (`code_tokens` > 1). The programmer writes `code_tokens` vectors and the executor reads them
@@ -54,14 +56,14 @@ class NEOArcOutput:
 class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
                  table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1,
-                 program_length: int = 1, decode_every_step: bool = False) -> None:
+                 program_length: int = 1, decode_every_step: bool = False, tie_table: float = 1.0) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
         self.programmer = build(PROGRAMMERS, programmer)
         self.executor = build(EXECUTORS, executor)
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
-        self.tie_programmer, self.code_tokens = tie_programmer, code_tokens
+        self.tie_programmer, self.code_tokens, self.tie_table = tie_programmer, code_tokens, tie_table
         self.program_length, self.decode_every_step = program_length, decode_every_step
         if code_dim % (code_tokens * program_length):
             raise ValueError("code_dim must be a multiple of code_tokens * program_length")
@@ -112,7 +114,7 @@ class NEOArc(nn.Module):
             given = self.table(batch["task"].clamp(min=0) * self.variants + batch["variant"]).float()       # (B,D)
             if known.any():
                 apart = ((code - given[:, None].detach()).pow(2).sum(-1) * there[..., 0]).sum(dim=1) / count[:, 0, 0]
-                tie = (self.tie_programmer * apart + (given - (own.sum(dim=1) / count[:, 0]).detach()).pow(2).sum(-1))[known].mean()
+                tie = (self.tie_programmer * apart + self.tie_table * (given - (own.sum(dim=1) / count[:, 0]).detach()).pow(2).sum(-1))[known].mean()
             if self.training:
                 from_table = (torch.rand(b, device=x.device) < self.table_share) & known
                 code = torch.where(from_table[:, None, None], given[:, None].expand_as(code), code)

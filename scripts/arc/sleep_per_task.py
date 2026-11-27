@@ -105,6 +105,10 @@ def main() -> None:
                              "reading of all the pairs, a free vector per view started from that reading and trained with the weights, or the first two together")
     parser.add_argument("--code-lr", type=float, default=0.01, help="learning rate of the free codes")
     parser.add_argument("--votes", type=int, default=64)
+    parser.add_argument("--symmetries", type=int, help="symmetries used for the views, when the run was trained with fewer")
+    parser.add_argument("--color-perms", type=int, help="colour permutations to draw the views from, when the run was trained with fewer")
+    parser.add_argument("--code-init", choices=("read", "first"), default="read",
+                        help="start of a free code: the programmer's reading of that view, or its reading of the task as given for every view")
     parser.add_argument("--scales", type=int, default=1, help="also use views with every cell enlarged up to this factor, for tasks whose grids then still fit the canvas")
     parser.add_argument("--colors", type=int, default=8, help="colour permutations used for the views (the first of the run's own)")
     parser.add_argument("--fit-steps", type=int, default=0)
@@ -123,7 +127,8 @@ def main() -> None:
     shard, shards = (int(v) for v in args.shard.split("/"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, config, step = load_run(args.run, device, args.checkpoint)
-    data = build(DATASETS, config["data"])
+    views_of_run = {"color_perms": len(build(DATASETS, {**config["data"], "evals": {}}).tables), "symmetries": config["data"].get("symmetries", 8)}
+    data = build(DATASETS, {**config["data"], "color_perms": args.color_perms or views_of_run["color_perms"], "symmetries": args.symmetries or views_of_run["symmetries"]})
     method = build(METHODS, config["method"])
     file = data.eval_tasks(args.split)
     tasks = len(file["names"]) if args.max_tasks is None else min(args.max_tasks, len(file["names"]))
@@ -155,7 +160,10 @@ def main() -> None:
             model.eval()
             pairs = len(demo_x)
             free = torch.cat([read_codes(model, seen_x[i: i + 16].flatten(0, 1), seen_y[i: i + 16].flatten(0, 1), args.eval_batch).view(-1, pairs, model.code_dim).mean(dim=1)
-                              for i in range(0, len(views), 16)]).requires_grad_(True)
+                              for i in range(0, len(views), 16)])
+            if args.code_init == "first":
+                free = free[:1].expand(len(views), -1).clone()
+            free.requires_grad_(True)
         if args.steps:
             model.train()
             groups = [{"params": list(model.parameters()), "lr": args.lr, "weight_decay": args.weight_decay}]

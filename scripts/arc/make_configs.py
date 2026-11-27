@@ -25,7 +25,7 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
         lr: float = 3.0e-4, tie_weight: float = 1.0, table_share: float = 0.5, table_lr_scale: float = 1.0, pad_weight: float = 1.0,
         tie_programmer: float | None = None, evals_every: int | None = None, final_fit: int = 100, final_votes: int = 8, workers: int = 4,
         init_from: str | None = None, ckpt_every: int | None = None, plain_share: float = 0.0, code_tokens: int = 1, map_dim: int = 0,
-        program_length: int = 1) -> dict:
+        program_length: int = 1, tie_table: float | None = None) -> dict:
     """NEO on re-ARC episodes at one canvas size. `batch` counts episodes; an episode is `pairs` pairs of one task variant."""
 
     every = evals_every or max(steps // 10, 1)
@@ -50,7 +50,7 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
                   "programmer": reader, "executor": runner,
                   "code_dim": code_dim * program_length + size * size * map_dim, "tasks": TASKS[size] if table else 0, "variants": color_perms * symmetries, "table_share": table_share, "loops": loops,
                   **({} if tie_programmer is None else {"tie_programmer": tie_programmer}), **({"code_tokens": code_tokens} if code_tokens > 1 else {}),
-                  **({"program_length": program_length} if program_length > 1 else {})},
+                  **({"program_length": program_length} if program_length > 1 else {}), **({} if tie_table is None else {"tie_table": tie_table})},
         "method": {"type": "neo_arc", "lr": lr, "weight_decay": 0.01, "warmup_ratio": 0.02, "min_lr_ratio": 0.1, "grad_clip": 1.0, "total_steps": steps,
                    "tie_weight": tie_weight, "table_lr_scale": table_lr_scale, "pad_weight": pad_weight},
         "evals": evals,
@@ -124,6 +124,11 @@ def main() -> None:
     configs["arc16_map_deep_s0"] = run(size=16, steps=20000, code_dim=256, map_dim=32, executor=(384, 8))
     # a program of three codes: the executor is applied three times, once per code, each on the state the last step left; all else as arc16_programmer_code256_s0
     configs["arc16_program3_s0"] = run(size=16, steps=20000, code_dim=256, program_length=3)
+    # given codes done right: every training task owns a free code in the table and the executor learns from those alone, on the tasks as given
+    # (no symmetries or colour permutations, as VARC trains offline); the programmer only imitates the table. Against arc16_programmer_plain_views_s0.
+    configs["arc16_given_plain_s0"] = run(size=16, steps=20000, code_dim=256, table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02, table_lr_scale=10.0, color_perms=1, symmetries=1)
+    configs["arc16_given_plain_deep_s0"] = run(size=16, steps=20000, code_dim=256, table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02, table_lr_scale=10.0, color_perms=1, symmetries=1,
+                                               executor=(384, 8))
     # sleeps in which every evaluation task and view owns a code in the table (210 evaluation tasks fit the 16x16 canvas)
     grown = "runs/arc16_programmer_s0/ckpt/grown_evaluation.pt"
     configs["arc16_sleep_given_s0"] = sleep(configs["arc16_programmer_s0"], grown, new, steps=4000, given=210)
