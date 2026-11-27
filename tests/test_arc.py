@@ -174,6 +174,36 @@ def test_a_code_of_several_vectors_is_read_as_tokens_and_handled_as_one_flat_vec
     assert model.executor(state, others.view(4, 3, 8)).shape == state.shape
 
 
+def test_a_code_with_a_map_starts_as_the_vector_model_and_then_reads_the_map() -> None:
+    import_all()
+    from models.neo_arc import NEOArc
+
+    torch.manual_seed(0)
+    part = {"d_model": 32, "num_heads": 4, "d_ff": 64, "num_layers": 2, "dropout": 0.0}
+    common = dict(encoder={"type": "token_embed", "vocab": 11, "d_model": 16}, decoder={"type": "linear_head", "d_model": 16, "vocab": 11, "spatial": [6, 6]})
+    plain = NEOArc(**common, programmer={"type": "token_pair_transformer", "state_dim": 16, "action_dim": 8, "grid_dim": 6, **part},
+                   executor={"type": "adaln_transformer", "state_dim": 16, "cond_dim": 8, "grid_dim": 6, **part}, code_dim=8).eval()
+    for block in plain.executor.stack.blocks:
+        for parameter in block.parameters():
+            torch.nn.init.normal_(parameter, std=0.2)
+    mapped = NEOArc(**common, programmer={"type": "token_pair_map", "state_dim": 16, "action_dim": 8, "grid_dim": 6, "map_dim": 4, **part},
+                    executor={"type": "adaln_map_transformer", "state_dim": 16, "cond_dim": 8, "map_dim": 4, "grid_dim": 6, **part}, code_dim=8 + 36 * 4).eval()
+    report = mapped.load_state_dict(plain.state_dict(), strict=False)          # a vector-code checkpoint loads; only the map's parts are new
+    assert not report.unexpected_keys and all("map" in key for key in report.missing_keys)
+    x, y = torch.randint(0, 11, (3, 6, 6)), torch.randint(0, 11, (3, 6, 6))
+    code = mapped.pair_codes(x, y)
+    assert code.shape == (3, 8 + 144) and torch.allclose(code[:, :8], plain.pair_codes(x, y), atol=1e-5)
+    assert torch.allclose(mapped.execute(x, code), plain.execute(x, code[:, :8]), atol=1e-5)          # the map is not read yet
+    for block in mapped.executor.stack.blocks:
+        torch.nn.init.normal_(block.map_out.weight, std=0.2)
+    changed = code.clone()
+    changed[:, 8:] += 1.0
+    assert not torch.allclose(mapped.execute(x, changed), mapped.execute(x, code), atol=1e-4)           # now the map changes the prediction
+    batch = {"inputs": x[None], "outputs": y[None], "task": torch.tensor([-1]), "variant": torch.tensor([0])}
+    others = (code.sum(dim=0, keepdim=True) - code) / 2
+    assert torch.allclose(mapped.execute(x, others), mapped(batch).logits_by_loop[0], atol=1e-5)
+
+
 def test_fitting_a_code_lowers_the_loss_on_the_pairs_and_leaves_the_weights_alone(tmp_path: Path) -> None:
     import_all()
     from evals.arc import fit_codes

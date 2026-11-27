@@ -59,6 +59,7 @@ def import_all() -> None:
     import components.programmers  # noqa: F401
     import components.programmer_pair  # noqa: F401
     import components.code_tokens  # noqa: F401
+    import components.code_map  # noqa: F401
     import models.neo  # noqa: F401
     import models.neo_visible_state  # noqa: F401
     import models.neo_repeat  # noqa: F401
