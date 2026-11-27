@@ -60,7 +60,7 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
 
 
 def sleep(base: dict, start: str, new: str, steps: int, lr: float = 1.0e-4, new_share: float = 0.5, every: int | None = None, fit: int = 30, votes: int = 8,
-          given: int = 0, table_share: float = 0.5, tie_weight: float = 0.0, table_lr_scale: float = 10.0) -> dict:
+          given: int = 0, table_share: float = 0.5, tie_weight: float = 0.0, table_lr_scale: float = 10.0, final_fit: int = 100) -> dict:
     """A sleep of a trained run: all parts train on the demonstration pairs of new tasks (`new`, written by
     scripts/arc/sleep_data.py) mixed with replayed episodes of the run's own train file. By default new tasks have no
     name: their code comes from their pairs alone. With `given` (the number of new tasks) every new task and view owns a
@@ -81,8 +81,9 @@ def sleep(base: dict, start: str, new: str, steps: int, lr: float = 1.0e-4, new_
     config["evals"] = [{"type": "arc_tasks", "name": "during", "every": every, "split": split, "batch_size": 256, **table(split),
                         **({"fit_steps": fit, "fit_lr": 0.05} if split == "evaluation" and fit else {})} for split in splits]
     many = lambda split: bool(given) and split == "evaluation"  # noqa: E731  every view of the table is voted, with a shorter fit
-    config["evals"] += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, **table(split), "fit_steps": 30 if many(split) else 100,
-                         "fit_lr": 0.05, "fit_report": [10] if many(split) else [10, 30], "votes": base["model"]["variants"] if many(split) else votes} for split in splits]
+    config["evals"] += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, **table(split), "fit_steps": 30 if many(split) else final_fit,
+                         "fit_lr": 0.05, "fit_report": [10] if many(split) or final_fit <= 30 else [10, 30], "votes": base["model"]["variants"] if many(split) else votes}
+                        for split in splits]
     config["train"] = {**base["train"], "steps": steps, "ckpt_every": steps, "init_from": start}
     return config
 
@@ -138,6 +139,11 @@ def main() -> None:
     # (two voted guesses) at the same score on the training tasks. arc30_programmer_s0 was stopped at 4,500 steps for it.
     configs["arc30_colors512_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), color_perms=512, evals_every=10000, ckpt_every=25000,
                                         final_fit=30, final_votes=1, workers=8)
+    # a joint sleep of the 30x30 run on all 400 evaluation tasks, from its checkpoints: the first stage before per-task sleeps.
+    # Light evaluations inside the run; the answers come from scripts/arc/sleep_per_task.py afterwards.
+    for at in (25, 50, 100, 200):
+        configs[f"arc30_sleep_{at}k_s0"] = sleep(configs["arc30_colors512_s0"], f"runs/arc30_colors512_s0/ckpt/step-{at * 1000:06d}.pt", f"{DATA}/sleep_evaluation_30.npz",
+                                               steps=4000, lr=3.0e-4, every=1000, fit=0, votes=1, final_fit=30)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(f"{len(configs)} configs in {OUT}")

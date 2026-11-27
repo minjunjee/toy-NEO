@@ -42,8 +42,9 @@ def merge(out: Path, shards: int) -> None:
     parts = [json.loads(out.with_suffix(f".shard{i}.json").read_text()) for i in range(shards)]
     tasks = sorted((task for part in parts for task in part["per_task"]), key=lambda task: task["index"])
     result = {**{k: v for k, v in parts[0].items() if k not in ("per_task", "shard")}, "tasks": len(tasks)}
-    for key in ("first_view", "vote1", "vote2"):
-        result[key] = float(np.mean([task[key] for task in tasks]))
+    for key in ("first_view", "vote1", "vote2", "cell_vote", "cell_or_vote1", "cell_or_vote2"):
+        if all(key in task for task in tasks):
+            result[key] = float(np.mean([task[key] for task in tasks]))
     result["seconds_per_task"] = float(np.mean([task["seconds"] for task in tasks]))
     result["per_task"] = tasks
     out.write_text(json.dumps(result, indent=1) + "\n")
@@ -127,10 +128,19 @@ def main() -> None:
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
         q = len(test_x)
         guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), 256).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
-        first, one, two, misses, ballots = [], [], [], [], []
+        first, one, two, misses, ballots, by_cell = [], [], [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
             back = [undo(guess[i, j], s, data.tables[c]) for i, (s, c) in enumerate(used)]
+            # a vote cell by cell: among the views that agree on the most frequent output shape, the most frequent colour of every cell
+            valid = [b for b in back if b is not None]
+            cell_grid = None
+            if valid:
+                shapes = Counter(((b != 10).sum(axis=0)[0], (b != 10).sum(axis=1)[0]) for b in valid)
+                shape = shapes.most_common(1)[0][0]
+                same = np.stack([b for b in valid if ((b != 10).sum(axis=0)[0], (b != 10).sum(axis=1)[0]) == shape])
+                counts_by_colour = np.stack([(same == colour).sum(axis=0) for colour in range(11)])
+                cell_grid = counts_by_colour.argmax(axis=0).astype(np.uint8).tobytes()
             back = [None if b is None else b.tobytes() for b in back]
             tally = Counter(b for b in back if b is not None)
             counts = tally.most_common(2)
@@ -140,6 +150,8 @@ def main() -> None:
             first.append(back[0] == answer)
             one.append(bool(top) and top[0] == answer)
             two.append(answer in top)
+            # [the cell-by-cell grid is right, it or the most frequent whole grid is right, either of those or the second most frequent is right]
+            by_cell.append([cell_grid == answer, cell_grid == answer or (bool(top) and top[0] == answer), cell_grid == answer or answer in top])
             # how the most frequent guess misses: -1 no valid guess, -2 wrong shape, else the number of wrong cells; and how many views agree on it
             if not top:
                 misses.append([-1, 0])
@@ -151,6 +163,8 @@ def main() -> None:
             torch.cuda.synchronize()
         per_task.append({"index": t, "name": str(file["names"][t]), "pairs": int(n), "tests": int(q), "first_view": float(np.mean(first)),
                          "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses, "ballots": ballots,
+                         "cell_vote": float(np.mean([b[0] for b in by_cell])), "cell_or_vote1": float(np.mean([b[1] for b in by_cell])),
+                         "cell_or_vote2": float(np.mean([b[2] for b in by_cell])),
                          "demo_from_others": demo_others, "demo_from_all": demo_all})
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
