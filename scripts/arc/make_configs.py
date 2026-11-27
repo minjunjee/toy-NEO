@@ -24,7 +24,7 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
         executor: tuple[int, int] = (256, 6), programmer: tuple[int, int] = (256, 4), color_perms: int = 8, symmetries: int = 8,
         lr: float = 3.0e-4, tie_weight: float = 1.0, table_share: float = 0.5, table_lr_scale: float = 1.0, pad_weight: float = 1.0,
         tie_programmer: float | None = None, evals_every: int | None = None, final_fit: int = 100, final_votes: int = 8, workers: int = 4,
-        init_from: str | None = None, ckpt_every: int | None = None) -> dict:
+        init_from: str | None = None, ckpt_every: int | None = None, plain_share: float = 0.0) -> dict:
     """NEO on re-ARC episodes at one canvas size. `batch` counts episodes; an episode is `pairs` pairs of one task variant."""
 
     every = evals_every or max(steps // 10, 1)
@@ -34,7 +34,8 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
     evals += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, "table": table, "fit_steps": final_fit,
                "fit_lr": 0.05, "fit_report": [10, 30], "votes": final_votes} for split in files]
     return {
-        "data": {"type": "arc_tasks", "train": f"{DATA}/rearc_train_{size}.npz", "evals": files, "pairs": pairs, "color_perms": color_perms, "symmetries": symmetries, "seed": 0},
+        "data": {"type": "arc_tasks", "train": f"{DATA}/rearc_train_{size}.npz", "evals": files, "pairs": pairs, "color_perms": color_perms, "symmetries": symmetries, "seed": 0,
+                 **({"plain_share": plain_share} if plain_share else {})},
         "model": {"type": "neo_arc", "encoder": {"type": "token_embed", "vocab": 11, "d_model": 128},
                   "decoder": {"type": "linear_head", "d_model": 128, "vocab": 11, "layer_norm_eps": 1.0e-6, "spatial": [size, size]},
                   "programmer": {"type": "token_pair_transformer", "state_dim": 128, "action_dim": code_dim, "grid_dim": size, "layer_norm_eps": 1.0e-6, **width(*programmer)},
@@ -86,6 +87,7 @@ def main() -> None:
     configs["arc16_programmer_60k_s0"] = run(size=16, steps=60000)
     configs["arc16_programmer_lr1e3_s0"] = run(**proxy, lr=1.0e-3)
     configs["arc16_programmer_colors512_s0"] = run(**proxy, color_perms=512)
+    configs["arc16_programmer_half_plain_s0"] = run(**proxy, plain_share=0.5)
     start, new = "runs/arc16_programmer_s0/ckpt/step-020000.pt", f"{DATA}/sleep_evaluation_16.npz"
     configs["arc16_sleep_replay_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000)
     configs["arc16_sleep_alone_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, new_share=1.0)

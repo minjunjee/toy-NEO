@@ -76,6 +76,8 @@ def test_an_episode_is_pairs_of_one_task_seen_through_one_view(tmp_path: Path) -
             assert ((x[inside] + int(batch["task"][row]) + 1) % 10 == y[inside]).all() and (y[~inside] == PAD).all()
     assert (transform(np.arange(6, dtype=np.uint8).reshape(2, 3) % 10, 2, 3, 4, data.tables[0], 8)[:2, :3] == np.array([[2, 1, 0], [5, 4, 3]])).all()
     assert batch["mask"].all()
+    plain = DATASETS["arc_tasks"](str(train), {}, pairs=3, color_perms=2, symmetries=8, seed=0, plain_share=1.0)
+    assert (next(iter(plain.train_loader(4, 1, 0, 0, 0, 1, 0, False)))["variant"] == 0).all()
     for row in range(4):                                             # the pairs of an episode are different examples
         assert len({batch["inputs"][row, slot].numpy().tobytes() for slot in range(3)}) == 3
 

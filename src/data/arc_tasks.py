@@ -6,7 +6,7 @@ of the eight symmetries of the square and one of `color_perms` fixed permutation
 value stay); the same symmetry and permutation are applied to the inputs and outputs of all the episode's pairs, so the
 pairs still share one rule, though it is usually a different rule from the original task's. The batch carries the task
 index and the variant index, which the model may use to look up a code of its own for that variant; nothing else about the
-task is given.
+task is given. With `plain_share` that share of the episodes is seen as the task is given (variant 0).
 
 Evaluation files hold ARC tasks as they are given: demonstration pairs and test pairs, never transformed.
 """
@@ -48,7 +48,8 @@ def transform(grid: np.ndarray, height: int, width: int, symmetry: int, table: n
 class ArcEpisodes(Dataset):
     """Episodes of one train file. `named` False hides the task index (-1), for tasks that own no code in the model's table."""
 
-    def __init__(self, path: str, pairs: int, tables: np.ndarray, symmetries: int, seed: int, tasks: int | None = None, named: bool = True) -> None:
+    def __init__(self, path: str, pairs: int, tables: np.ndarray, symmetries: int, seed: int, tasks: int | None = None, named: bool = True,
+                 plain_share: float = 0.0) -> None:
         with np.load(path) as f:
             self.inputs, self.outputs, self.shapes, self.task = f["inputs"], f["outputs"], f["shapes"], f["task"].astype(np.int64)
         if tasks is not None:                      # a prefix of the tasks, for small trials
@@ -63,6 +64,7 @@ class ArcEpisodes(Dataset):
         for members in self.members:
             self.place[members] = np.arange(len(members))
         self.pairs, self.symmetries, self.seed, self.named = pairs, symmetries, seed, named
+        self.plain_share = plain_share
         self.tables = tables
         self.variants = symmetries * len(tables)
 
@@ -77,6 +79,8 @@ class ArcEpisodes(Dataset):
         grids = np.full((n, k, 2, size, size), PAD, dtype=np.uint8)
         mask = np.zeros((n, k), dtype=bool)
         variant = rng.integers(0, self.variants, size=n)
+        if self.plain_share > 0:                   # these episodes are seen as the task is given: variant 0
+            variant[rng.random(n) < self.plain_share] = 0
         for row, index in enumerate(indices):
             members = self.members[self.task[index]]
             others = rng.choice(len(members) - 1, size=min(k - 1, len(members) - 1), replace=False)
@@ -125,7 +129,7 @@ class ArcTasks:
     task index is passed to the model; by default only the first file's is)."""
 
     def __init__(self, train: str | list[str], evals: dict[str, str] | None = None, pairs: int = 4, color_perms: int = 8, symmetries: int = 8,
-                 seed: int = 0, tasks: int | None = None, shares: list[float] | None = None, named: list[bool] | None = None) -> None:
+                 seed: int = 0, tasks: int | None = None, shares: list[float] | None = None, named: list[bool] | None = None, plain_share: float = 0.0) -> None:
         self.train_paths = [train] if isinstance(train, str) else list(train)
         self.eval_paths = dict(evals or {})
         for path in [*self.train_paths, *self.eval_paths.values()]:
@@ -133,7 +137,7 @@ class ArcTasks:
                 raise FileNotFoundError(path)
         self.shares = shares
         self.named = named if named is not None else [i == 0 for i in range(len(self.train_paths))]
-        self.pairs, self.symmetries, self.seed, self.tasks = pairs, symmetries, seed, tasks
+        self.pairs, self.symmetries, self.seed, self.tasks, self.plain_share = pairs, symmetries, seed, tasks, plain_share
         self.tables = color_tables(color_perms, seed)
         self.variants = symmetries * color_perms
         self._train: Dataset | None = None
@@ -144,7 +148,7 @@ class ArcTasks:
 
     def episodes(self) -> Dataset:
         if self._train is None:
-            sources = [ArcEpisodes(path, self.pairs, self.tables, self.symmetries, self.seed, self.tasks, named) for path, named in zip(self.train_paths, self.named)]
+            sources = [ArcEpisodes(path, self.pairs, self.tables, self.symmetries, self.seed, self.tasks, named, self.plain_share) for path, named in zip(self.train_paths, self.named)]
             self._train = sources[0] if len(sources) == 1 else ArcMixedEpisodes(sources, self.shares or [1 / len(sources)] * len(sources), self.seed)
         return self._train
 
