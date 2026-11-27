@@ -37,8 +37,43 @@ sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts" / "arc"))
 
 from core.registry import DATASETS, METHODS, build  # noqa: E402
-from evals.arc import autocast, fit_codes, predict, read_codes, undo, view  # noqa: E402
+from evals.arc import autocast, crop, fit_codes, predict, read_codes, undo, view  # noqa: E402
 from evaluate import load_run  # noqa: E402
+
+
+def enlarged(canvases: np.ndarray, symmetry: int, table: np.ndarray, scale: int) -> np.ndarray:
+    """A view of the grids with every cell drawn as a scale x scale block (after the symmetry and the colour permutation)."""
+
+    out = view(canvases, symmetry, table)
+    if scale == 1:
+        return out
+    size = out.shape[-1]
+    for i, canvas in enumerate(out):
+        g = np.kron(crop(canvas), np.ones((scale, scale), dtype=np.uint8))
+        out[i] = 10
+        out[i, : g.shape[0], : g.shape[1]] = g
+    return out
+
+
+def shrunk(canvas: np.ndarray, symmetry: int, table: np.ndarray, scale: int) -> np.ndarray | None:
+    """Undo `enlarged` on a predicted canvas; None when the prediction is not made of whole blocks of one colour."""
+
+    if scale > 1:
+        g = crop(canvas)
+        if g is None or g.shape[0] % scale or g.shape[1] % scale:
+            return None
+        blocks = g.reshape(g.shape[0] // scale, scale, g.shape[1] // scale, scale)
+        small = blocks[:, 0, :, 0]
+        if not (blocks == small[:, None, :, None]).all():
+            return None
+        canvas = np.full_like(canvas, 10)
+        canvas[: small.shape[0], : small.shape[1]] = small
+    return undo(canvas, symmetry, table)
+
+
+def fits(canvases: np.ndarray, scale: int) -> bool:
+    size = canvases.shape[-1]
+    return all(max(crop(c).shape) * scale <= size for c in canvases)
 
 
 def merge(out: Path, shards: int) -> None:
@@ -70,6 +105,7 @@ def main() -> None:
                              "reading of all the pairs, a free vector per view started from that reading and trained with the weights, or the first two together")
     parser.add_argument("--code-lr", type=float, default=0.01, help="learning rate of the free codes")
     parser.add_argument("--votes", type=int, default=64)
+    parser.add_argument("--scales", type=int, default=1, help="also use views with every cell enlarged up to this factor, for tasks whose grids then still fit the canvas")
     parser.add_argument("--colors", type=int, default=8, help="colour permutations used for the views (the first of the run's own)")
     parser.add_argument("--fit-steps", type=int, default=0)
     parser.add_argument("--fit-lr", type=float, default=0.05)
@@ -91,7 +127,7 @@ def main() -> None:
     method = build(METHODS, config["method"])
     file = data.eval_tasks(args.split)
     tasks = len(file["names"]) if args.max_tasks is None else min(args.max_tasks, len(file["names"]))
-    views = [(s, c) for c in range(min(args.colors, len(data.tables))) for s in range(data.symmetries)]
+    plain_views = [(s, c, 1) for c in range(min(args.colors, len(data.tables))) for s in range(data.symmetries)]
     trained = {key: value.clone() for key, value in model.state_dict().items()}
     if args.compile and device.type == "cuda":
         for part in (model.programmer, model.executor):
@@ -106,8 +142,13 @@ def main() -> None:
         started = time.monotonic()
         demo_x, demo_y = file["demo_inputs"][file["demo_task"] == t], file["demo_outputs"][file["demo_task"] == t]
         test_x, test_y = file["test_inputs"][file["test_task"] == t], file["test_outputs"][file["test_task"] == t].astype(np.uint8)
-        seen_x = tensor(np.stack([view(demo_x, s, data.tables[c]) for s, c in views]))          # (V,n,S,S)
-        seen_y = tensor(np.stack([view(demo_y, s, data.tables[c]) for s, c in views]))
+        # views: the symmetries and colour permutations, and with --scales the same again with every cell enlarged, where everything fits
+        views = list(plain_views)
+        for scale in range(2, args.scales + 1):
+            if fits(demo_x, scale) and fits(demo_y, scale) and fits(test_x, scale):
+                views += [(s, c, scale) for s, c, _ in plain_views]
+        seen_x = tensor(np.stack([enlarged(demo_x, s, data.tables[c], k) for s, c, k in views]))          # (V,n,S,S)
+        seen_y = tensor(np.stack([enlarged(demo_y, s, data.tables[c], k) for s, c, k in views]))
         model.load_state_dict(trained)
         free = None
         if args.code == "free":          # one code of its own for every view, started from what the trained programmer reads in all the pairs
@@ -143,12 +184,13 @@ def main() -> None:
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
                 optimizer.step()
         model.eval()
-        used = views[: args.votes]
+        keep = list(range(min(args.votes, len(plain_views)))) + list(range(len(plain_views), len(views)))     # the views that vote
+        used = [views[i] for i in keep]
         v, n = len(used), len(demo_x)
-        vx, vy = seen_x[:v].flatten(0, 1), seen_y[:v].flatten(0, 1)
+        vx, vy = seen_x[keep].flatten(0, 1), seen_y[keep].flatten(0, 1)
         owner = torch.arange(v, device=device).repeat_interleave(n)
         own = read_codes(model, vx, vy, args.eval_batch).view(v, n, -1)
-        code = own.mean(dim=1) if free is None else free.detach()[:v]
+        code = own.mean(dim=1) if free is None else free.detach()[keep]
         # checks that need no answers, on the first view: demonstration pairs reproduced from the other pairs' code, and from all pairs' code
         others = (own[0].sum(dim=0, keepdim=True) - own[0]) / max(n - 1, 1)
         demo_others = float(predict(model, seen_x[0], others, args.eval_batch).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
@@ -156,13 +198,13 @@ def main() -> None:
         del own
         if args.fit_steps:
             code = fit_codes(model, vx, vy, owner, code, args.fit_steps, args.fit_lr, args.eval_batch)
-        seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
+        seen_tests = tensor(np.stack([enlarged(test_x, s, data.tables[c], k) for s, c, k in used]))        # (V,q,S,S)
         q = len(test_x)
         guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), args.eval_batch).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
         first, one, two, misses, ballots, by_cell = [], [], [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
-            back = [undo(guess[i, j], s, data.tables[c]) for i, (s, c) in enumerate(used)]
+            back = [shrunk(guess[i, j], s, data.tables[c], k) for i, (s, c, k) in enumerate(used)]
             # a vote cell by cell: among the views that agree on the most frequent output shape, the most frequent colour of every cell
             valid = [b for b in back if b is not None]
             cell_grid = None
@@ -200,7 +242,7 @@ def main() -> None:
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
-              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "shard": args.shard, "per_task": per_task}
+              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "scales": args.scales, "shard": args.shard, "per_task": per_task}
     target = args.out if shards == 1 else args.out.with_suffix(f".shard{shard}.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, indent=1) + "\n")
