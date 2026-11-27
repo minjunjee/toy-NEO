@@ -937,6 +937,21 @@ def main() -> None:
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
             config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
             configs[f"{tag}_memory_m24_to_m52_s{seed}"] = config
+    # what the sleep replays (2026-11-27 21:00): sleep_memory_m24_to_m52_s43 keeps the old world by replaying its train file,
+    # which assumes the old data is kept. Two more sleeps from the same start on the same memory: no replay at all (how much
+    # is forgotten), and a replay the model dreams itself (scripts/babytheorist/memory_dream_replay.py: each of its codes
+    # run on grids it saw while awake), with no old data.
+    for tag, replay in (("norep", []), ("dream", [f"{DATA}/dream_replay_s43/lv1_train.h5"])):
+        config = one_step(43, steps=2000, codes=104, changes={**hard_em, "train.init_from": "runs/grow_init/m24_price_s43_to_m52_sleep_memory.pt"},
+                          data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/memory_refit_s43_rep/lv1_train.h5"] + replay
+        config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"sleep_{tag}_m24_to_m52_s43"] = config
     # the control for what the fast memory chose (2026-11-27 17:15): the same sleep from fresh rows on 435 tasks drawn at
     # random from the 52-primitive two-pair train file (seed 0, repeated to 40,000 rows), instead of the 435 tasks the
     # memory kept because no code of the frozen model reproduced them.

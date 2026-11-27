@@ -4,13 +4,13 @@
 
 Claude Code가 썼다. 이날의 이야기와 그림은 `docs/reports/2026-11-27-autoresearch.md`에, 비교마다의 숫자는 `docs/ablations.md`에, 시각별 기록은 `docs/research-log.md`에 있다. 사용자가 11월 27일에 정한 방향은 무작위 초기화에서 code를 세우는 문제에 매달리지 말고, 아는 것 위에 새것이 싸게 붙는지를 보이는 것이다.
 
-- 중심 결과. 얼린 모델이 과제를 하나씩 받으며 빠른 기억에 새 code를 만들어 쓰고, 자기 code로 풀리지 않은 과제를 모았다가 잠에서 가중치로 옮긴다. 24개 환경 가격 seed 43 모델이 52개 환경의 한 단계 과제를 800개씩 받을 때, 새 primitive 정답률이 자기 전 51%, 한 번 잔 뒤 79%, 두 번 잔 뒤 86%이고 새로 만드는 code는 150개, 43개, 25개다. 아는 24개는 내내 99% 이상이다. 도구는 `scripts/babytheorist/memory_online.py`, `memory_sleep_data.py`, `grow_checkpoint.py --rows-from`, 설정은 `configs/babytheorist/sleep*_m24_to_m52_s*.yaml`, 그림 도구는 `memory_online_figure.py`, `sleep_curves.py`, `memory_cycle_figure.py`다.
+- 중심 결과. 얼린 모델이 과제를 하나씩 받으며 빠른 기억에 새 code를 만들어 쓰고, 자기 code로 풀리지 않은 과제를 모았다가 잠에서 가중치로 옮긴다. 24개 환경 가격 모델 seed 42, 43, 44가 52개 환경의 한 단계 과제를 800개씩 받을 때, 새 primitive 정답률이 세 seed 평균으로 자기 전 50.5%, 한 번 잔 뒤 82.4%, 두 번 잔 뒤 83.0%이고 새로 만드는 code는 150개, 49개, 40개다. 아는 24개는 내내 99% 이상이다. 자지 않고 빠른 기억만으로 같은 과제를 받으면 62%에서 멈춘다. 첫 잠의 상승은 세 seed에서 같고, 둘째 잠부터의 이득은 seed 43에서만 뚜렷하다. 큰 물체 세계에서도 같은 바퀴로 48%, 70%, 74%가 나왔다. 도구는 `scripts/babytheorist/memory_online.py`, `memory_sleep_data.py`, `grow_checkpoint.py --rows-from`, 설정은 `configs/babytheorist/sleep*_m24_to_m52_s*.yaml`, 그림 도구는 `memory_online_figure.py`, `sleep_curves.py`, `memory_cycle_figure.py`다.
 - 빠른 기억의 범위. code 벡터 하나로 붙는 것은 executor가 이미 할 줄 아는 계산의 조합, 곧 이동 거리만 다른 이동 같은 것이다. 앞서 3에서 8번 본 뒤 77에서 82%다. 거울상 붙이기, 확대처럼 새 계산이 필요한 개념은 11에서 22%이고 잠에서만 배운다. 할당 전에 기존 새 code를 다시 맞춰 이어 쓰는 단계가 있어야 code가 늘기만 하지 않는다. `docs/decisions.md`에 적었다.
 - 빠른 기억의 code는 길이가 1이 아니다. codebook은 길이 1로 정규화하므로 그대로 옮기면 기능을 잃는다. 길이를 묶어 맞추면 처음 보는 과제에서 10점 넘게 낮다. codebook이 길이를 쓰게 할지는 열린 물음이다.
 - 학습 state 넓히기. 생성기의 `--start-steps 4`로 학습 pair의 물체가 먼저 무작위 primitive를 0에서 4개 거치게 하면, 정답 code의 정확도가 다섯 단계 거친 물체에서 80%에서 97%, 큰 물체에서 62%에서 90%로 오른다. 긴 program의 상한과 꿈 학습 뒤의 탐색도 따라 오른다. 24개 환경 길이 5, 6, 7이 64%, 55%, 50%다.
 - code 형성. 가격 방식은 52개 환경 세 seed를 모두 풀었고, 24개 환경은 다섯 seed 가운데 셋이다. 재현 적합도로 가격을 거두는 `model.price_fit`이 어려운 두 seed를 올렸지만 다 풀지는 못했다.
 - 환경 키우기. 이어 배우면 초반이 두 배쯤 빠르지만 끝 성능과 학습에 없던 primitive로의 일반화는 처음부터 배운 쪽이 낫다.
-- 남은 일. 세 바퀴를 seed 42와 44로 확인하는 run과 자지 않는 대조 run이 이 글을 쓰는 시점에 돌고 있다. 결과는 연구 로그의 마지막 항목을 본다. 그다음은 같은 바퀴를 여러 단계 program 과제로 넓히는 것, 재생을 데이터 대신 꿈으로 바꾸는 것이다.
+- 남은 일. 같은 바퀴를 여러 단계 program 과제로 넓히는 것이 다음이다. 여러 단계 과제가 검증에 실패했을 때 어느 단계가 모르는 primitive인지를 정하는 규칙이 먼저 필요하다. 두 배 확대처럼 잠을 거듭해도 일부 seed에서 0%에 머무는 개념이 왜 막히는지도 봐야 한다. 재생을 원래 데이터 대신 모델의 꿈으로 바꾸는 비교는 `sleep_dream_m24_to_m52_s43`과 `sleep_norep_m24_to_m52_s43`에 있고 결과는 연구 로그의 마지막 항목을 본다.
 - 원격 저장소로의 push는 이 세션의 권한 분류기가 막아 하지 못했다. 커밋은 로컬 `code/baseline-observation`에 있다.
 
 ## 2026-11-24 18:50, 최선을 갱신하는 자율 연구 중의 상태
