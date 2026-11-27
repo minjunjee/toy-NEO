@@ -921,6 +921,22 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"{tag}_large_m24_s43"] = config
+    # more rounds at three seeds (2026-11-27 20:40): after one sleep from the fast memory's codes, seeds 42, 43, 44 solved 83%,
+    # 82%, 82% of the new primitives' tasks (57%, 51%, 43% before). Rounds two and three for each: every sleep continues
+    # from the one before on the memory of all wakes so far, 1,000 steps, half of each batch replaying the 24-primitive file.
+    for seed in (42, 43, 44):
+        for tag, start, memory, unstreamed in (("sleep2", f"runs/sleep_memory_m24_to_m52_s{seed}/ckpt/step-002000.pt", f"memory_round2_mem_s{seed}_rep", "many_p52_without4_unstreamed1600"),
+                                                ("sleep3", f"runs/sleep2_memory_m24_to_m52_s{seed}/ckpt/step-001000.pt", f"memory_round3_mem_s{seed}_rep", "many_p52_without4_unstreamed2400")):
+            config = one_step(seed, steps=1000, codes=104, changes={**hard_em, "train.init_from": start, "train.ckpt_every": 1000}, data=suite("many_p52_without4"))
+            config["data"]["type"] = "babytheorist_episodes"
+            config["data"]["train"] = [f"{DATA}/{memory}/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+            config["data"]["evals"] = {"lv1": f"{DATA}/{unstreamed}/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+            config["evals"][0]["tables"] = True
+            config["evals"][0]["every"] = 500
+            config["evals"][1]["every"] = 1000
+            config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+            config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+            configs[f"{tag}_memory_m24_to_m52_s{seed}"] = config
     # the control for what the fast memory chose (2026-11-27 17:15): the same sleep from fresh rows on 435 tasks drawn at
     # random from the 52-primitive two-pair train file (seed 0, repeated to 40,000 rows), instead of the 435 tasks the
     # memory kept because no code of the frozen model reproduced them.
