@@ -1,5 +1,16 @@
 # 인수인계
 
+## 2026-11-28 04:20, ARC-AGI-1 첫 실험이 도는 중의 상태
+
+Claude Code가 썼다. 사용자가 일요일 23:59까지 자율 연구를 맡겼다. 설계는 `docs/arc-agi-1-design.md`, 비교마다의 숫자는 `docs/ablations.md` 9절, 시각별 기록은 `docs/research-log.md`, 그림은 `docs/reports/2026-11-28-arc/`에 있다.
+
+- 목표. 사용자가 03:14에 기준을 정답률로 정했다. 평가 과제 400개 전체, 한 변 30칸, 두 번의 시도 조건이다. TRM은 44.6%이지만 조사해 보니 선두는 CHARM의 84%이고 VARC 54.5%, transductARC 76%가 그 사이에 있다. 어느 선을 목표로 할지는 사용자에게 물어 둔 상태다.
+- 코드. 데이터 `arc_tasks`, 모델 `neo_arc`, 학습 `neo_arc`, 평가 `arc_tasks`가 새 부품이다. config는 `configs/arc/`에 있고 `scripts/arc/make_configs.py`가 만든다. 얼린 평가는 `scripts/arc/evaluate.py`, 모든 과제를 함께 재우는 잠은 `sleep_data.py`로 파일을 만들어 config로 돌리고, 과제마다 따로 재우는 잠은 `sleep_per_task.py`와 `per_task_sleep.sh`다.
+- 도는 것. GPU 4에서 30칸 본학습 `arc30_colors512_s0`이 04:06에 시작했고 19시쯤 끝난다. 혼자 쓸 때만 그 속도이므로 GPU 4에는 다른 것을 올리지 않는다. GPU 5에서는 `runs/queue/arc_proxy2.txt`의 16칸 탐색과 과제별 잠의 비교가 돈다.
+- 16칸 탐색에서 나온 것. 평가 과제 210개 기준으로, 얼린 채 두 번 시도 7.4%에서 14.8%, 모든 과제를 함께 재우면 23%, 과제마다 따로 재우면 29.5%에서 32.6%다. code는 클수록, executor는 클수록, 색 순열은 많을수록 본 적 없는 과제에 좋다. executor를 여러 번 도는 것, 과제 이름의 code를 programmer와 양쪽으로 묶는 것, 높은 학습률은 버렸다.
+- 다음. 본학습의 첫 checkpoint가 06시쯤 나오면 평가 과제 400개에 과제별 잠을 걸어 전체 값을 잰다. 탐색에서 code를 여러 vector로 두고 executor가 attention으로 읽는 조건이 낫게 나오면 그 설계로 둘째 본학습을 GPU 5에 띄운다.
+- 원격 저장소로의 push는 앞 세션에서 권한 분류기가 막았다. 커밋은 로컬 `code/baseline-observation`에 있다.
+
 ## 2026-11-27 밤, 빠른 기억과 잠의 바퀴를 돌린 뒤의 상태
 
 Claude Code가 썼다. 이날의 이야기와 그림은 `docs/reports/2026-11-27-autoresearch.md`에, 비교마다의 숫자는 `docs/ablations.md`에, 시각별 기록은 `docs/research-log.md`에 있다. 사용자가 11월 27일에 정한 방향은 무작위 초기화에서 code를 세우는 문제에 매달리지 말고, 아는 것 위에 새것이 싸게 붙는지를 보이는 것이다.
