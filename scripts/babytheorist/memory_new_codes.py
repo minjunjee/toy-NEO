@@ -3,7 +3,7 @@
 
 The model of a smaller environment stays frozen. For each primitive of the larger set that the smaller one lacks, k train
 tasks of that primitive (two pairs each, from the larger set's two-pair train file; the hidden primitive only groups them)
-fit a new code vector from zero by Adam on the executor's reproduction loss; nothing else changes. The new code is then
+fit a new code vector (from zero, or from the existing code that best reproduces the fitting pairs) by Adam on the executor's reproduction loss; nothing else changes. The new code is then
 run on that primitive's held-out eval tasks (the query of single-primitive tasks of the larger set's eval file).
 
 Two references per primitive: the best of the frozen model's existing codes on the same held-out queries (what reuse alone
@@ -56,6 +56,7 @@ def main() -> None:
     parser.add_argument("--shots", type=int, nargs="+", default=[4, 16, 64])
     parser.add_argument("--fit-steps", type=int, default=300)
     parser.add_argument("--lr", type=float, default=0.05)
+    parser.add_argument("--init", choices=("zero", "nearest"), default="zero", help="start the new code from zero or from the existing code that fits best")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -86,7 +87,16 @@ def main() -> None:
             y = torch.cat([ty[:k, p] for p in range(ty.shape[1])]).to(device)
             with torch.no_grad():
                 state = model.encoder(x)
-            vector = torch.zeros(table.shape[1], device=device, requires_grad=True)
+            if args.init == "nearest":  # start from the existing code that best reproduces the fitting pairs
+                with torch.no_grad():
+                    losses = []
+                    for c in range(table.shape[0]):
+                        logits = model.decoder(model.executor(state, table[c].expand(len(x), -1)[:, None]))
+                        losses.append(float(F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1))))
+                    start = table[min(range(len(losses)), key=losses.__getitem__)].clone()
+            else:
+                start = torch.zeros(table.shape[1], device=device)
+            vector = start.clone().requires_grad_(True)
             opt = torch.optim.Adam([vector], lr=args.lr)
             for _ in range(args.fit_steps):
                 opt.zero_grad()
@@ -102,7 +112,7 @@ def main() -> None:
     summary = {f"k{k}": round(sum(e[f"k{k}"]["held_out"] for e in results.values()) / len(results), 3) for k in args.shots}
     summary["best_existing_code"] = round(sum(e["best_existing_code"] for e in results.values()) / len(results), 3)
     report = json.loads(args.out.read_text()) if args.out.exists() else []
-    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "summary": summary, "primitives": results})
+    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "init": args.init, "summary": summary, "primitives": results})
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1) + "\n")
     print("mean over new primitives:", summary, flush=True)
