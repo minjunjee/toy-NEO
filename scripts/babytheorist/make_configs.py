@@ -862,6 +862,15 @@ def main() -> None:
     config["evals"][0]["tables"] = True
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
     configs["onestep_s_m52_hardem_pairs2_price_reach4_s42"] = config
+    # growth from the wider-state model (2026-11-27 13:00): the 24-primitive wider-state model of seed 42 (its executor nearly
+    # a function off the training states), grown to 104 codes, on the 52-primitive wider-state two-pair file. From-nothing
+    # reference: onestep_s_m52_hardem_pairs2_price_reach4_s42.
+    config = one_step(42, steps=24000, codes=104, changes={**price, "train.init_from": "runs/grow_init/m24_price_reach4_s42_to_m52.pt"}, data=suite("many_p52_without4"))
+    config["data"]["type"] = "babytheorist_episodes"
+    config["data"]["train"] = [f"{DATA}/many_p52_pairs2_reach4/lv1_train.h5"]
+    config["evals"][0]["tables"] = True
+    config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+    configs["grow_m24_to_m52_price_reach4_s42"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
