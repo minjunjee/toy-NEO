@@ -75,6 +75,46 @@ def test_an_episode_is_pairs_of_one_task_seen_through_one_view(tmp_path: Path) -
             inside = x != PAD
             assert ((x[inside] + int(batch["task"][row]) + 1) % 10 == y[inside]).all() and (y[~inside] == PAD).all()
     assert (transform(np.arange(6, dtype=np.uint8).reshape(2, 3) % 10, 2, 3, 4, data.tables[0], 8)[:2, :3] == np.array([[2, 1, 0], [5, 4, 3]])).all()
+    assert batch["mask"].all()
+    for row in range(4):                                             # the pairs of an episode are different examples
+        assert len({batch["inputs"][row, slot].numpy().tobytes() for slot in range(3)}) == 3
+
+
+def test_short_tasks_give_masked_episodes_and_files_are_mixed_in_fixed_shares(tmp_path: Path) -> None:
+    import_all()
+    old, _ = write_files(tmp_path, size=8)
+    rng = np.random.default_rng(3)
+    grids = rng.integers(0, 10, size=(5, 8, 8)).astype(np.uint8)       # two new tasks with two and three examples
+    new = tmp_path / "new.npz"
+    np.savez(new, inputs=grids, outputs=grids, shapes=np.full((5, 4), 8, dtype=np.uint8), task=np.asarray([0, 0, 1, 1, 1], dtype=np.int32), names=np.asarray(["a", "b"]))
+    data = DATASETS["arc_tasks"]([str(new), str(old)], {}, pairs=4, color_perms=2, symmetries=8, seed=0, shares=[0.25, 0.75], named=[False, True])
+    batch = next(iter(data.train_loader(8, 1, 0, 0, 0, 1, 0, False)))
+    assert batch["source"].tolist() == [0, 0, 1, 1, 1, 1, 1, 1] and (batch["task"][:2] == -1).all() and (batch["task"][2:] >= 0).all()
+    assert all(int(batch["mask"][row].sum()) in (2, 3) for row in range(2)) and int(batch["mask"][2:].sum()) == 6 * 3      # old tasks have three examples
+    assert (batch["inputs"][~batch["mask"]] == PAD).all() and batch["mask"][:, 0].all()
+
+    from methods.neo_arc import NEOArcMethod
+    from models.neo_arc import NEOArc
+
+    torch.manual_seed(0)
+    part = {"d_model": 32, "num_heads": 4, "d_ff": 64, "num_layers": 1, "dropout": 0.0}
+    model = NEOArc(encoder={"type": "token_embed", "vocab": 11, "d_model": 16}, decoder={"type": "linear_head", "d_model": 16, "vocab": 11, "spatial": [8, 8]},
+                   programmer={"type": "token_pair_transformer", "state_dim": 16, "action_dim": 8, "grid_dim": 8, **part},
+                   executor={"type": "adaln_transformer", "state_dim": 16, "cond_dim": 8, "grid_dim": 8, **part}, code_dim=8, tasks=3, variants=16, table_share=1.0)
+    for block in model.executor.stack.blocks:
+        for parameter in block.parameters():
+            torch.nn.init.normal_(parameter, std=0.2)
+    out = model.train()(batch)
+    assert not out.from_table[:8].any() and out.from_table[8:].all()          # tasks without a name never use the table
+    assert out.valid.tolist() == batch["mask"].flatten().tolist()
+    model.eval()
+    row = int(batch["mask"][:2].sum(dim=1).argmin())                         # an episode of two pairs: each is predicted from the other alone
+    if int(batch["mask"][row].sum()) == 2:
+        own = model.pair_codes(batch["inputs"][row, :2], batch["outputs"][row, :2])
+        assert torch.allclose(model.execute(batch["inputs"][row, :2], own.flip(0)), model(batch).logits_by_loop[0].view(8, 4, 8, 8, 11)[row, :2], atol=1e-5)
+    method = NEOArcMethod(lr=1e-3, weight_decay=0.0, warmup_ratio=0.0, min_lr_ratio=1.0, grad_clip=1.0, total_steps=1)
+    step = method.compute_loss(model.train(), batch, 0)
+    assert torch.isfinite(step.total) and "grid_acc_file0" in step.metrics and "grid_acc_file1" in step.metrics
 
 
 def test_a_pair_is_predicted_from_the_other_pairs_and_the_table_is_used_only_in_training(tmp_path: Path) -> None:
@@ -138,7 +178,9 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     config = load_config(path)
     size = config["model"]["decoder"]["spatial"][0]
     train, evaluation = write_files(tmp_path, size)
-    block = {**config["data"], "train": str(train), "evals": {split: str(evaluation) for split in config["data"]["evals"]}}
+    several = isinstance(config["data"]["train"], list)
+    block = {**config["data"], "train": [str(train)] * len(config["data"]["train"]) if several else str(train),
+             "evals": {split: str(evaluation) for split in config["data"]["evals"]}}
     data = build(DATASETS, block)
     assert data.variants == config["model"]["variants"]
     method = build(METHODS, config["method"])
@@ -147,12 +189,15 @@ def test_config_builds_steps_and_evaluates(path: Path, tmp_path: Path) -> None:
     method.set_train_mode(model)
     metrics = method.train_step(model, next(iter(data.train_loader(2, 1, 0, 0, 0, 1, 0, False))), 0)
     assert all(torch.isfinite(torch.tensor(v)) for v in metrics.values()), metrics
-    blocks = [{**b, "batch_size": 4, **({"fit_steps": 2, "fit_report": [1], "votes": 3} if b.get("fit_steps") else {})} for b in config["evals"]]
+    blocks = [{**b, "batch_size": 4, **({"fit_steps": 2, "fit_report": [1], "votes": 3} if b.get("votes") else {"fit_steps": 2} if b.get("fit_steps") else {})}
+              for b in config["evals"]]
     results = run_evals(model, data, blocks, 1, torch.device("cpu"))
     for b in blocks:
         prefix = f"{b.get('name', b['type'])}/{b['split']}"
         assert results[f"{prefix}/tasks"] == 3 and 0.0 <= results[f"{prefix}/zero"] <= 1.0 and 0.0 <= results[f"{prefix}/verify_tasks"] <= 1.0
-        if b.get("fit_steps"):
+        if b.get("votes"):
             assert all(0.0 <= results[f"{prefix}/{key}"] <= 1.0 for key in ("fit1", "fit2", "fit2_vote1", "fit2_vote2", "zero_vote2", "fit_demo_tasks"))
+        elif b.get("fit_steps"):
+            assert 0.0 <= results[f"{prefix}/fit2"] <= 1.0
         if config["model"]["tasks"]:
             assert 0.0 <= results[f"{prefix}/table"] <= 1.0

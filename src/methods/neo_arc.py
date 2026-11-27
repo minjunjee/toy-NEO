@@ -37,25 +37,31 @@ class NEOArcMethod(Method):
 
     def compute_loss(self, model: nn.Module, batch: dict, step: int) -> TrainingStep:
         out = model(batch, step)
-        targets = out.targets
-        weight = None
-        if self.pad_weight != 1.0:
-            weight = torch.ones(out.logits_by_loop[0].shape[-1], device=targets.device)
-            weight[PAD] = self.pad_weight
-        cells = sum(F.cross_entropy(logits.float().flatten(0, 2), targets.flatten(), weight=weight) for logits in out.logits_by_loop) / len(out.logits_by_loop)
+        targets, valid = out.targets[out.valid], out.valid
+        weight = torch.where(targets.eq(PAD), self.pad_weight, 1.0).flatten(1)
+        per_pass = []
+        for logits in out.logits_by_loop:
+            logits = logits[valid].float()
+            cell = F.cross_entropy(logits.flatten(0, 2), targets.flatten(), reduction="none").view(len(targets), -1)
+            per_pass.append(((cell * weight).sum(dim=1) / weight.sum(dim=1)).mean())
+        cells = sum(per_pass) / len(per_pass)
         total = cells + self.tie_weight * out.tie
         with torch.no_grad():
-            right = out.logits_by_loop[-1].argmax(dim=-1).eq(targets)
+            from_table = out.from_table[valid]
+            right = out.logits_by_loop[-1][valid].argmax(dim=-1).eq(targets)
             exact = right.flatten(1).all(dim=1).float()
-            inside = targets.ne(PAD)
             metrics = {"loss": total, "cell_loss": cells, "tie": out.tie, "code_norm": out.code_norm,
-                       "cell_acc": right[inside].float().mean(), "grid_acc": exact.mean()}
-            if out.from_table.any():
-                metrics["grid_acc_table"] = exact[out.from_table].mean()
-            if (~out.from_table).any():
-                metrics["grid_acc_programmer"] = exact[~out.from_table].mean()
+                       "cell_acc": right[targets.ne(PAD)].float().mean(), "grid_acc": exact.mean()}
+            if from_table.any():
+                metrics["grid_acc_table"] = exact[from_table].mean()
+            if (~from_table).any():
+                metrics["grid_acc_programmer"] = exact[~from_table].mean()
             if len(out.logits_by_loop) > 1:
-                metrics["grid_acc_first_pass"] = out.logits_by_loop[0].argmax(dim=-1).eq(targets).flatten(1).all(dim=1).float().mean()
+                metrics["grid_acc_first_pass"] = out.logits_by_loop[0][valid].argmax(dim=-1).eq(targets).flatten(1).all(dim=1).float().mean()
+            if "source" in batch:                    # a mixed batch: exact grids of each train file
+                source = batch["source"].repeat_interleave(len(out.valid) // len(batch["source"]))[valid]
+                for k in source.unique().tolist():
+                    metrics[f"grid_acc_file{k}"] = exact[source == k].mean()
         return TrainingStep(total, metrics)
 
 

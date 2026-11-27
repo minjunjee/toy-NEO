@@ -47,6 +47,27 @@ def run(size: int, steps: int, seed: int = 0, batch: int = 64, pairs: int = 4, c
     }
 
 
+def sleep(base: dict, start: str, new: str, steps: int, lr: float = 1.0e-4, new_share: float = 0.5, every: int | None = None, fit: int = 30, votes: int = 8) -> dict:
+    """A sleep of a trained run: all parts train on the demonstration pairs of new tasks (`new`, written by
+    scripts/arc/sleep_data.py) mixed with replayed episodes of the run's own train file. New tasks have no name: their
+    code comes from their pairs alone."""
+
+    config = {key: dict(value) if isinstance(value, dict) else value for key, value in base.items()}
+    old = base["data"]["train"]
+    config["data"] = {**base["data"], "train": [new, old] if new_share < 1 else [new], "shares": [new_share, 1 - new_share] if new_share < 1 else [1.0],
+                      "named": [False, True] if new_share < 1 else [False]}
+    config["method"] = {**base["method"], "lr": lr, "total_steps": steps, "warmup_ratio": 0.05}
+    every = every or max(steps // 8, 1)
+    splits = base["data"]["evals"]
+    table = bool(base["model"]["tasks"])
+    config["evals"] = [{"type": "arc_tasks", "name": "during", "every": every, "split": split, "batch_size": 256, "table": table,
+                        **({"fit_steps": fit, "fit_lr": 0.05} if split == "evaluation" and fit else {})} for split in splits]
+    config["evals"] += [{"type": "arc_tasks", "name": "final", "every": steps, "split": split, "batch_size": 256, "table": table, "fit_steps": 100,
+                         "fit_lr": 0.05, "fit_report": [10, 30], "votes": votes} for split in splits]
+    config["train"] = {**base["train"], "steps": steps, "ckpt_every": steps, "init_from": start}
+    return config
+
+
 def main() -> None:
     OUT.mkdir(parents=True, exist_ok=True)
     configs: dict[str, dict] = {}

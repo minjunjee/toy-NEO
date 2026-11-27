@@ -7,12 +7,15 @@ included, so the size of the output is predicted with its content.
 
 Training (an episode is `pairs` grids of one task variant). Every pair is predicted from the mean of the codes of the
 other pairs, never from its own code, so the code has to say what the pairs share and cannot carry one pair's answer.
+An episode may be shorter (`mask`): the missing pairs are left out of the means and of the loss.
 
 A code given by the task's name (`tasks` > 0). Each task variant of the training set also owns a code vector in a table.
 With probability `table_share` an episode is executed with its table code instead of the programmer's, so the executor
 learns the transformations from a code that does not depend on how well the programmer reads yet; and a tie term pulls the
 programmer's codes and the table code of the same variant together, so the table lives where the programmer writes. The
-table is never used on a task outside the training set: there the code comes from the pairs alone.
+tie has two sides: the table code is pulled to the mean of the programmer's codes, and the programmer's codes are pulled
+to the table code with weight `tie_programmer` (0: the table only follows, and holds the average code of its variant).
+The table is never used on a task outside the training set (task index -1): there the code comes from the pairs alone.
 
 Refinement (`loops` > 1). The executor is applied `loops` times with the same weights and the same code; from the second
 time on its input is the input state plus its previous output, detached, and every output is trained to decode to the
@@ -36,17 +39,19 @@ class NEOArcOutput:
     from_table: Tensor               # (B*N,) bool: executed with the table code
     tie: Tensor                      # scalar, 0 without a table
     code_norm: Tensor                # scalar, mean length of the programmer's leave-one-out codes
+    valid: Tensor                    # (B*N,) bool: the pair is there (episodes of tasks with few examples are shorter)
 
 
 class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
-                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5) -> None:
+                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
         self.programmer = build(PROGRAMMERS, programmer)
         self.executor = build(EXECUTORS, executor)
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
+        self.tie_programmer = tie_programmer
         self.table = nn.Embedding(tasks * variants, code_dim) if tasks else None
         if self.table is not None:
             nn.init.normal_(self.table.weight, std=table_std * code_dim**-0.5)
@@ -73,20 +78,26 @@ class NEOArc(nn.Module):
     def forward(self, batch: dict, step: int = 0) -> NEOArcOutput:
         x, y = batch["inputs"], batch["outputs"]                      # (B,N,S,S)
         b, n = x.shape[:2]
+        mask = batch.get("mask")
+        there = torch.ones(b, n, 1, device=x.device) if mask is None else mask.float()[..., None]      # pairs the episode really has
         state_x, state_y = self.encoder(x.flatten(0, 1)), self.encoder(y.flatten(0, 1))
-        own = self.programmer(state_x, state_y)[:, 0].float().view(b, n, -1)
-        code = (own.sum(dim=1, keepdim=True) - own) / (n - 1)         # the mean of the other pairs' codes
+        own = self.programmer(state_x, state_y)[:, 0].float().view(b, n, -1) * there
+        count = there.sum(dim=1, keepdim=True)
+        code = (own.sum(dim=1, keepdim=True) - own) / (count - 1).clamp(min=1)         # the mean of the other pairs' codes
         from_table = torch.zeros(b, dtype=torch.bool, device=x.device)
         tie = torch.zeros((), device=x.device)
         code_norm = code.detach().norm(dim=-1).mean()
         if self.table is not None:
-            given = self.table(batch["task"] * self.variants + batch["variant"]).float()       # (B,D)
-            tie = (code - given[:, None].detach()).pow(2).sum(-1).mean() + (given - own.mean(dim=1).detach()).pow(2).sum(-1).mean()
+            known = batch["task"] >= 0                                 # tasks that own a code in the table
+            given = self.table(batch["task"].clamp(min=0) * self.variants + batch["variant"]).float()       # (B,D)
+            if known.any():
+                apart = ((code - given[:, None].detach()).pow(2).sum(-1) * there[..., 0]).sum(dim=1) / count[:, 0, 0]
+                tie = (self.tie_programmer * apart + (given - (own.sum(dim=1) / count[:, 0]).detach()).pow(2).sum(-1))[known].mean()
             if self.training:
-                from_table = torch.rand(b, device=x.device) < self.table_share
+                from_table = (torch.rand(b, device=x.device) < self.table_share) & known
                 code = torch.where(from_table[:, None, None], given[:, None].expand_as(code), code)
         logits = self.run(state_x, code.flatten(0, 1))
-        return NEOArcOutput(logits, y.flatten(0, 1), from_table.repeat_interleave(n), tie, code_norm)
+        return NEOArcOutput(logits, y.flatten(0, 1), from_table.repeat_interleave(n), tie, code_norm, there.flatten().bool())
 
 
 MODELS["neo_arc"] = NEOArc
