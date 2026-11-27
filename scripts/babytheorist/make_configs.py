@@ -903,6 +903,24 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"sleep_memory_m24_to_m52_s{seed}"] = config
+    # the rounds of waking and sleeping in the sibling world of larger objects (2026-11-27 19:40): the same 24 primitives, so no
+    # new code row is needed. The frozen price model of seed 43 meets 400 single-primitive tasks of the large-object eval (it holds 1,088)
+    # file with the same online fast memory; the tasks none of its codes reproduced go into the sleep (2,000 steps of hard
+    # EM, half of each batch replaying the usual world), scored on the large-object eval file without the stream's rows and
+    # on the usual world. A second round continues from the first on the memory of both wakes (1,000 steps). Earlier, 256
+    # random large tasks with replay gave 72% from 59% (adapt_n256_replay_m24_large_s43).
+    for tag, steps, start, memory, unstreamed in (("sleep", 2000, "runs/onestep_s_m24_hardem_pairs2_price_s43/ckpt/step-024000.pt", "memory_large_s43_rep", "many_p24_large_unstreamed"),
+                                                   ("sleep2", 1000, "runs/sleep_large_m24_s43/ckpt/step-002000.pt", "memory_large_round2_s43_rep", "many_p24_large_unstreamed800")):
+        config = one_step(43, steps=steps, codes=48, changes={**hard_em, "train.init_from": start, "train.ckpt_every": steps}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/{memory}/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["data"]["evals"] = {"lv1": f"{DATA}/{unstreamed}/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"][1]["every"] = steps
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"{tag}_large_m24_s43"] = config
     # the control for what the fast memory chose (2026-11-27 17:15): the same sleep from fresh rows on 435 tasks drawn at
     # random from the 52-primitive two-pair train file (seed 0, repeated to 40,000 rows), instead of the 435 tasks the
     # memory kept because no code of the frozen model reproduced them.

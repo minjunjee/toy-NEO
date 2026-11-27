@@ -32,8 +32,9 @@ def sphere_refit(model, state: dict, saved: dict, chosen: list[int], steps: int)
     import h5py
     import torch.nn.functional as F
 
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.load_state_dict(state)
-    model.eval()
+    model.to(device).eval()
     for p in model.parameters():
         p.requires_grad_(False)
     with h5py.File(saved["eval"], "r") as f:
@@ -41,10 +42,10 @@ def sphere_refit(model, state: dict, saved: dict, chosen: list[int], steps: int)
     out, kept, total = [], 0, 0
     for j in chosen:
         rows = saved["memory_rows"][j]
-        x, y = inputs[rows][:, :2].flatten(0, 1), outputs[rows][:, :2].flatten(0, 1)
+        x, y = inputs[rows][:, :2].flatten(0, 1).to(device), outputs[rows][:, :2].flatten(0, 1).to(device)
         with torch.no_grad():
             state_x = model.encoder(x)
-        v = saved["vectors"][j].clone().requires_grad_(True)
+        v = saved["vectors"][j].clone().to(device).requires_grad_(True)
         opt = torch.optim.Adam([v], lr=0.05)
         for _ in range(steps):
             opt.zero_grad()
@@ -55,7 +56,7 @@ def sphere_refit(model, state: dict, saved: dict, chosen: list[int], steps: int)
         with torch.no_grad():
             done = model.decoder(model.executor(state_x, unit.expand(len(x), -1)[:, None])).argmax(-1).eq(y).flatten(1).all(1).view(-1, 2).all(1)
         kept, total = kept + int(done.sum()), total + len(rows)
-        out.append(unit)
+        out.append(unit.cpu())
     print(f"unit-vector refit: {kept} of {total} memory tasks reproduced by the placed codes")
     return torch.stack(out)
 
