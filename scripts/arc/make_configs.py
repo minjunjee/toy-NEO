@@ -92,6 +92,9 @@ def main() -> None:
     configs["arc16_sleep_replay_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000)
     configs["arc16_sleep_alone_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, new_share=1.0)
     configs["arc16_sleep_replay_lr3_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, lr=3.0e-4)
+    # the full canvas: all 400 tasks at 30x30, the best of the first proxy batch (wider and deeper executor, code of 256 dims).
+    # The heavy frozen evaluation is run apart (scripts/arc/evaluate.py); the run itself ends with a light one.
+    configs["arc30_programmer_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), evals_every=10000, ckpt_every=25000, final_fit=30, final_votes=1, workers=8)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(f"{len(configs)} configs in {OUT}")
