@@ -21,6 +21,11 @@ A code of several vectors (`code_tokens` > 1). The programmer writes `code_token
 as separate tokens (parts in components/code_tokens.py). Everywhere else the code is still one flat vector of `code_dim`
 numbers: the mean over pairs, the table and the fitting at test time work on it unchanged.
 
+A program of several codes (`program_length` > 1), as in the lab NEO. The programmer's output is cut into
+`program_length` codes and the executor is applied once per code, each time on the state the previous step produced, with
+the same weights; only the last state is decoded (every state, with `decode_every_step`, during training). The gradient
+flows through all steps. The flat code holds all the codes one after another.
+
 Refinement (`loops` > 1). The executor is applied `loops` times with the same weights and the same code; from the second
 time on its input is the input state plus its previous output, detached, and every output is trained to decode to the
 answer. One pass is the plain model.
@@ -48,7 +53,8 @@ class NEOArcOutput:
 
 class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
-                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1) -> None:
+                 table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1,
+                 program_length: int = 1, decode_every_step: bool = False) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
@@ -56,8 +62,9 @@ class NEOArc(nn.Module):
         self.executor = build(EXECUTORS, executor)
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
         self.tie_programmer, self.code_tokens = tie_programmer, code_tokens
-        if code_dim % code_tokens:
-            raise ValueError("code_dim must be a multiple of code_tokens")
+        self.program_length, self.decode_every_step = program_length, decode_every_step
+        if code_dim % (code_tokens * program_length):
+            raise ValueError("code_dim must be a multiple of code_tokens * program_length")
         self.table = nn.Embedding(tasks * variants, code_dim) if tasks else None
         if self.table is not None:
             nn.init.normal_(self.table.weight, std=table_std * code_dim**-0.5)
@@ -71,6 +78,13 @@ class NEOArc(nn.Module):
         """state (M,L,d), code (M,D) -> logits after each pass of the executor."""
 
         logits, carry = [], None
+        if self.program_length > 1:                  # a program: the executor runs once per code, each time on the state the last step left
+            steps = code.view(len(code), self.program_length, self.code_tokens, -1)
+            for t in range(self.program_length):
+                state = self.executor(state, steps[:, t])
+                if t == self.program_length - 1 or (self.decode_every_step and self.training):
+                    logits.append(self.decoder(state))
+            return logits
         for _ in range(loops or self.loops):
             carry = self.executor(state if carry is None else state + carry.detach(), code.view(len(code), self.code_tokens, -1))
             logits.append(self.decoder(carry))

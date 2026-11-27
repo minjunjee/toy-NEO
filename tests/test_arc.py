@@ -204,6 +204,30 @@ def test_a_code_with_a_map_starts_as_the_vector_model_and_then_reads_the_map() -
     assert torch.allclose(mapped.execute(x, others), mapped(batch).logits_by_loop[0], atol=1e-5)
 
 
+def test_a_program_of_several_codes_applies_the_executor_once_per_code() -> None:
+    import_all()
+    from models.neo_arc import NEOArc
+
+    torch.manual_seed(0)
+    part = {"d_model": 32, "num_heads": 4, "d_ff": 64, "num_layers": 1, "dropout": 0.0}
+    model = NEOArc(encoder={"type": "token_embed", "vocab": 11, "d_model": 16}, decoder={"type": "linear_head", "d_model": 16, "vocab": 11, "spatial": [6, 6]},
+                   programmer={"type": "token_pair_transformer", "state_dim": 16, "action_dim": 24, "grid_dim": 6, **part},
+                   executor={"type": "adaln_transformer", "state_dim": 16, "cond_dim": 8, "grid_dim": 6, **part}, code_dim=24, program_length=3).eval()
+    for block in model.executor.stack.blocks:
+        for parameter in block.parameters():
+            torch.nn.init.normal_(parameter, std=0.2)
+    x, y = torch.randint(0, 11, (2, 6, 6)), torch.randint(0, 11, (2, 6, 6))
+    code = model.pair_codes(x, y)
+    assert code.shape == (2, 24)
+    state = model.encoder(x)
+    for t in range(3):
+        state = model.executor(state, code[:, 8 * t: 8 * t + 8][:, None, :])
+    assert torch.allclose(model.decoder(state), model.execute(x, code), atol=1e-5)
+    swapped = torch.cat([code[:, 8:16], code[:, :8], code[:, 16:]], dim=1)           # the order of the codes matters
+    assert not torch.allclose(model.execute(x, swapped), model.execute(x, code), atol=1e-4)
+    assert len(model.train()({"inputs": x[None], "outputs": y[None], "task": torch.tensor([-1]), "variant": torch.tensor([0])}).logits_by_loop) == 1
+
+
 def test_fitting_a_code_lowers_the_loss_on_the_pairs_and_leaves_the_weights_alone(tmp_path: Path) -> None:
     import_all()
     from evals.arc import fit_codes
