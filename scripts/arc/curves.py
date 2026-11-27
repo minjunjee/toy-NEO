@@ -73,7 +73,7 @@ def main() -> None:
             if get("zero_vote2") is not None:
                 axes[1, column].plot(xs, [100 * get(f"{w}_vote2") for w in ways], color=color, marker="s", ls="--")
             axes[1, column].set_xticks(xs, ["one reading"] + [f"fit {k} steps" for k in fits])
-            line[split] = " / ".join(f"{100 * get(w):.1f}" for w in ways) + (f" | vote2 {100 * get(ways[-1] + '_vote2'):.1f}" if get("zero_vote2") is not None else "")
+            line[split] = " / ".join(f"{100 * get(w):.1f}" for w in ways) + (f"; two voted guesses {100 * get(ways[-1] + '_vote2'):.1f}" if get("zero_vote2") is not None else "")
             line[f"{split} verify"] = f"{100 * get('verify_tasks'):.1f}"
             if get("table") is not None:
                 line[f"{split} table"] = f"{100 * get('table'):.1f}"

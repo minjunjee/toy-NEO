@@ -92,6 +92,13 @@ def main() -> None:
     configs["arc16_sleep_replay_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000)
     configs["arc16_sleep_alone_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, new_share=1.0)
     configs["arc16_sleep_replay_lr3_s0"] = sleep(configs["arc16_programmer_s0"], start, new, steps=4000, lr=3.0e-4)
+    # third batch, all with the code of 256 dims: the 30x30 run's model at proxy size, a longer code, a larger programmer, more pairs
+    wide = dict(size=16, steps=20000, code_dim=256)
+    configs["arc16_code256_deep_s0"] = run(**wide, executor=(384, 8))
+    configs["arc16_code1024_s0"] = run(size=16, steps=20000, code_dim=1024)
+    configs["arc16_code256_reader_s0"] = run(**wide, programmer=(384, 6))
+    configs["arc16_code256_pairs6_s0"] = run(**wide, pairs=6)
+    configs["arc16_code256_half_plain_s0"] = run(**wide, plain_share=0.5)
     # the full canvas: all 400 tasks at 30x30, the best of the first proxy batch (wider and deeper executor, code of 256 dims).
     # The heavy frozen evaluation is run apart (scripts/arc/evaluate.py); the run itself ends with a light one.
     configs["arc30_programmer_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), evals_every=10000, ckpt_every=25000, final_fit=30, final_votes=1, workers=8)
