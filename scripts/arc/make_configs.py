@@ -120,6 +120,10 @@ def main() -> None:
     # the full canvas: all 400 tasks at 30x30, the best of the first proxy batch (wider and deeper executor, code of 256 dims).
     # The heavy frozen evaluation is run apart (scripts/arc/evaluate.py); the run itself ends with a light one.
     configs["arc30_programmer_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), evals_every=10000, ckpt_every=25000, final_fit=30, final_votes=1, workers=8)
+    # the same with 512 colour permutations instead of 8: on the proxy this lifted the frozen score on unseen tasks from 7.4% to 12.9%
+    # (two voted guesses) at the same score on the training tasks. arc30_programmer_s0 was stopped at 4,500 steps for it.
+    configs["arc30_colors512_s0"] = run(size=30, steps=200000, code_dim=256, executor=(384, 8), color_perms=512, evals_every=10000, ckpt_every=25000,
+                                        final_fit=30, final_votes=1, workers=8)
     for name, config in configs.items():
         (OUT / f"{name}.yaml").write_text(yaml.dump(config, Dumper=Flow, sort_keys=False, default_flow_style=None, width=200))
     print(f"{len(configs)} configs in {OUT}")
