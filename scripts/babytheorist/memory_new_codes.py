@@ -30,6 +30,7 @@ sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts" / "babytheorist"))
 
 import generate_many_primitives as gen  # noqa: E402
+from memory_online import fit as fit_codes  # noqa: E402
 from support_search import code_table  # noqa: E402
 from training.evaluate import load_run  # noqa: E402
 
@@ -98,18 +99,7 @@ def main() -> None:
             order = sorted(range(len(losses)), key=losses.__getitem__)
             starts = [table[c].clone() for c in order[:args.starts]] if args.init == "nearest" else []
             starts.append(torch.zeros(table.shape[1], device=device))
-            best_loss, vector = float("inf"), None
-            for start_vector in starts:
-                candidate = start_vector.clone().requires_grad_(True)
-                opt = torch.optim.Adam([candidate], lr=args.lr)
-                for _ in range(args.fit_steps):
-                    opt.zero_grad()
-                    logits = model.decoder(model.executor(state, candidate.expand(len(x), -1)[:, None]))
-                    loss = F.cross_entropy(logits.reshape(-1, logits.shape[-1]).float(), y.reshape(-1))
-                    loss.backward()
-                    opt.step()
-                if float(loss) < best_loss:
-                    best_loss, vector = float(loss), candidate.detach()
+            vector = fit_codes(model, state, y, starts, args.fit_steps, args.lr)   # all starts in one batch, lowest loss kept
             with torch.no_grad():
                 fit = float(model.decoder(model.executor(state, vector.expand(len(x), -1)[:, None])).argmax(-1).eq(y).flatten(1).all(dim=1).float().mean())
                 held = float(model.decoder(model.executor(qstate, vector.expand(len(qx), -1)[:, None])).argmax(-1).eq(qy).flatten(1).all(dim=1).float().mean())
@@ -119,7 +109,7 @@ def main() -> None:
     summary = {f"k{k}": round(sum(e[f"k{k}"]["held_out"] for e in results.values()) / len(results), 3) for k in args.shots}
     summary["best_existing_code"] = round(sum(e["best_existing_code"] for e in results.values()) / len(results), 3)
     report = json.loads(args.out.read_text()) if args.out.exists() else []
-    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "init": args.init, "summary": summary, "primitives": results})
+    report.append({"run": args.run.name, "small": args.small, "large": args.large, "fit_steps": args.fit_steps, "lr": args.lr, "init": args.init, "starts": args.starts, "summary": summary, "primitives": results})
     args.out.parent.mkdir(parents=True, exist_ok=True)
     args.out.write_text(json.dumps(report, indent=1) + "\n")
     print("mean over new primitives:", summary, flush=True)

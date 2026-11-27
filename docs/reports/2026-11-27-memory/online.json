@@ -1,0 +1,140 @@
+{
+ "verify, else allocate": {
+  "all new primitives": {
+   "accuracy": [
+    0.321,
+    0.321,
+    0.393,
+    0.411,
+    0.411,
+    0.457
+   ],
+   "tasks": [
+    28,
+    28,
+    28,
+    56,
+    112,
+    197
+   ],
+   "new_codes": 290
+  },
+  "computable by the executor": {
+   "accuracy": [
+    0.267,
+    0.467,
+    0.533,
+    0.633,
+    0.65,
+    0.667
+   ],
+   "tasks": [
+    15,
+    15,
+    15,
+    30,
+    60,
+    102
+   ],
+   "new_codes": 290
+  },
+  "needing a new computation": {
+   "accuracy": [
+    0.222,
+    0.111,
+    0.222,
+    0.111,
+    0.167,
+    0.19
+   ],
+   "tasks": [
+    9,
+    9,
+    9,
+    18,
+    36,
+    63
+   ],
+   "new_codes": 290
+  }
+ },
+ "verify, else refit, else allocate": {
+  "all new primitives": {
+   "accuracy": [
+    0.321,
+    0.286,
+    0.429,
+    0.554,
+    0.571,
+    0.538
+   ],
+   "tasks": [
+    28,
+    28,
+    28,
+    56,
+    112,
+    197
+   ],
+   "new_codes": 150
+  },
+  "computable by the executor": {
+   "accuracy": [
+    0.267,
+    0.467,
+    0.667,
+    0.767,
+    0.817,
+    0.745
+   ],
+   "tasks": [
+    15,
+    15,
+    15,
+    30,
+    60,
+    102
+   ],
+   "new_codes": 150
+  },
+  "needing a new computation": {
+   "accuracy": [
+    0.222,
+    0.111,
+    0.111,
+    0.167,
+    0.167,
+    0.222
+   ],
+   "tasks": [
+    9,
+    9,
+    9,
+    18,
+    36,
+    63
+   ],
+   "new_codes": 150
+  }
+ },
+ "offline": {
+  "all new primitives": {
+   "k1": 0.153,
+   "k2": 0.334,
+   "k4": 0.465,
+   "k16": 0.562
+  },
+  "computable by the executor": {
+   "k1": 0.176,
+   "k2": 0.434,
+   "k4": 0.623,
+   "k16": 0.825
+  },
+  "needing a new computation": {
+   "k1": 0.115,
+   "k2": 0.166,
+   "k4": 0.202,
+   "k16": 0.125
+  }
+ }
+}

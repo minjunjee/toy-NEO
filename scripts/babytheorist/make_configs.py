@@ -871,6 +871,25 @@ def main() -> None:
     config["evals"][0]["tables"] = True
     config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 200, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
     configs["grow_m24_to_m52_price_reach4_s42"] = config
+    # sleep after an online fast memory (2026-11-27 16:00): the frozen 24-primitive price model of seed 43 met 800 single-
+    # primitive tasks of the 52-primitive eval file one at a time and kept the tasks no code of its own reproduced, with new
+    # code vectors fitted to them (scripts/babytheorist/memory_online.py, reuse of a new code by refitting before allocating).
+    # The sleep trains every part, as in growth, on those memory tasks only (scripts/babytheorist/memory_sleep_data.py,
+    # repeated to 40,000 rows) with half of each batch replaying the 24-primitive train file, 2,000 steps of hard EM without
+    # prices, and is scored on the eval file without the stream's rows. Two starts that differ only in the new codebook
+    # rows: fresh rows as in growth, or the fast memory's codes that hold two tasks or more (grow_checkpoint.py --rows-from).
+    # The many-example reference is grow_m24_to_m52_price_s43 (80,000 two-pair tasks).
+    for tag in ("fresh", "memory"):
+        config = one_step(43, steps=2000, codes=104, changes={**hard_em, "train.init_from": f"runs/grow_init/m24_price_s43_to_m52_sleep_{tag}.pt"},
+                          data=suite("many_p52_without4"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/memory_refit_s43_rep/lv1_train.h5", f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["data"]["evals"] = {"lv1": f"{DATA}/many_p52_without4_unstreamed/lv1_eval.h5", "usual": f"{DATA}/many_p24/lv1_eval.h5"}
+        config["evals"][0]["tables"] = True
+        config["evals"][0]["every"] = 500
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"sleep_{tag}_m24_to_m52_s43"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs

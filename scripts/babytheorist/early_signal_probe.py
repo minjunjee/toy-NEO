@@ -113,7 +113,7 @@ def main() -> None:
                     hits[p, rows] = logits.argmax(-1).eq(goal).flatten(1).all(dim=1).view(len(rows), size)
             hidden = {}
             handle = model.programmer.output.register_forward_hook(lambda m, i, o: hidden.__setitem__("h", i[0].detach()))
-            action = model.programmer(states[0], states[1]).flatten(1)
+            action = model.programmer(states[0], model.encoder(y[:, 0])).flatten(1)  # the first pair's input and output
             handle.remove()
         assigned = (loss[0] + loss[1]).argmin(1)
         single = loss[0].argmin(1)
