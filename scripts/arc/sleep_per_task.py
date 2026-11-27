@@ -58,6 +58,8 @@ def main() -> None:
     parser.add_argument("--split", default="evaluation")
     parser.add_argument("--steps", type=int, default=200)
     parser.add_argument("--batch", type=int, default=16)
+    parser.add_argument("--eval-batch", type=int, default=128)
+    parser.add_argument("--max-pairs", type=int, default=64, help="at most this many pairs in a training step: tasks with many demonstration pairs use fewer views per step")
     parser.add_argument("--lr", type=float, default=1.0e-4)
     parser.add_argument("--weight-decay", type=float, default=0.0)
     parser.add_argument("--votes", type=int, default=64)
@@ -103,9 +105,10 @@ def main() -> None:
         if args.steps:
             model.train()
             optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+            size = max(2, min(args.batch, args.max_pairs // len(demo_x)))
             for k in range(args.steps):
-                pick = torch.randint(0, len(views), (args.batch,), generator=generator).to(device)
-                batch = {"inputs": seen_x[pick], "outputs": seen_y[pick], "task": torch.full((args.batch,), -1, device=device), "variant": pick}
+                pick = torch.randint(0, len(views), (size,), generator=generator).to(device)
+                batch = {"inputs": seen_x[pick], "outputs": seen_y[pick], "task": torch.full((size,), -1, device=device), "variant": pick}
                 optimizer.zero_grad(set_to_none=True)
                 with autocast(device):
                     loss = method.compute_loss(model, batch, k).total
@@ -117,17 +120,17 @@ def main() -> None:
         v, n = len(used), len(demo_x)
         vx, vy = seen_x[:v].flatten(0, 1), seen_y[:v].flatten(0, 1)
         owner = torch.arange(v, device=device).repeat_interleave(n)
-        own = read_codes(model, vx, vy, 256).view(v, n, -1)
+        own = read_codes(model, vx, vy, args.eval_batch).view(v, n, -1)
         code = own.mean(dim=1)
         # checks that need no answers, on the first view: demonstration pairs reproduced from the other pairs' code, and from all pairs' code
         others = (own[0].sum(dim=0, keepdim=True) - own[0]) / max(n - 1, 1)
-        demo_others = float(predict(model, seen_x[0], others, 256).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
-        demo_all = float(predict(model, seen_x[0], code[:1].expand(n, -1), 256).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
+        demo_others = float(predict(model, seen_x[0], others, args.eval_batch).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
+        demo_all = float(predict(model, seen_x[0], code[:1].expand(n, -1), args.eval_batch).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
         if args.fit_steps:
-            code = fit_codes(model, vx, vy, owner, code, args.fit_steps, args.fit_lr, 256)
+            code = fit_codes(model, vx, vy, owner, code, args.fit_steps, args.fit_lr, args.eval_batch)
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
         q = len(test_x)
-        guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), 256).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
+        guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), args.eval_batch).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
         first, one, two, misses, ballots, by_cell = [], [], [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
