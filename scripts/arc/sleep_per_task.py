@@ -115,7 +115,12 @@ def main() -> None:
         v, n = len(used), len(demo_x)
         vx, vy = seen_x[:v].flatten(0, 1), seen_y[:v].flatten(0, 1)
         owner = torch.arange(v, device=device).repeat_interleave(n)
-        code = read_codes(model, vx, vy, 256).view(v, n, -1).mean(dim=1)
+        own = read_codes(model, vx, vy, 256).view(v, n, -1)
+        code = own.mean(dim=1)
+        # checks that need no answers, on the first view: demonstration pairs reproduced from the other pairs' code, and from all pairs' code
+        others = (own[0].sum(dim=0, keepdim=True) - own[0]) / max(n - 1, 1)
+        demo_others = float(predict(model, seen_x[0], others, 256).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
+        demo_all = float(predict(model, seen_x[0], code[:1].expand(n, -1), 256).eq(seen_y[0]).flatten(1).all(dim=1).float().mean())
         if args.fit_steps:
             code = fit_codes(model, vx, vy, owner, code, args.fit_steps, args.fit_lr, 256)
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
@@ -141,7 +146,8 @@ def main() -> None:
         if device.type == "cuda":
             torch.cuda.synchronize()
         per_task.append({"index": t, "name": str(file["names"][t]), "pairs": int(n), "tests": int(q), "first_view": float(np.mean(first)),
-                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses})
+                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses,
+                         "demo_from_others": demo_others, "demo_from_all": demo_all})
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
