@@ -115,19 +115,27 @@ def main() -> None:
         seen_tests = tensor(np.stack([view(test_x, s, data.tables[c]) for s, c in used]))        # (V,q,S,S)
         q = len(test_x)
         guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), 256).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
-        first, one, two = [], [], []
+        first, one, two, misses = [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
             back = [undo(guess[i, j], s, data.tables[c]) for i, (s, c) in enumerate(used)]
             back = [None if b is None else b.tobytes() for b in back]
-            top = [grid for grid, _ in Counter(b for b in back if b is not None).most_common(2)]
+            counts = Counter(b for b in back if b is not None).most_common(2)
+            top = [grid for grid, _ in counts]
             first.append(back[0] == answer)
             one.append(bool(top) and top[0] == answer)
             two.append(answer in top)
+            # how the most frequent guess misses: -1 no valid guess, -2 wrong shape, else the number of wrong cells; and how many views agree on it
+            if not top:
+                misses.append([-1, 0])
+            else:
+                best = np.frombuffer(top[0], dtype=np.uint8).reshape(test_y[j].shape)
+                shape_right = ((best != 10) == (test_y[j] != 10)).all()
+                misses.append([int((best != test_y[j]).sum()) if shape_right else -2, int(counts[0][1])])
         if device.type == "cuda":
             torch.cuda.synchronize()
         per_task.append({"index": t, "name": str(file["names"][t]), "pairs": int(n), "tests": int(q), "first_view": float(np.mean(first)),
-                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started})
+                         "vote1": float(np.mean(one)), "vote2": float(np.mean(two)), "seconds": time.monotonic() - started, "top_guess": misses})
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
