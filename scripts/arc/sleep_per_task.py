@@ -67,6 +67,7 @@ def main() -> None:
     parser.add_argument("--shard", default="0/1")
     parser.add_argument("--merge", type=int, help="combine this many shard files written under --out")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--compile", action="store_true", help="compile the programmer and the executor once (weights are reset in place, so the compiled code stays valid)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
     if args.merge:
@@ -81,6 +82,9 @@ def main() -> None:
     tasks = len(file["names"]) if args.max_tasks is None else min(args.max_tasks, len(file["names"]))
     views = [(s, c) for c in range(min(args.colors, len(data.tables))) for s in range(data.symmetries)]
     trained = {key: value.clone() for key, value in model.state_dict().items()}
+    if args.compile and device.type == "cuda":
+        for part in (model.programmer, model.executor):
+            part.forward = torch.compile(part.forward)
     tensor = lambda a: torch.from_numpy(np.ascontiguousarray(a)).long().to(device)  # noqa: E731
     generator = torch.Generator(device="cpu").manual_seed(args.seed)
     per_task = []
