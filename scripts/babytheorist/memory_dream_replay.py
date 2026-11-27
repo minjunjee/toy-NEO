@@ -34,7 +34,7 @@ from training.evaluate import load_run  # noqa: E402
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--run", type=Path, required=True)
-    parser.add_argument("--memory", type=Path, required=True)
+    parser.add_argument("--memory", type=Path, nargs="+", required=True, help="saved memories of the wakes so far (their streams' grids are pooled)")
     parser.add_argument("--rows", type=int, default=40000)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--out", type=Path, required=True)
@@ -43,9 +43,10 @@ def main() -> None:
     model, _, _, _ = load_run(args.run, None, device)
     model.eval()
     table = code_table(model)
-    saved = torch.load(args.memory, map_location="cpu", weights_only=False)
+    loaded = [torch.load(path, map_location="cpu", weights_only=False) for path in args.memory]
+    saved = {"eval": loaded[0]["eval"], "rows": [r for m in loaded for r in m["rows"]]}
     with h5py.File(saved["eval"], "r") as f:
-        rows = sorted(saved["rows"])
+        rows = sorted(set(saved["rows"]))
         seen = np.concatenate([f["inputs"][:][rows], f["outputs"][:][rows]]).reshape(-1, *f["inputs"].shape[2:])
         grid_size = f["grid_sizes"][0]
     rng = np.random.default_rng(args.seed)
