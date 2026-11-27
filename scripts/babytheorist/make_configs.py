@@ -794,6 +794,17 @@ def main() -> None:
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 100, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
         config["evals"].append({"type": "codebook_snapshot", "name": "snapshot_usual", "every": 500, "split": "usual", "max_tasks": 1024, "max_samples": 4000})
         configs[f"adapt_n256_{tag}_m24_large_s43"] = config
+    # longer prices (2026-11-27 11:10): seeds 45 and 46 ended at 51% and 53% with prices (83% and 71% without). Only transpose
+    # got a code of its own; when the prices ended at 8,000 steps their executor still got the four 25% to 61% right, where
+    # seed 43's got 77% to 90%. Prices that end before the executor can tell the four apart let hard EM join the codes again.
+    # Held to 8,000 and falling to zero at 16,000; seed 43 checks that a solved seed is not harmed.
+    for seed in (43, 45, 46):
+        config = one_step(seed, steps=24000, codes=48, changes={**price, "model.price_hold": 8000, "model.price_off": 16000}, data=suite("many_p24"))
+        config["data"]["type"] = "babytheorist_episodes"
+        config["data"]["train"] = [f"{DATA}/many_p24_pairs2/lv1_train.h5"]
+        config["evals"][0]["tables"] = True
+        config["evals"].append({"type": "codebook_snapshot", "name": "snapshot", "every": 400, "split": "lv1", "max_tasks": 1024, "max_samples": 4000})
+        configs[f"onestep_s_m24_hardem_pairs2_pricelong_s{seed}"] = config
     # checkpoints every 200 steps over the first 4,000 (the runs are stopped there), seeds 42 and 43 of the two-pair hard
     # EM above, for asking what the gradients of the tasks on a shared code look like around step 1,300, when seed 43's
     # orientation four settle on one code and seed 42's do not. Checkpoints do not touch the random state, so the runs
