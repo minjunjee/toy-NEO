@@ -1,7 +1,7 @@
 {
  "grow_m24_to_m52_price_s42": {
   "grown": {
-   "last_step": 16800,
+   "last_step": 24000,
    "new_reached": "16/24",
    "new_median_step": 800.0,
    "new_steps": {
@@ -30,14 +30,14 @@
     "shift_right_5": 600,
     "shift_right_6": 200
    },
-   "new_mean_last": 0.7872636554621849,
-   "known_first": 0.9327619678934829,
-   "known_lowest": 0.9327619678934829,
-   "known_last": 0.9957912457912457,
-   "untrained_last": 0.3038461538461539
+   "new_mean_last": 0.759651221599751,
+   "known_first": 0.932761967893483,
+   "known_lowest": 0.932761967893483,
+   "known_last": 0.993013468013468,
+   "untrained_last": 0.32147435897435894
   },
   "scratch": {
-   "last_step": 19600,
+   "last_step": 24000,
    "new_reached": "24/24",
    "new_median_step": 1400.0,
    "new_steps": {
@@ -66,16 +66,16 @@
     "shift_right_5": 1200,
     "shift_right_6": 1200
    },
-   "new_mean_last": 0.9975490196078431,
+   "new_mean_last": 0.9953560371517028,
    "known_first": 0.0,
    "known_lowest": 0.0,
-   "known_last": 0.9930351307189542,
-   "untrained_last": 0.8807692307692309
+   "known_last": 1.0,
+   "untrained_last": 0.8903846153846154
   }
  },
  "grow_m24_to_m52_price_s43": {
   "grown": {
-   "last_step": 19000,
+   "last_step": 24000,
    "new_reached": "22/24",
    "new_median_step": 600.0,
    "new_steps": {
@@ -104,14 +104,14 @@
     "shift_right_5": null,
     "shift_right_6": null
    },
-   "new_mean_last": 0.9418903672580144,
-   "known_first": 0.9141662501007836,
-   "known_lowest": 0.9141662501007836,
+   "new_mean_last": 0.9416588857765328,
+   "known_first": 0.9141662501007838,
+   "known_lowest": 0.9141662501007838,
    "known_last": 0.9976851851851851,
-   "untrained_last": 0.27884615384615385
+   "untrained_last": 0.2955128205128205
   },
   "scratch": {
-   "last_step": 20400,
+   "last_step": 24000,
    "new_reached": "24/24",
    "new_median_step": 1600.0,
    "new_steps": {
@@ -140,16 +140,16 @@
     "shift_right_5": 1600,
     "shift_right_6": 1200
    },
-   "new_mean_last": 0.9915966386554622,
+   "new_mean_last": 0.9891456582633054,
    "known_first": 0.0,
    "known_lowest": 0.0,
-   "known_last": 0.9962121212121212,
-   "untrained_last": 0.969551282051282
+   "known_last": 0.9961219336219337,
+   "untrained_last": 0.9612179487179487
   }
  },
  "grow_m24_to_m52_price_s44": {
   "grown": {
-   "last_step": 17400,
+   "last_step": 24000,
    "new_reached": "24/24",
    "new_median_step": 700.0,
    "new_steps": {
@@ -179,13 +179,13 @@
     "shift_right_6": 400
    },
    "new_mean_last": 0.9975490196078431,
-   "known_first": 0.8841650566012748,
-   "known_lowest": 0.8841650566012748,
-   "known_last": 0.9916245791245791,
-   "untrained_last": 0.44711538461538464
+   "known_first": 0.8841650566012745,
+   "known_lowest": 0.8841650566012745,
+   "known_last": 0.9938973063973066,
+   "untrained_last": 0.4317307692307692
   },
   "scratch": {
-   "last_step": 19600,
+   "last_step": 24000,
    "new_reached": "24/24",
    "new_median_step": 1600.0,
    "new_steps": {
@@ -214,11 +214,11 @@
     "shift_right_5": 2000,
     "shift_right_6": 1600
    },
-   "new_mean_last": 0.9921218487394959,
+   "new_mean_last": 0.9915966386554622,
    "known_first": 0.0,
    "known_lowest": 0.0,
-   "known_last": 0.9751163596751833,
-   "untrained_last": 0.8506410256410257
+   "known_last": 0.977109505418329,
+   "untrained_last": 0.8698717948717949
   }
  }
 }
