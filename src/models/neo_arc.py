@@ -29,8 +29,9 @@ the same weights; only the last state is decoded (every state, with `decode_ever
 flows through all steps. The flat code holds all the codes one after another.
 
 Refinement (`loops` > 1). The executor is applied `loops` times with the same weights and the same code; from the second
-time on its input is the input state plus its previous output, detached, and every output is trained to decode to the
-answer. One pass is the plain model.
+time on its input is the input state plus its previous output, and every output is trained to decode to the answer. The
+previous output is detached by default; with `loop_detach` false the gradient flows through all passes. One pass is the
+plain model.
 """
 
 from __future__ import annotations
@@ -56,7 +57,8 @@ class NEOArcOutput:
 class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
                  table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1,
-                 program_length: int = 1, decode_every_step: bool = False, tie_table: float = 1.0) -> None:
+                 program_length: int = 1, decode_every_step: bool = False, tie_table: float = 1.0,
+                 loop_detach: bool = True) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
@@ -64,7 +66,7 @@ class NEOArc(nn.Module):
         self.executor = build(EXECUTORS, executor)
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
         self.tie_programmer, self.code_tokens, self.tie_table = tie_programmer, code_tokens, tie_table
-        self.program_length, self.decode_every_step = program_length, decode_every_step
+        self.program_length, self.decode_every_step, self.loop_detach = program_length, decode_every_step, loop_detach
         if code_dim % (code_tokens * program_length):
             raise ValueError("code_dim must be a multiple of code_tokens * program_length")
         self.table = nn.Embedding(tasks * variants, code_dim) if tasks else None
@@ -88,7 +90,7 @@ class NEOArc(nn.Module):
                     logits.append(self.decoder(state))
             return logits
         for _ in range(loops or self.loops):
-            carry = self.executor(state if carry is None else state + carry.detach(), code.view(len(code), self.code_tokens, -1))
+            carry = self.executor(state if carry is None else state + (carry.detach() if self.loop_detach else carry), code.view(len(code), self.code_tokens, -1))
             logits.append(self.decoder(carry))
         return logits
 
