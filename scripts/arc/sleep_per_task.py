@@ -36,7 +36,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "src"))
 sys.path.insert(0, str(REPO / "scripts" / "arc"))
 
-from core.registry import DATASETS, METHODS, build  # noqa: E402
+from core.registry import DATASETS, METHODS, MODELS, build  # noqa: E402
 from evals.arc import autocast, crop, fit_codes, predict, read_codes, undo, view  # noqa: E402
 from evaluate import load_run  # noqa: E402
 
@@ -119,6 +119,7 @@ def main() -> None:
     parser.add_argument("--shard", default="0/1")
     parser.add_argument("--merge", type=int, help="combine this many shard files written under --out")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--loops", type=int, help="refining passes of the executor during the sleep and when answering, for a run trained with one pass")
     parser.add_argument("--dump", type=Path, help="folder to save, for every task, the test inputs, the answers and the most frequent guess of each test")
     parser.add_argument("--compile", action="store_true", help="compile the programmer and the executor once (weights are reset in place, so the compiled code stays valid)")
     parser.add_argument("--out", type=Path, required=True)
@@ -129,6 +130,11 @@ def main() -> None:
     shard, shards = (int(v) for v in args.shard.split("/"))
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, config, step = load_run(args.run, device, args.checkpoint)
+    if args.loops:        # give a one-pass model refining passes for the sleep: they enter through a gate that starts at zero
+        grown = build(MODELS, {**config["model"], "loops": args.loops, "loop_detach": False, "loop_gate": True}).to(device)
+        missing = grown.load_state_dict(model.state_dict(), strict=False).missing_keys
+        assert missing in ([], ["carry_gate"]), missing
+        model = grown.eval()
     views_of_run = {"color_perms": len(build(DATASETS, {**config["data"], "evals": {}}).tables), "symmetries": config["data"].get("symmetries", 8)}
     data = build(DATASETS, {**config["data"], "color_perms": args.color_perms or views_of_run["color_perms"], "symmetries": args.symmetries or views_of_run["symmetries"]})
     method = build(METHODS, config["method"])
@@ -259,7 +265,7 @@ def main() -> None:
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
-              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "code_init": args.code_init, "scales": args.scales, "shard": args.shard, "per_task": per_task}
+              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "code_init": args.code_init, "scales": args.scales, "loops": args.loops, "shard": args.shard, "per_task": per_task}
     target = args.out if shards == 1 else args.out.with_suffix(f".shard{shard}.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, indent=1) + "\n")
