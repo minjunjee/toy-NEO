@@ -107,8 +107,9 @@ def main() -> None:
     parser.add_argument("--votes", type=int, default=64)
     parser.add_argument("--symmetries", type=int, help="symmetries used for the views, when the run was trained with fewer")
     parser.add_argument("--color-perms", type=int, help="colour permutations to draw the views from, when the run was trained with fewer")
-    parser.add_argument("--code-init", choices=("read", "first"), default="read",
-                        help="start of a free code: the programmer's reading of that view, or its reading of the task as given for every view")
+    parser.add_argument("--code-init", choices=("read", "first", "random"), default="read",
+                        help="start of a free code: the programmer's reading of that view, its reading of the task as given for every view, or a random "
+                             "vector of the same length as the readings (no programmer: what a learned task token starts from)")
     parser.add_argument("--scales", type=int, default=1, help="also use views with every cell enlarged up to this factor, for tasks whose grids then still fit the canvas")
     parser.add_argument("--colors", type=int, default=8, help="colour permutations used for the views (the first of the run's own)")
     parser.add_argument("--fit-steps", type=int, default=0)
@@ -164,6 +165,9 @@ def main() -> None:
                               for i in range(0, len(views), 16)])
             if args.code_init == "first":
                 free = free[:1].expand(len(views), -1).clone()
+            elif args.code_init == "random":
+                noise = torch.randn(free.shape, generator=generator).to(device)
+                free = noise / noise.norm(dim=-1, keepdim=True) * free.norm(dim=-1, keepdim=True)
             free.requires_grad_(True)
         if args.steps:
             model.train()
@@ -255,7 +259,7 @@ def main() -> None:
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
-              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "scales": args.scales, "shard": args.shard, "per_task": per_task}
+              "fit_steps": args.fit_steps, "every": args.every, "code": args.code, "code_init": args.code_init, "scales": args.scales, "shard": args.shard, "per_task": per_task}
     target = args.out if shards == 1 else args.out.with_suffix(f".shard{shard}.json")
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(result, indent=1) + "\n")
