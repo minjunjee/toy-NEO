@@ -118,6 +118,7 @@ def main() -> None:
     parser.add_argument("--shard", default="0/1")
     parser.add_argument("--merge", type=int, help="combine this many shard files written under --out")
     parser.add_argument("--seed", type=int, default=0)
+    parser.add_argument("--dump", type=Path, help="folder to save, for every task, the test inputs, the answers and the most frequent guess of each test")
     parser.add_argument("--compile", action="store_true", help="compile the programmer and the executor once (weights are reset in place, so the compiled code stays valid)")
     parser.add_argument("--out", type=Path, required=True)
     args = parser.parse_args()
@@ -209,7 +210,7 @@ def main() -> None:
         seen_tests = tensor(np.stack([enlarged(test_x, s, data.tables[c], k) for s, c, k in used]))        # (V,q,S,S)
         q = len(test_x)
         guess = predict(model, seen_tests.flatten(0, 1), code.repeat_interleave(q, dim=0), args.eval_batch).view(v, q, *test_y.shape[1:]).cpu().numpy().astype(np.uint8)
-        first, one, two, misses, ballots, by_cell = [], [], [], [], [], []
+        first, one, two, misses, ballots, by_cell, shown = [], [], [], [], [], [], []
         for j in range(q):
             answer = test_y[j].tobytes()
             back = [shrunk(guess[i, j], s, data.tables[c], k) for i, (s, c, k) in enumerate(used)]
@@ -228,6 +229,7 @@ def main() -> None:
             top = [grid for grid, _ in counts]
             # the five most frequent guesses as (digest of the grid, number of views, is it the answer), so runs can be voted together later
             ballots.append([[hashlib.md5(grid).hexdigest()[:16], int(count), grid == answer] for grid, count in tally.most_common(5)])
+            shown.append(np.frombuffer(top[0], dtype=np.uint8).reshape(test_y[j].shape) if top else np.full_like(test_y[j], 10))
             first.append(back[0] == answer)
             one.append(bool(top) and top[0] == answer)
             two.append(answer in top)
@@ -247,6 +249,9 @@ def main() -> None:
                          "cell_vote": float(np.mean([b[0] for b in by_cell])), "cell_or_vote1": float(np.mean([b[1] for b in by_cell])),
                          "cell_or_vote2": float(np.mean([b[2] for b in by_cell])),
                          "demo_from_others": demo_others, "demo_from_all": demo_all})
+        if args.dump:
+            args.dump.mkdir(parents=True, exist_ok=True)
+            np.savez_compressed(args.dump / f"task{t:03d}.npz", demo_inputs=demo_x, demo_outputs=demo_y, test_inputs=test_x, answers=test_y, guesses=np.stack(shown))
         if len(per_task) % 20 == 0:
             print(f"{len(per_task)} tasks, vote2 so far {100 * np.mean([p['vote2'] for p in per_task]):.1f}%, {np.mean([p['seconds'] for p in per_task]):.1f} s per task", flush=True)
     result = {"run": args.run.name, "step": step, "split": args.split, "sleep_steps": args.steps, "batch": args.batch, "lr": args.lr, "votes": args.votes,
