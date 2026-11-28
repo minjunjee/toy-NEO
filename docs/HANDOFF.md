@@ -1,14 +1,16 @@
 # 인수인계
 
-## 2026-11-28 04:20, ARC-AGI-1 첫 실험이 도는 중의 상태
+## 2026-11-28 13:35, ARC-AGI-1 본학습 둘이 도는 중의 상태
 
-Claude Code가 썼다. 사용자가 일요일 23:59까지 자율 연구를 맡겼다. 설계는 `docs/arc-agi-1-design.md`, 비교마다의 숫자는 `docs/ablations.md` 9절, 시각별 기록은 `docs/research-log.md`, 그림은 `docs/reports/2026-11-28-arc/`에 있다.
+Claude Code가 썼다. 사용자가 일요일 23:59까지 자율 연구를 맡겼다. 지금까지의 이야기는 `docs/reports/2026-11-28-arc.md`, 설계는 `docs/arc-agi-1-design.md`, 비교마다의 숫자는 `docs/ablations.md` 9절, 시각별 기록은 `docs/research-log.md`, 그림은 `docs/reports/2026-11-28-arc/`에 있다.
 
-- 목표. 사용자가 03:14에 기준을 정답률로 정했다. 평가 과제 400개 전체, 한 변 30칸, 두 번의 시도 조건이다. TRM은 44.6%이지만 조사해 보니 선두는 CHARM의 84%이고 VARC 54.5%, transductARC 76%가 그 사이에 있다. 어느 선을 목표로 할지는 사용자에게 물어 둔 상태다.
-- 코드. 데이터 `arc_tasks`, 모델 `neo_arc`, 학습 `neo_arc`, 평가 `arc_tasks`가 새 부품이다. config는 `configs/arc/`에 있고 `scripts/arc/make_configs.py`가 만든다. 얼린 평가는 `scripts/arc/evaluate.py`, 모든 과제를 함께 재우는 잠은 `sleep_data.py`로 파일을 만들어 config로 돌리고, 과제마다 따로 재우는 잠은 `sleep_per_task.py`와 `per_task_sleep.sh`다.
-- 도는 것. GPU 4에서 30칸 본학습 `arc30_colors512_s0`이 04:06에 시작했고 19시쯤 끝난다. 혼자 쓸 때만 그 속도이므로 GPU 4에는 다른 것을 올리지 않는다. GPU 5에서는 `runs/queue/arc_proxy2.txt`의 16칸 탐색과 과제별 잠의 비교가 돈다.
-- 16칸 탐색에서 나온 것. 평가 과제 210개 기준으로, 얼린 채 두 번 시도 7.4%에서 14.8%, 모든 과제를 함께 재우면 23%, 과제마다 따로 재우면 29.5%에서 32.6%다. code는 클수록, executor는 클수록, 색 순열은 많을수록 본 적 없는 과제에 좋다. executor를 여러 번 도는 것, 과제 이름의 code를 programmer와 양쪽으로 묶는 것, 높은 학습률은 버렸다.
-- 다음. 본학습의 첫 checkpoint가 06시쯤 나오면 평가 과제 400개에 과제별 잠을 걸어 전체 값을 잰다. 탐색에서 code를 여러 vector로 두고 executor가 attention으로 읽는 조건이 낫게 나오면 그 설계로 둘째 본학습을 GPU 5에 띄운다.
+- 목표. 사용자가 기준을 정답률로 정했다. 평가 과제 400개 전체, 한 변 30칸, 두 번의 시도다. TRM은 44.6%이고 조사해 보니 선두는 CHARM의 84%다. 어느 선을 목표로 할지는 사용자에게 물어 둔 상태다.
+- 지금의 값. 30칸 평가 과제 200개에서 과제별 잠 한 번이 27%, 넷을 합친 다수결이 33%다. 과제별 잠을 400스텝으로 늘리면 과제 67개에서 4.5점 오른다.
+- 도는 것. 첫 본학습 `arc30_colors512_s0`은 67,500스텝에서 멈췄고 2만 5천과 5만 스텝 checkpoint가 있다. 그 5만 스텝 checkpoint에서 갈라진 둘이 돈다. GPU 5의 `arc30_map_from50k_s0`은 code에 지도를 더한 것이고 23시쯤 끝난다. GPU 4의 `arc30_given_from50k_s0`은 주어진 code로 바꾼 것이고 21시쯤 끝난다. 둘 다 2만 스텝마다 checkpoint를 남긴다.
+- 끝나면 할 일. `scripts/arc/sleep_members.sh`로 각 checkpoint에서 평가 과제 400개 전체에 과제별 잠 400스텝을 건다. 지도 쪽과 첫 본학습은 기본 설정, 주어진 code 쪽은 `--code free`다. 결과 파일들을 `scripts/arc/vote_together.py`에 넣으면 합친 다수결이 나온다. 과제별 잠 하나가 GPU 한 장으로 두 시간쯤이다.
+- GPU 메모리. 30칸 학습 하나가 40에서 50GB, 30칸 과제별 잠 프로세스 하나가 9에서 11GB다. 이날 오전에 GPU 5를 네 번 넘치게 채워 프로세스가 죽었다. 띄우기 전에 nvidia-smi로 남은 메모리를 본다.
+- 탐색에서 과제별 잠 뒤의 값을 올린 설계는 셋이다. code에 지도를 더하기, 방향마다 주어진 code, 답을 세 번 고치기이고 각각 6점쯤이다. 답을 고치는 것은 사전 학습에서 배워야 하고 30칸에서는 아직 돌리지 못했다.
+- 값을 바꾸지 못한 것은 보고서 4.4절에 모았다.
 - 원격 저장소로의 push는 앞 세션에서 권한 분류기가 막았다. 커밋은 로컬 `code/baseline-observation`에 있다.
 
 ## 2026-11-27 밤, 빠른 기억과 잠의 바퀴를 돌린 뒤의 상태
