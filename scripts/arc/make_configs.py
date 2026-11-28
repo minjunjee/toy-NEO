@@ -154,6 +154,13 @@ def main() -> None:
     # the per-task sleep on evaluation tasks from 29.5% to 36.2%.
     configs["arc30_map_from50k_s0"] = run(size=30, steps=120000, code_dim=256, map_dim=32, executor=(384, 8), color_perms=512, evals_every=10000, ckpt_every=20000,
                                           final_fit=30, final_votes=1, workers=8, init_from="runs/arc30_colors512_s0/ckpt/step-050000.pt")
+    # the 30x30 run turned into a given-code run from its 50,000-step checkpoint: every training task and each of 64 views owns a code in the
+    # table, filled with what that checkpoint's programmer reads (scripts/arc/grow_table.py); from then on the executor learns from the table
+    # codes alone and the programmer imitates them. On the proxy given codes with views lifted unseen examples of training tasks from 43.8% to
+    # 56.8% and the per-task sleep on evaluation tasks from 29.5% to 35.2%.
+    configs["arc30_given_from50k_s0"] = run(size=30, steps=120000, code_dim=256, executor=(384, 8), table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02,
+                                            table_lr_scale=10.0, color_perms=8, symmetries=8, evals_every=10000, ckpt_every=20000, final_fit=30, final_votes=1, workers=8,
+                                            init_from="runs/arc30_colors512_s0/ckpt/grown_given_50k.pt")
     # a joint sleep of the 30x30 run on all 400 evaluation tasks, from its checkpoints: the first stage before per-task sleeps.
     # Light evaluations inside the run; the answers come from scripts/arc/sleep_per_task.py afterwards.
     for at in (25, 50, 100, 200):

@@ -36,13 +36,21 @@ def main() -> None:
     parser.add_argument("--fit-steps", type=int, default=0)
     parser.add_argument("--fit-lr", type=float, default=0.05)
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--color-perms", type=int, help="colour permutations of the table's views, when fewer than the run was trained with")
+    parser.add_argument("--pairs", type=int, help="read at most this many pairs of each task (the first ones), for train files with many examples")
     args = parser.parse_args()
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model, config, step = load_run(args.run, device, args.checkpoint)
-    data = build(DATASETS, {**config["data"], "evals": {}})
+    data = build(DATASETS, {**config["data"], "evals": {}, **({"color_perms": args.color_perms} if args.color_perms else {})})
     with np.load(args.tasks) as f:
-        x, y, task = f["inputs"], f["outputs"], torch.from_numpy(f["task"].astype(np.int64)).to(device)
+        x, y, owner = f["inputs"], f["outputs"], f["task"].astype(np.int64)
         tasks = len(f["names"])
+    if args.pairs:
+        rank = np.zeros(len(owner), dtype=np.int64)          # the position of every pair among its task's pairs
+        order = np.argsort(owner, kind="stable")
+        rank[order] = np.arange(len(owner)) - np.searchsorted(owner[order], owner[order])
+        x, y, owner = x[rank < args.pairs], y[rank < args.pairs], owner[rank < args.pairs]
+    task = torch.from_numpy(owner).to(device)
     tensor = lambda a: torch.from_numpy(np.ascontiguousarray(a)).long().to(device)  # noqa: E731
     table = torch.zeros(tasks, data.variants, model.code_dim)
     for color, colors in enumerate(data.tables):
@@ -58,7 +66,7 @@ def main() -> None:
     state["table.weight"] = table.flatten(0, 1)
     grown.load_state_dict(state)
     args.out.parent.mkdir(parents=True, exist_ok=True)
-    torch.save({"step": step, "model": grown.state_dict(), "config": {**config, "model": spec}}, args.out)
+    torch.save({"step": step, "model": grown.state_dict(), "config": {**config, "model": spec, "data": {**config["data"], "color_perms": len(data.tables)}}}, args.out)
     print(f"{args.out}: {tasks} tasks x {data.variants} views, mean code length {float(table.norm(dim=-1).mean()):.2f}")
 
 
