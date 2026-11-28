@@ -30,8 +30,9 @@ flows through all steps. The flat code holds all the codes one after another.
 
 Refinement (`loops` > 1). The executor is applied `loops` times with the same weights and the same code; from the second
 time on its input is the input state plus its previous output, and every output is trained to decode to the answer. The
-previous output is detached by default; with `loop_detach` false the gradient flows through all passes. One pass is the
-plain model.
+previous output is detached by default; with `loop_detach` false the gradient flows through all passes. With `loop_gate`
+the previous output is multiplied by a weight that starts at zero, so a checkpoint trained with one pass keeps its
+predictions when it is given more passes. One pass is the plain model.
 """
 
 from __future__ import annotations
@@ -58,7 +59,7 @@ class NEOArc(nn.Module):
     def __init__(self, encoder: dict, decoder: dict, programmer: dict, executor: dict, code_dim: int, tasks: int = 0, variants: int = 1,
                  table_share: float = 0.5, loops: int = 1, table_std: float = 0.5, tie_programmer: float = 1.0, code_tokens: int = 1,
                  program_length: int = 1, decode_every_step: bool = False, tie_table: float = 1.0,
-                 loop_detach: bool = True) -> None:
+                 loop_detach: bool = True, loop_gate: bool = False) -> None:
         super().__init__()
         self.encoder = build(ENCODERS, encoder)
         self.decoder = build(DECODERS, decoder)
@@ -67,6 +68,9 @@ class NEOArc(nn.Module):
         self.code_dim, self.tasks, self.variants, self.table_share, self.loops = code_dim, tasks, variants, table_share, loops
         self.tie_programmer, self.code_tokens, self.tie_table = tie_programmer, code_tokens, tie_table
         self.program_length, self.decode_every_step, self.loop_detach = program_length, decode_every_step, loop_detach
+        # with a gate the previous output enters the next pass through a weight that starts at zero: every pass then starts as the first
+        # pass, so a model trained with one pass can be given more passes and go on from what it does
+        self.carry_gate = nn.Parameter(torch.zeros(1)) if loop_gate else None
         if code_dim % (code_tokens * program_length):
             raise ValueError("code_dim must be a multiple of code_tokens * program_length")
         self.table = nn.Embedding(tasks * variants, code_dim) if tasks else None
@@ -90,7 +94,10 @@ class NEOArc(nn.Module):
                     logits.append(self.decoder(state))
             return logits
         for _ in range(loops or self.loops):
-            carry = self.executor(state if carry is None else state + (carry.detach() if self.loop_detach else carry), code.view(len(code), self.code_tokens, -1))
+            if carry is not None:
+                carry = carry.detach() if self.loop_detach else carry
+                carry = carry if self.carry_gate is None else self.carry_gate * carry
+            carry = self.executor(state if carry is None else state + carry, code.view(len(code), self.code_tokens, -1))
             logits.append(self.decoder(carry))
         return logits
 

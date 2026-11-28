@@ -149,6 +149,14 @@ def test_a_pair_is_predicted_from_the_other_pairs_and_the_table_is_used_only_in_
     assert torch.allclose(model.execute(batch["inputs"][1], given[1:2].expand(3, -1)), out.logits_by_loop[0][3:], atol=1e-5)
     model.loops = 3
     assert len(model(batch).logits_by_loop) == 3
+    gated = NEOArc(encoder={"type": "token_embed", "vocab": 11, "d_model": 16}, decoder={"type": "linear_head", "d_model": 16, "vocab": 11, "spatial": [6, 6]},
+                   programmer={"type": "token_pair_transformer", "state_dim": 16, "action_dim": 8, "grid_dim": 6, **part},
+                   executor={"type": "adaln_transformer", "state_dim": 16, "cond_dim": 8, "grid_dim": 6, **part}, code_dim=8, loops=3, loop_detach=False, loop_gate=True).eval()
+    model.loops = 1
+    report = gated.load_state_dict({k: v for k, v in model.state_dict().items() if not k.startswith("table.")}, strict=False)
+    assert report.missing_keys == ["carry_gate"]                      # a one-pass model loads, and every pass repeats its prediction until the gate opens
+    passes = gated(batch).logits_by_loop
+    assert len(passes) == 3 and torch.allclose(passes[0], passes[2], atol=1e-5) and torch.allclose(passes[0], model.eval()(batch).logits_by_loop[0], atol=1e-5)
 
 
 def test_a_code_of_several_vectors_is_read_as_tokens_and_handled_as_one_flat_vector() -> None:
