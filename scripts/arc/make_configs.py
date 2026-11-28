@@ -168,6 +168,11 @@ def main() -> None:
     configs["arc30_given_from50k_s0"] = run(size=30, steps=120000, code_dim=256, executor=(384, 8), table=True, table_share=1.0, tie_table=0.0, tie_weight=0.02,
                                             table_lr_scale=10.0, color_perms=8, symmetries=8, evals_every=10000, ckpt_every=20000, final_fit=30, final_votes=1, workers=8,
                                             init_from="runs/arc30_colors512_s0/ckpt/grown_given_50k.pt")
+    # a fourth design at 30x30, trained from scratch: the executor refines its answer three times, the gradient through all passes (on the
+    # proxy 29.5% to 35.7% after the per-task sleep, and it has to be learned in pretraining). Half the batch, since three passes hold three
+    # times the executor's activations.
+    configs["arc30_refine3_s0"] = run(size=30, steps=100000, batch=32, code_dim=256, executor=(384, 8), color_perms=512, loops=3, loop_detach=False,
+                                      evals_every=10000, ckpt_every=20000, final_fit=30, final_votes=1, workers=8)
     # a joint sleep of the 30x30 run on all 400 evaluation tasks, from its checkpoints: the first stage before per-task sleeps.
     # Light evaluations inside the run; the answers come from scripts/arc/sleep_per_task.py afterwards.
     for at in (25, 50, 100, 200):
